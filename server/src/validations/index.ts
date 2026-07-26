@@ -30,3 +30,24 @@ export * from './role.validation';
 
 // Config (FR-20: Cấu hình hệ thống)
 export * from './config.validation';
+
+// Session (FR-9: Lượt gửi xe)
+export * from './session.validation';
+
+// Exception (FR-11: Ngoại lệ)
+export * from './exception.validation';
+
+// Feedback (FR-13: Phản hồi)
+export * from './feedback.validation';
+
+// Reservation (FR-7: Đặt chỗ)
+export * from './reservation.validation';
+
+// Payment (FR-10: Thanh toán)
+export * from './payment.validation';
+
+// AI Chatbot (FR-6.5: AI)
+export * from './ai.validation';
+
+// Report (FR-6: Báo cáo)
+export * from './report.validation';

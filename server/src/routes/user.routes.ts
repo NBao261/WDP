@@ -28,7 +28,7 @@ router.put('/device-token', UserController.updateDeviceToken);
 router.post('/', checkRole([UserRole.ADMIN]), validate(createUserSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.createUser);
 router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkAnyPermission([PERMISSIONS.USER_MANAGE, PERMISSIONS.USER_ASSIGN_FACILITY]), UserController.getAllUsers);
 router.get('/:id', checkRole([UserRole.ADMIN]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.getUserById);
-router.patch('/:id', checkRole([UserRole.ADMIN]), validate(updateUserSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.updateUser);
+router.patch('/:id', checkRole([UserRole.ADMIN]), validate(objectIdParamSchema), validate(updateUserSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.updateUser);
 router.delete('/:id', checkRole([UserRole.ADMIN]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.softDeleteUser);
 
 router.post('/:id/lock', checkRole([UserRole.ADMIN]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.USER_MANAGE), UserController.lockUser);

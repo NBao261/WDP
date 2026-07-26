@@ -37,7 +37,9 @@ export const checkInSchema = z.object({
       .optional(),
     gateIn: z
       .string({ required_error: 'Gate in is required' })
-      .min(1, 'Gate in is required'),
+      .min(1, 'Gate in is required')
+      .max(50, 'Gate in too long')
+      .trim(),
     floorId: z
       .string()
       .regex(objectIdRegex, 'Invalid floor ID format')
@@ -49,8 +51,9 @@ export const checkInSchema = z.object({
     reservationCode: z
       .string()
       .min(1, 'Reservation code is required')
+      .max(50, 'Reservation code too long')
       .optional(),
-    checkInImage: z.string().optional(),
+    checkInImage: z.string().max(500, 'Image URL too long').optional(),
   }).refine(
     (data) => data.reservationCode || (data.facilityId && data.vehicleTypeId && data.licensePlate),
     {
@@ -107,7 +110,9 @@ export const checkOutSchema = z.object({
   body: z.object({
     gateOut: z
       .string({ required_error: 'Gate out is required' })
-      .min(1, 'Gate out is required'),
-    checkOutImage: z.string().optional(),
+      .min(1, 'Gate out is required')
+      .max(50, 'Gate out too long')
+      .trim(),
+    checkOutImage: z.string().max(500, 'Image URL too long').optional(),
   }),
 });

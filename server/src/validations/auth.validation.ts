@@ -4,7 +4,7 @@ import { UserRole } from '../models/user.model';
 // FR-18.1: Register (Admin tạo tài khoản)
 export const registerSchema = z.object({
   body: z.object({
-    name: z.string({ required_error: 'Name is required' }).min(2, 'Name must be at least 2 characters'),
+    name: z.string({ required_error: 'Name is required' }).min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters').trim(),
     email: z
       .string({ required_error: 'Email is required' })
       .email('Invalid email format'),
@@ -13,7 +13,8 @@ export const registerSchema = z.object({
       .regex(/^(0|\+84)\d{9,10}$/, 'Invalid phone number format'),
     password: z
       .string({ required_error: 'Password is required' })
-      .min(6, 'Password must be at least 6 characters'),
+      .min(6, 'Password must be at least 6 characters')
+      .max(128, 'Password must be at most 128 characters'),
   }),
 });
 

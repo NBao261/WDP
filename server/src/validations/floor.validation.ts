@@ -5,7 +5,7 @@ export const createFloorSchema = z.object({
     facilityId: z
       .string({ required_error: 'Facility ID is required' })
       .regex(/^[0-9a-fA-F]{24}$/, 'Invalid facility ID format'),
-    name: z.string({ required_error: 'Name is required' }).min(1),
+    name: z.string({ required_error: 'Floor name is required' }).min(1, 'Floor name is required').max(100, 'Floor name too long').trim(),
     allowedVehicleTypes: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/)).optional(),
     totalSlots: z.number().min(0).optional(),
   }),

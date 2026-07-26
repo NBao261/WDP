@@ -32,7 +32,7 @@ export class ReservationService {
 
     // Validate facility operating hours
     const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-    
+
     if (facility.openTime !== facility.closeTime) {
       if (facility.openTime < facility.closeTime) {
         if (startStr < facility.openTime || startStr >= facility.closeTime) {
@@ -57,15 +57,15 @@ export class ReservationService {
       status: 'active',
       isDeleted: false,
     });
-    
+
     if (!pricingPlan) {
       throw new AppError('Bãi xe chưa có bảng giá áp dụng cho loại xe này', 400);
     }
 
-    // BR-6.2: Phải đặt trước ít nhất 30 phút
-    const minAdvanceMs = 30 * 60 * 1000;
+    // BR-6.2: Phải đặt trước ít nhất 5 phút
+    const minAdvanceMs = 5 * 60 * 1000;
     if (start.getTime() - now.getTime() < minAdvanceMs) {
-      throw new AppError('Phải đặt trước ít nhất 30 phút so với thời gian bắt đầu', 400);
+      throw new AppError('Phải đặt trước ít nhất 5 phút so với thời gian bắt đầu', 400);
     }
 
     // BR-6.3: Tối đa 2 reservation active / user
@@ -318,9 +318,9 @@ export class ReservationService {
     if (reservation.status !== ReservationStatus.CONFIRMED) {
       const statusMsg: Record<string, string> = {
         cancelled: 'đã bị hủy',
-        expired:   'đã hết hạn',
-        used:      'đã sử dụng',
-        pending:   'đang chờ xác nhận',
+        expired: 'đã hết hạn',
+        used: 'đã sử dụng',
+        pending: 'đang chờ xác nhận',
       };
       const msg = statusMsg[reservation.status] || reservation.status;
       throw new AppError(`Đặt chỗ ${msg}, không thể check-in`, 400);

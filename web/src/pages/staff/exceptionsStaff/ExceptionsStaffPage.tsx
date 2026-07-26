@@ -17,6 +17,7 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
   const session = typeof exc.sessionId === 'object' ? exc.sessionId : null;
   const staff = typeof exc.staffId === 'object' ? exc.staffId : null;
   const manager = typeof exc.managerId === 'object' && exc.managerId ? exc.managerId : null;
+  const driver = typeof exc.driverId === 'object' && exc.driverId ? exc.driverId : null;
   const resolvedBy =
     typeof exc.resolvedByStaffId === 'object' && exc.resolvedByStaffId
       ? exc.resolvedByStaffId
@@ -82,6 +83,9 @@ function mapApiException(exc: any, pricingMap?: Map<string, number>): ExceptionD
     checkInImage: exc.checkInImage,
     checkOutImage: exc.checkOutImage,
     excCardCode: exc.cardCode,
+    source: exc.source,
+    driverName: driver?.name || '—',
+    images: exc.images || [],
   };
 }
 
@@ -101,7 +105,7 @@ export default function ExceptionsStaffPage() {
       const params: any = {
         sortBy: 'createdAt',
         sortOrder: 'desc',
-        limit: 1000,
+        limit: 100,
         ...(currentFacilityId ? { facilityId: currentFacilityId } : {}),
       };
 

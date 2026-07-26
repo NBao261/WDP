@@ -19,6 +19,18 @@ export class ExceptionController {
   }
 
   /**
+   * Lấy chi tiết một sự cố theo ID (bao gồm images)
+   */
+  static async getExceptionById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const exception = await ExceptionService.getExceptionById(req.params.id as string);
+      res.status(200).json({ success: true, data: exception });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * Lấy danh sách ngoại lệ
    */
   static async getExceptions(req: Request, res: Response, next: NextFunction) {
@@ -84,6 +96,42 @@ export class ExceptionController {
         success: true,
         message: `Đã quét và phát hiện ${count} lượt gửi xe quá hạn.`,
         data: { count },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Driver tạo báo cáo sự cố (phản hồi)
+   */
+  static async createDriverReport(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = {
+        ...req.body,
+        driverId: req.user?.userId,
+      };
+      const exception = await ExceptionService.createDriverReport(data);
+      res.status(201).json({ success: true, data: exception });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Driver lấy danh sách báo cáo của mình
+   */
+  static async getMyReports(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await ExceptionService.getDriverReports(req.user!.userId, req.query);
+      res.status(200).json({
+        success: true,
+        data: result.data,
+        pagination: {
+          total: result.total,
+          page: result.page,
+          totalPages: result.totalPages,
+        },
       });
     } catch (error) {
       next(error);

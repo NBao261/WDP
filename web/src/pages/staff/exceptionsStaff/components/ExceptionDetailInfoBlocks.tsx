@@ -59,7 +59,9 @@ export const ExceptionInfoBlocks = ({ selectedException, parkingLocation }: any)
           </div>
           <div className="flex justify-between text-[13px]">
             <span className="text-[#6b6b6b]">Người báo cáo:</span>
-            <span className="font-medium text-[#060606]">{selectedException.staffName}</span>
+            <span className="font-medium text-[#060606]">
+              {selectedException.source === 'driver' ? selectedException.driverName : selectedException.staffName}
+            </span>
           </div>
           <div className="flex justify-between text-[13px]">
             <span className="text-[#6b6b6b]">Phụ phí yêu cầu:</span>
@@ -156,6 +158,28 @@ export const ExceptionInfoBlocks = ({ selectedException, parkingLocation }: any)
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Ảnh từ driver */}
+      {selectedException.images && selectedException.images.length > 0 && (
+        <div>
+          <h4 className="text-[12px] font-bold text-[#060606] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-1.5 h-4 bg-[#8b5cf6] rounded-sm"></span>Ảnh đính kèm từ khách hàng
+          </h4>
+          <div className="bg-white border border-[#e8e9e8] rounded-[10px] p-4 shadow-sm">
+            <div className={`grid ${selectedException.images.length === 1 ? 'grid-cols-1' : selectedException.images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
+              {selectedException.images.map((img: string, idx: number) => (
+                <div key={idx} className="flex flex-col bg-[#f5f5f4] rounded-lg border border-[#e8e9e8] p-2">
+                  <img
+                    src={getImageUrl(img)}
+                    alt={`Driver Upload ${idx + 1}`}
+                    className="w-full max-h-[350px] object-contain rounded-md bg-black/5"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -11,6 +11,7 @@ export interface ExceptionData {
   checkInTime: string; slotCode: string; floorName: string; facilityName: string;
   facilityId: string; vehicleTypeIdStr: string; gateIn: string; sessionId: string; sessionStatus: string; updatedAt: string;
   actualPlate?: string; expectedPlate?: string; checkInImage?: string; checkOutImage?: string; excCardCode?: string;
+  source?: string; driverName?: string; images?: string[];
 }
 
 interface ExceptionsListProps {

@@ -106,4 +106,43 @@ export class UploadService {
       throw err; // Throw so BullMQ can retry
     }
   }
+
+  /**
+   * Upload ảnh base64 trực tiếp lên Cloudinary.
+   * Cloudinary hỗ trợ nhận chuỗi data URI (data:image/...;base64,...) natively.
+   * @param base64String - chuỗi base64 hoặc data URI
+   * @param folder - thư mục trên Cloudinary (default: 'smart_parking/vehicles')
+   * @returns URL ảnh trên Cloudinary (secure_url)
+   */
+  static async uploadBase64Image(base64String: string, folder = 'smart_parking/vehicles'): Promise<string> {
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      console.warn('[UploadService] CLOUDINARY_CLOUD_NAME not set, keeping base64 as-is');
+      return base64String;
+    }
+
+    // Đảm bảo chuỗi có prefix data URI
+    let dataUri = base64String;
+    if (!dataUri.startsWith('data:')) {
+      dataUri = `data:image/jpeg;base64,${dataUri}`;
+    }
+
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder,
+      resource_type: 'image',
+      transformation: [
+        { width: 800, height: 600, crop: 'limit' }, // giới hạn kích thước tối đa
+        { quality: 'auto', fetch_format: 'auto' },   // tự tối ưu chất lượng & format
+      ],
+    });
+
+    console.log(`[UploadService] [OK] Uploaded vehicle image to Cloudinary: ${result.secure_url}`);
+    return result.secure_url;
+  }
+
+  /**
+   * Kiểm tra chuỗi có phải base64 / data URI không.
+   */
+  static isBase64Image(str: string): boolean {
+    return str.startsWith('data:image/') || /^[A-Za-z0-9+/=]{100,}/.test(str);
+  }
 }

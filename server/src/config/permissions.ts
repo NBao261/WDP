@@ -196,8 +196,9 @@ export const DEFAULT_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.SLOT_RESERVE,
     // Bảng giá (xem)
     PERMISSIONS.PRICING_READ,
-    // Session (xem của mình)
+    // Session (xem của mình + tạo báo cáo sự cố)
     PERMISSIONS.SESSION_READ,
+    PERMISSIONS.SESSION_EXCEPTION,
     // Thanh toán (online + xem lịch sử của mình)
     PERMISSIONS.PAYMENT_ONLINE,
     PERMISSIONS.PAYMENT_HISTORY,

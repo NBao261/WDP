@@ -4,6 +4,7 @@ import { apiClient } from './api';
 export enum ExceptionType {
   LOST_CARD = 'lost_card',
   WRONG_PLATE = 'wrong_plate',
+  WRONG_FEE = 'wrong_fee',
   OVERTIME = 'overtime',
   WRONG_ZONE = 'wrong_zone',
   UNPAID = 'unpaid',
@@ -21,6 +22,7 @@ export enum ExceptionStatus {
 export const EXCEPTION_TYPE_LABELS: Record<ExceptionType, string> = {
   [ExceptionType.LOST_CARD]: 'Mất vé / Mất thẻ',
   [ExceptionType.WRONG_PLATE]: 'Sai biển số',
+  [ExceptionType.WRONG_FEE]: 'Sai phí gửi xe',
   [ExceptionType.OVERTIME]: 'Xe quá giờ',
   [ExceptionType.WRONG_ZONE]: 'Sai khu vực đỗ',
   [ExceptionType.UNPAID]: 'Chưa thanh toán',
@@ -52,7 +54,9 @@ export interface IException {
     | string;
   type: ExceptionType;
   description: string;
-  staffId: { _id: string; name: string; email: string } | string;
+  source?: 'staff' | 'driver' | 'system';
+  driverId?: { _id: string; name: string; email: string; phone?: string } | string;
+  staffId?: { _id: string; name: string; email: string } | string;
   resolvedByStaffId?: { _id: string; name: string; email: string } | string;
   staffNote?: string;
   managerId: { _id: string; name: string; email: string } | null | string;
@@ -65,6 +69,7 @@ export interface IException {
   newSlot?: { _id: string; name: string } | string;
   checkInImage?: string;
   checkOutImage?: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -124,6 +129,16 @@ export const exceptionService = {
     sessionId: string
   ): Promise<{ success: boolean; data: ExceptionsResponse; message?: string }> => {
     return apiClient.get('/exceptions', { params: { sessionId } });
+  },
+
+  /**
+   * Lấy chi tiết một sự cố theo ID (bao gồm images)
+   * GET /api/v1/exceptions/:id
+   */
+  getExceptionById: async (
+    exceptionId: string
+  ): Promise<{ success: boolean; data: IException; message?: string }> => {
+    return apiClient.get(`/exceptions/${exceptionId}`);
   },
 
   /**

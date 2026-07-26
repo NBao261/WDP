@@ -179,8 +179,15 @@ export function ExceptionsTable({
                       </span>
                     </td>
                     <td className="px-4 py-4 text-[#060606] text-[13px]">
-                      <div className="truncate max-w-[150px]" title={exc.description}>
-                        {exc.description}
+                      <div className="flex flex-col gap-1">
+                        <div className="truncate max-w-[150px]" title={exc.description}>
+                          {exc.description}
+                        </div>
+                        {exc.source === 'driver' && (
+                          <span className="inline-flex items-center text-[10px] text-[#4f46e5] font-bold bg-[#e0e7ff] px-2 py-0.5 rounded-full w-max border border-[#c7d2fe]">
+                            📱 Khách phản hồi
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-[#6b6b6b] text-[12px] tabular-nums truncate">

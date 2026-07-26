@@ -579,7 +579,7 @@ export default function AddVehicleScreen() {
             activeOpacity={0.85}
           >
             <Text style={[styles.submitBtnText, (!selectedTypeId || !licensePlate.trim() || submitting) && { color: Colors.brandGrayText }]}>
-              {submitting ? "Đang lưu..." : "Lưu xe"}
+              {submitting ? (image ? "Đang tải ảnh lên..." : "Đang lưu...") : "Lưu xe"}
             </Text>
           </TouchableOpacity>
 

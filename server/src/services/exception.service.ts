@@ -60,6 +60,7 @@ export class ExceptionService {
       sessionId: new mongoose.Types.ObjectId(data.sessionId),
       type: data.type,
       description: data.description,
+      source: 'staff',
       staffId: new mongoose.Types.ObjectId(data.staffId),
       surcharge: data.surcharge || 0,
       actualPlate: data.actualPlate,
@@ -99,6 +100,36 @@ export class ExceptionService {
     }
 
     return exception;
+  }
+
+  /**
+   * Lấy chi tiết một exception theo ID (bao gồm images)
+   */
+  static async getExceptionById(exceptionId: string): Promise<IException> {
+    const exception = await Exception.findById(exceptionId)
+      .populate('staffId', 'name email')
+      .populate('driverId', 'name email phone')
+      .populate('resolvedByStaffId', 'name email')
+      .populate('managerId', 'name email')
+      .populate('oldSlot', 'name')
+      .populate('newSlot', 'name')
+      .populate({
+        path: 'sessionId',
+        select: 'code licensePlate status facilityId vehicleTypeId checkInTime checkOutTime gateIn gateOut floorId slotId totalFee cardCode',
+        populate: [
+          { path: 'facilityId', select: 'name' },
+          { path: 'vehicleTypeId', select: 'name code' },
+          { path: 'floorId', select: 'name' },
+          { path: 'slotId', select: 'code name' }
+        ]
+      })
+      .lean();
+
+    if (!exception) {
+      throw new AppError('Không tìm thấy sự cố', 404);
+    }
+
+    return exception as unknown as IException;
   }
 
   /**
@@ -160,17 +191,19 @@ export class ExceptionService {
 
     const [data, total] = await Promise.all([
       Exception.find(filter)
+        .select('-images')
         .sort(sort)
         .skip(skip)
         .limit(Number(limit))
         .populate('staffId', 'name')
+        .populate('driverId', 'name email phone')
         .populate('resolvedByStaffId', 'name')
         .populate('managerId', 'name')
         .populate('oldSlot', 'name')
         .populate('newSlot', 'name')
         .populate({
           path: 'sessionId',
-          select: 'code licensePlate status facilityId vehicleTypeId checkInTime checkOutTime gateIn gateOut floorId slotId totalFee',
+          select: 'code licensePlate status facilityId vehicleTypeId checkInTime checkOutTime gateIn gateOut floorId slotId totalFee cardCode',
           populate: [
             { path: 'facilityId', select: 'name' },
             { path: 'vehicleTypeId', select: 'name code' },
@@ -377,6 +410,107 @@ export class ExceptionService {
   }
 
   /**
+   * Driver tạo báo cáo sự cố (phản hồi)
+   */
+  static async createDriverReport(data: {
+    sessionId: string;
+    type: string;
+    description: string;
+    driverId: string;
+    images?: string[];
+  }): Promise<IException> {
+    const session = await ParkingSession.findById(data.sessionId);
+    if (!session) {
+      throw new AppError('Lượt gửi xe không tồn tại', 404);
+    }
+    
+    // Kiểm tra session có thuộc về driver không (thông qua userId của driver đã tạo xe)
+    // Ở đây tạm dùng thông tin chung, thực tế có thể cần liên kết thêm
+
+    let imageUrls: string[] = [];
+    if (data.images && data.images.length > 0) {
+      // Import UploadService dynamically or ensure it's imported at the top
+      const { UploadService } = await import('./upload.service');
+      for (const img of data.images) {
+        if (img.startsWith('data:image')) {
+          try {
+            const url = await UploadService.uploadBase64Image(img, 'exceptions');
+            imageUrls.push(url);
+          } catch (error) {
+            console.error('[ExceptionService] Error uploading image to Cloudinary:', error);
+          }
+        } else {
+          imageUrls.push(img); // Neu da la url roi
+        }
+      }
+    }
+    
+    const exception = new Exception({
+      sessionId: new mongoose.Types.ObjectId(data.sessionId),
+      type: data.type as ExceptionType,
+      description: data.description,
+      source: 'driver',
+      driverId: new mongoose.Types.ObjectId(data.driverId),
+      images: imageUrls,
+      status: ExceptionStatus.NEW,
+    });
+
+    await exception.save();
+
+    // Không khóa session tự động khi driver report (để staff review)
+
+    try {
+      getIO().to(`facility:${session.facilityId}`).emit('exception:created', {
+        exception,
+        facilityId: session.facilityId,
+      });
+    } catch (e) {
+      // Bỏ qua lỗi socket
+    }
+
+    return exception;
+  }
+
+  /**
+   * Lấy danh sách báo cáo sự cố của Driver
+   */
+  static async getDriverReports(driverId: string, query: any): Promise<{ data: IException[], total: number, page: number, totalPages: number }> {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    const filter: any = { driverId: new mongoose.Types.ObjectId(driverId) };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const sort: any = { [sortBy as string]: sortOrder === 'asc' ? 1 : -1 };
+
+    const [data, total] = await Promise.all([
+      Exception.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('staffId', 'name')
+        .populate('resolvedByStaffId', 'name')
+        .populate('oldSlot', 'name code')
+        .populate('newSlot', 'name code')
+        .populate({
+          path: 'sessionId',
+          select: 'code licensePlate checkInTime facilityId slotId',
+          populate: [
+            { path: 'facilityId', select: 'name' },
+            { path: 'slotId', select: 'name code' }
+          ]
+        })
+        .lean(),
+      Exception.countDocuments(filter)
+    ]);
+
+    return {
+      data: data as any[],
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit))
+    };
+  }
+
+  /**
    * Tự động phát hiện xe quá hạn (quá 24h) và tạo cảnh báo (Exception OVERTIME)
    */
   static async detectOverdueSessions(): Promise<number> {
@@ -407,6 +541,7 @@ export class ExceptionService {
             sessionId: session._id,
             type: ExceptionType.OVERTIME,
             description: 'Phát hiện xe đỗ quá 24h liên tục tự động bởi hệ thống.',
+            source: 'system',
             staffId: adminUser._id,
             status: ExceptionStatus.NEW
           });

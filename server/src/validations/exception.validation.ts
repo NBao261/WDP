@@ -42,3 +42,12 @@ export const managerReviewSchema = z.object({
     managerNote: z.string({ required_error: 'Vui lòng cung cấp ghi chú' }).min(1, 'Ghi chú không được để trống'),
   }),
 });
+
+export const driverReportSchema = z.object({
+  body: z.object({
+    sessionId: z.string({ required_error: 'ID lượt gửi không được để trống' }).regex(objectIdRegex, 'Invalid session ID format'),
+    type: z.nativeEnum(ExceptionType, { required_error: 'Vui lòng chọn loại phản hồi hợp lệ' }),
+    description: z.string({ required_error: 'Vui lòng cung cấp mô tả' }).min(1, 'Mô tả không được để trống'),
+    images: z.array(z.string()).max(3, 'Chỉ được đính kèm tối đa 3 ảnh').optional(),
+  }),
+});

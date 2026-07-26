@@ -9,6 +9,7 @@ function getExceptionMeta(type: ExceptionType, status: ExceptionStatus) {
   const iconMap: Record<ExceptionType, { icon: typeof AlertTriangle; iconColor: string; bg: string }> = {
     [ExceptionType.LOST_CARD]:   { icon: CreditCard,    iconColor: 'text-amber-500',  bg: 'bg-amber-50' },
     [ExceptionType.WRONG_PLATE]: { icon: AlertTriangle, iconColor: 'text-rose-500',   bg: 'bg-rose-50' },
+    [ExceptionType.WRONG_FEE]:   { icon: CreditCard,    iconColor: 'text-blue-500',   bg: 'bg-blue-50' },
     [ExceptionType.OVERTIME]:    { icon: Clock,         iconColor: 'text-orange-500', bg: 'bg-orange-50' },
     [ExceptionType.WRONG_ZONE]:  { icon: MapPin,        iconColor: 'text-violet-500', bg: 'bg-violet-50' },
     [ExceptionType.UNPAID]:      { icon: CreditCard,    iconColor: 'text-red-600',    bg: 'bg-red-50' },

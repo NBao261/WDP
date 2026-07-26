@@ -4,6 +4,7 @@ import { VehicleType } from '../models/vehicleType.model';
 import { AppError } from '../middlewares/error.middleware';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
+import { UploadService } from './upload.service';
 
 interface AddVehicleDto {
   userId: string;
@@ -74,12 +75,23 @@ export class VehicleService {
       throw new AppError('Bạn đã đăng ký xe với biển số này rồi', 400);
     }
 
+    // Upload ảnh lên Cloudinary nếu là base64
+    let imageUrl = data.image || '';
+    if (imageUrl && UploadService.isBase64Image(imageUrl)) {
+      try {
+        imageUrl = await UploadService.uploadBase64Image(imageUrl);
+      } catch (err) {
+        console.error('[VehicleService] Upload ảnh xe thất bại, lưu trống:', err);
+        imageUrl = '';
+      }
+    }
+
     const vehicle = new Vehicle({
       userId: new mongoose.Types.ObjectId(data.userId),
       vehicleTypeId: new mongoose.Types.ObjectId(data.vehicleTypeId),
       licensePlate: data.licensePlate.toUpperCase(),
       nickname: data.nickname || '',
-      image: data.image || '',
+      image: imageUrl,
     });
 
     if (data.isDefault === true) {
@@ -189,7 +201,20 @@ export class VehicleService {
     }
 
     if (data.nickname !== undefined) vehicle.nickname = data.nickname;
-    if (data.image !== undefined) vehicle.image = data.image;
+
+    // Upload ảnh lên Cloudinary nếu là base64 mới
+    if (data.image !== undefined) {
+      if (data.image && UploadService.isBase64Image(data.image)) {
+        try {
+          vehicle.image = await UploadService.uploadBase64Image(data.image);
+        } catch (err) {
+          console.error('[VehicleService] Upload ảnh xe thất bại:', err);
+          // Giữ ảnh cũ nếu upload thất bại
+        }
+      } else {
+        vehicle.image = data.image;
+      }
+    }
 
     // Nếu set default → bỏ default của các xe khác
     if (data.isDefault === true) {

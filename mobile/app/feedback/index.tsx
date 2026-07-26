@@ -8,13 +8,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Typography, Shadows } from "../../src/constants/theme";
-import { feedbackApi } from "../../src/services/api";
+import { exceptionApi } from "../../src/services/api";
 
 function StatusChip({ status }: { status: string }) {
   const map: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-    submitted:  { label: "Đã gửi",       color: Colors.warning,       bg: Colors.warningLight,  icon: "time-outline" },
+    new:        { label: "Chờ xử lý",    color: Colors.warning,       bg: Colors.warningLight,  icon: "time-outline" },
     processing: { label: "Đang xử lý",   color: Colors.brandDark,     bg: Colors.primaryBg,     icon: "sync-outline" },
-    resolved:   { label: "Đã giải quyết",color: Colors.success,       bg: Colors.successLight,  icon: "checkmark-circle-outline" },
+    resolved:   { label: "Đã xử lý",     color: Colors.success,       bg: Colors.successLight,  icon: "checkmark-circle-outline" },
     rejected:   { label: "Từ chối",       color: Colors.danger,        bg: Colors.dangerLight,   icon: "close-circle-outline" },
   };
   const s = map[status] || { label: status, color: Colors.brandGrayText, bg: Colors.brandGray, icon: "ellipse-outline" };
@@ -28,11 +28,12 @@ function StatusChip({ status }: { status: string }) {
 
 function TypeLabel({ type }: { type: string }) {
   const map: Record<string, string> = {
-    lost_card:     "Mất thẻ/Vé",
-    wrong_fee:     "Sai phí",
-    hard_to_find:  "Khó tìm chỗ",
-    slot_occupied: "Chỗ bị chiếm",
-    other:         "Khác",
+    lost_card:    "Mất thẻ/Vé",
+    wrong_fee:    "Sai phí",
+    wrong_plate:  "Sai biển số",
+    wrong_zone:   "Sai khu vực đỗ",
+    unpaid:       "Chưa thanh toán",
+    other:        "Khác",
   };
   return <Text style={styles.typeLabel}>{map[type] || type}</Text>;
 }
@@ -45,7 +46,7 @@ export default function FeedbackListScreen() {
 
   const fetchFeedbacks = async () => {
     try {
-      const res: any = await feedbackApi.getFeedbacks({ limit: 50 });
+      const res: any = await exceptionApi.getMyReports();
       if (res.success) setFeedbacks(res.data || []);
     } catch (e) {
       console.log("Error fetching feedbacks", e);
@@ -82,13 +83,44 @@ export default function FeedbackListScreen() {
           <StatusChip status={item.status} />
         </View>
         <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
-        {item.responseNote && (
+        
+        {/* Thông báo kết quả xử lý (nếu có dời chỗ đỗ / đổi biển số) */}
+        {item.status === 'resolved' && (
+          <View>
+            {item.type === 'wrong_zone' && item.newSlot && (
+              <View style={[styles.responseBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderLeftColor: Colors.danger }]}>
+                <View style={styles.responseHeader}>
+                  <Ionicons name="swap-horizontal-outline" size={14} color={Colors.danger} />
+                  <Text style={[styles.responseBy, { color: Colors.danger }]}>Thông báo dời xe</Text>
+                </View>
+                <Text style={styles.responseNote}>
+                  Quản lý đã dời xe của bạn từ vị trí <Text style={{fontWeight: 'bold'}}>{item.oldSlot?.code || item.oldSlot?.name || 'cũ'}</Text> sang vị trí mới là <Text style={{fontWeight: 'bold'}}>{item.newSlot?.code || item.newSlot?.name}</Text>. Vui lòng kiểm tra lại!
+                </Text>
+              </View>
+            )}
+            
+            {item.type === 'wrong_plate' && item.sessionId?.licensePlate && (
+              <View style={[styles.responseBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderLeftColor: '#3b82f6' }]}>
+                <View style={styles.responseHeader}>
+                  <Ionicons name="car-sport-outline" size={14} color="#3b82f6" />
+                  <Text style={[styles.responseBy, { color: '#3b82f6' }]}>Cập nhật biển số</Text>
+                </View>
+                <Text style={styles.responseNote}>
+                  Biển số của bạn đã được cập nhật lại thành <Text style={{fontWeight: 'bold'}}>{item.sessionId.licensePlate}</Text>.
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Lời nhắn từ Staff/Manager */}
+        {item.staffNote && (
           <View style={styles.responseBox}>
             <View style={styles.responseHeader}>
               <Ionicons name="person-circle-outline" size={14} color={Colors.brandDark} />
               <Text style={styles.responseBy}>Phản hồi từ quản lý</Text>
             </View>
-            <Text style={styles.responseNote}>{item.responseNote}</Text>
+            <Text style={styles.responseNote}>{item.staffNote}</Text>
           </View>
         )}
       </View>

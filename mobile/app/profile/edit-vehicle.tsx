@@ -463,7 +463,7 @@ export default function EditVehicleScreen() {
             activeOpacity={0.85}
           >
             <Text style={[styles.submitBtnText, (!selectedTypeId || !licensePlate.trim() || submitting || isInUse) && { color: Colors.brandGrayText }]}>
-              {submitting ? "Đang lưu..." : "Lưu thay đổi"}
+              {submitting ? (image && image.startsWith('data:') ? "Đang tải ảnh lên..." : "Đang lưu...") : "Lưu thay đổi"}
             </Text>
           </TouchableOpacity>
 

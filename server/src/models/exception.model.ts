@@ -3,10 +3,17 @@ import mongoose, { Schema, Document } from 'mongoose';
 export enum ExceptionType {
   LOST_CARD = 'lost_card',
   WRONG_PLATE = 'wrong_plate',
+  WRONG_FEE = 'wrong_fee',
   OVERTIME = 'overtime',
   WRONG_ZONE = 'wrong_zone',
   UNPAID = 'unpaid',
   OTHER = 'other',
+}
+
+export enum ExceptionSource {
+  STAFF = 'staff',
+  DRIVER = 'driver',
+  SYSTEM = 'system',
 }
 
 export enum ExceptionStatus {
@@ -18,7 +25,11 @@ export interface IException extends Document {
   sessionId: mongoose.Types.ObjectId;
   type: ExceptionType;
   description: string;
-  staffId: mongoose.Types.ObjectId;                   // Staff tạo exception
+  source: ExceptionSource;                            // Nguồn tạo exception
+  staffId: mongoose.Types.ObjectId | null;            // Staff tạo exception (nếu do staff)
+  driverId: mongoose.Types.ObjectId | null;           // Driver tạo exception (nếu do driver)
+  images: string[];                                   // Ảnh đính kèm từ driver
+
   resolvedByStaffId: mongoose.Types.ObjectId | null;  // Staff xử lý exception
   staffNote: string;                                  // Ghi chú xử lý của staff
   managerId: mongoose.Types.ObjectId | null;          // Manager review (optional)
@@ -41,7 +52,11 @@ const exceptionSchema = new Schema<IException>(
     sessionId: { type: Schema.Types.ObjectId, ref: 'ParkingSession', required: true },
     type: { type: String, enum: Object.values(ExceptionType), required: true },
     description: { type: String, required: true },
-    staffId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    source: { type: String, enum: Object.values(ExceptionSource), default: ExceptionSource.STAFF },
+    staffId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    driverId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    images: [{ type: String }],
+
     resolvedByStaffId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     staffNote: { type: String, default: '' },
     managerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },

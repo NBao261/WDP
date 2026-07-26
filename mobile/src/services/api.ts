@@ -160,6 +160,14 @@ export const exceptionApi = {
     cardCode?: string;
   }) => {
     return apiClient.post('/exceptions', data);
+  },
+  // Cho driver gửi sự cố (timeout dài hơn cho ảnh base64)
+  createDriverReport: (data: { sessionId: string; type: string; description: string; images?: string[] }) => {
+    return apiClient.post('/exceptions/driver-report', data, { timeout: 30000 });
+  },
+  // Lấy danh sách sự cố của driver
+  getMyReports: () => {
+    return apiClient.get('/exceptions/my-reports');
   }
 };
 
@@ -186,7 +194,7 @@ export const authApi = {
 
 export const vehicleApi = {
   addVehicle: (data: { vehicleTypeId: string; licensePlate: string; nickname?: string; image?: string }) => {
-    return apiClient.post('/vehicles', data);
+    return apiClient.post('/vehicles', data, { timeout: 30000 });
   },
   getMyVehicles: () => {
     return apiClient.get('/vehicles/my');
@@ -195,7 +203,7 @@ export const vehicleApi = {
     return apiClient.get(`/vehicles/${id}`);
   },
   updateVehicle: (id: string, data: { vehicleTypeId?: string; licensePlate?: string; nickname?: string; image?: string; isDefault?: boolean }) => {
-    return apiClient.patch(`/vehicles/${id}`, data);
+    return apiClient.patch(`/vehicles/${id}`, data, { timeout: 30000 });
   },
   deleteVehicle: (id: string) => {
     return apiClient.delete(`/vehicles/${id}`);

@@ -5,7 +5,8 @@ import { ExceptionInfoBlocks } from './ExceptionDetailInfoBlocks';
 import { ExceptionDetailResolveForm } from './ExceptionDetailResolveForm';
 import { ExceptionDetailReviewBlocks } from './ExceptionDetailReviewBlocks';
 import { DirectCheckoutModal } from './DirectCheckoutModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { exceptionService, EXCEPTION_TYPE_LABELS, ExceptionType } from '../../../../services/exception.service';
 
 interface ExceptionDetailDrawerProps {
   selectedException: ExceptionData | null;
@@ -49,14 +50,47 @@ export default function ExceptionDetailDrawer({
 }: ExceptionDetailDrawerProps) {
   const logic = useExceptionDetailLogic({ selectedException, onClose, onResolved });
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [detailData, setDetailData] = useState<ExceptionData | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
-  if (!selectedException) return null;
+  // Khi selectedException thay đổi, fetch full detail (bao gồm images)
+  useEffect(() => {
+    if (selectedException?.id) {
+      setIsLoadingDetail(true);
+      // Bắt đầu với data đã có từ list
+      setDetailData({ ...selectedException });
 
-  const badge = STATUS_BADGE[selectedException.status] || STATUS_BADGE.NEW;
-  const isResolved = selectedException.status === 'RESOLVED';
+      // Fetch full detail nếu source là driver (có thể có images)
+      if (selectedException.source === 'driver') {
+        exceptionService.getExceptionById(selectedException.id).then((res: any) => {
+          if (res.success && res.data) {
+            const exc = res.data;
+            const session = typeof exc.sessionId === 'object' ? exc.sessionId : null;
+            const driver = typeof exc.driverId === 'object' && exc.driverId ? exc.driverId : null;
+            setDetailData(prev => prev ? {
+              ...prev,
+              images: exc.images || [],
+              driverName: driver?.name || prev.driverName,
+            } : prev);
+          }
+        }).catch(() => {
+          // Bỏ qua lỗi, dùng data đã có
+        }).finally(() => setIsLoadingDetail(false));
+      } else {
+        setIsLoadingDetail(false);
+      }
+    } else {
+      setDetailData(null);
+    }
+  }, [selectedException]);
+
+  if (!selectedException || !detailData) return null;
+
+  const badge = STATUS_BADGE[detailData.status] || STATUS_BADGE.NEW;
+  const isResolved = detailData.status === 'RESOLVED';
   const canResolve =
-    selectedException.status === 'NEW' || selectedException.status === 'PROCESSING';
-  const parkingLocation = `${selectedException.facilityName} - ${selectedException.floorName} - ${selectedException.slotCode}`;
+    detailData.status === 'NEW' || detailData.status === 'PROCESSING';
+  const parkingLocation = `${detailData.facilityName} - ${detailData.floorName} - ${detailData.slotCode}`;
 
   return (
     <div className="fixed inset-0 z-[60] overflow-hidden">
@@ -66,12 +100,17 @@ export default function ExceptionDetailDrawer({
           <div>
             <h3 className="text-[18px] font-bold text-[#060606]">Chi tiết Sự cố</h3>
             <div className="flex items-center gap-3 mt-1.5">
-              <p className="text-[13px] text-[#6b6b6b] font-mono">{selectedException.code}</p>
+              <p className="text-[13px] text-[#6b6b6b] font-mono">{detailData.code}</p>
               <span
                 className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${badge.bg} ${badge.text} ${badge.border}`}
               >
                 {badge.label}
               </span>
+              {detailData.source === 'driver' && (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border bg-[#e0e7ff] text-[#4f46e5] border-[#c7d2fe]">
+                  📱 Phản hồi từ khách hàng
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -84,12 +123,12 @@ export default function ExceptionDetailDrawer({
 
         <div className="flex-1 p-6 overflow-y-auto space-y-8 bg-[#fdfdfd]">
           <ExceptionInfoBlocks
-            selectedException={selectedException}
+            selectedException={detailData}
             parkingLocation={parkingLocation}
           />
 
           <ExceptionDetailResolveForm
-            selectedException={selectedException}
+            selectedException={detailData}
             canResolve={canResolve}
             staffNote={logic.staffNote}
             setStaffNote={logic.setStaffNote}
@@ -106,7 +145,7 @@ export default function ExceptionDetailDrawer({
           />
 
           <ExceptionDetailReviewBlocks
-            selectedException={selectedException}
+            selectedException={detailData}
             isResolved={isResolved}
           />
         </div>
@@ -129,7 +168,7 @@ export default function ExceptionDetailDrawer({
               Lưu Xử Lý
             </button>
           )}
-          {isResolved && selectedException.sessionStatus !== 'completed' && (
+          {isResolved && detailData.sessionStatus !== 'completed' && (
             <button
               onClick={() => setShowCheckoutModal(true)}
               className="flex-[2] h-11 bg-[#A3E635] text-[#1A202C] font-bold rounded-[8px] hover:bg-[#84CC16] transition-colors shadow-sm"
@@ -144,7 +183,7 @@ export default function ExceptionDetailDrawer({
         <DirectCheckoutModal
           isOpen={showCheckoutModal}
           onClose={() => setShowCheckoutModal(false)}
-          sessionId={selectedException.sessionId}
+          sessionId={detailData.sessionId}
           onSuccess={() => {
             setShowCheckoutModal(false);
             if (onResolved) onResolved();

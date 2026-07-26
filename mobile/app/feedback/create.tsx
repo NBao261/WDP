@@ -9,14 +9,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Typography, Spacing, Shadows } from "../../src/constants/theme";
-import { feedbackApi, sessionApi } from "../../src/services/api";
+import { exceptionApi, sessionApi } from "../../src/services/api";
 
 const FEEDBACK_TYPES = [
-  { id: "lost_card",     label: "Mất thẻ/Vé",    icon: "card-outline"                  },
-  { id: "wrong_fee",    label: "Sai phí gửi",    icon: "cash-outline"                  },
-  { id: "hard_to_find", label: "Khó tìm vị trí", icon: "navigate-outline"              },
-  { id: "slot_occupied",label: "Chỗ bị chiếm",   icon: "car-sport-outline"             },
-  { id: "other",        label: "Khác",            icon: "chatbubble-ellipses-outline"   },
+  { id: "lost_card",    label: "Mất thẻ/Vé",       icon: "card-outline" },
+  { id: "wrong_fee",    label: "Sai phí gửi xe",    icon: "cash-outline" },
+  { id: "wrong_plate",  label: "Sai biển số",       icon: "document-text-outline" },
+  { id: "wrong_zone",   label: "Sai khu vực đỗ",   icon: "navigate-outline" },
+  { id: "unpaid",       label: "Chưa thanh toán",   icon: "wallet-outline" },
+  { id: "other",        label: "Khác",              icon: "chatbubble-ellipses-outline" },
 ];
 
 export default function CreateFeedbackScreen() {
@@ -33,25 +34,20 @@ export default function CreateFeedbackScreen() {
     const loadSessions = async () => {
       try {
         setLoadingSessions(true);
-        // Load cả active và completed để user có thể feedback cho những phiên gần đây
+        // Chỉ lấy các phiên xe đang đỗ (active) để gửi phản hồi
         const activeRes: any = await sessionApi.getMySessions('active');
-        const completedRes: any = await sessionApi.getMySessions('completed');
         
         let allSessions: any[] = [];
-        if (activeRes.success && activeRes.data) allSessions = [...allSessions, ...activeRes.data];
-        if (completedRes.success && completedRes.data) allSessions = [...allSessions, ...completedRes.data];
+        if (activeRes.success && activeRes.data) allSessions = [...activeRes.data];
 
         // Sắp xếp phiên mới nhất lên đầu
         allSessions.sort((a, b) => new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime());
 
-        // Lấy 5 phiên gửi xe gần nhất
-        const recentSessions = allSessions.slice(0, 5);
-
-        setSessions(recentSessions);
-        if (recentSessions.length > 0) {
-          setSelectedSessionId(recentSessions[0]._id);
+        setSessions(allSessions);
+        if (allSessions.length > 0) {
+          setSelectedSessionId(allSessions[0]._id);
         } else {
-          Alert.alert("Chưa có lượt gửi xe", "Bạn cần có ít nhất một lượt gửi xe để có thể gửi phản hồi.", [
+          Alert.alert("Không có xe đang đỗ", "Bạn hiện không có xe nào đang đỗ trong bãi để gửi phản hồi.", [
             { text: "Đóng", onPress: () => router.back() }
           ]);
         }
@@ -71,7 +67,8 @@ export default function CreateFeedbackScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, aspect: [4, 3], quality: 0.5, base64: true,
+      allowsEditing: true, aspect: [4, 3], quality: 0.3,
+      base64: true,
     });
     if (!result.canceled && result.assets[0].base64) {
       setImages(prev => [...prev, `data:image/jpeg;base64,${result.assets[0].base64}`]);
@@ -88,7 +85,7 @@ export default function CreateFeedbackScreen() {
       setSubmitting(true);
       const payload: any = { type: selectedType, description: description.trim(), images, sessionId: selectedSessionId };
 
-      const res: any = await feedbackApi.createFeedback(payload);
+      const res: any = await exceptionApi.createDriverReport(payload);
       if (res.success) {
         Alert.alert("✅ Gửi thành công!", "Phản hồi của bạn đã được ghi nhận.", [
           { text: "OK", onPress: () => router.back() },
@@ -133,13 +130,15 @@ export default function CreateFeedbackScreen() {
             <>
               <View style={styles.stepHeader}>
                 <View style={styles.stepBadge}><Text style={styles.stepNum}>1</Text></View>
-                <Text style={styles.stepTitle}>Chọn lượt gửi xe <Text style={{ color: Colors.danger }}>*</Text></Text>
+                <Text style={styles.stepTitle}>Chọn xe đang đỗ cần phản hồi <Text style={{ color: Colors.danger }}>*</Text></Text>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
                 {sessions.map((sess) => {
                   const active = selectedSessionId === sess._id;
                   const date = new Date(sess.checkInTime);
                   const timeString = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getDate()}/${date.getMonth() + 1}`;
+                  // Format the parking location text
+                  const slotText = sess.slotId?.code ? `Đang đỗ: ${sess.slotId.code}` : "Đang gửi";
                   return (
                     <TouchableOpacity
                       key={sess._id}
@@ -148,7 +147,10 @@ export default function CreateFeedbackScreen() {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="car-outline" size={17} color={active ? Colors.primary : Colors.textSecondary} />
-                      <Text style={[styles.typeChipText, active && styles.typeChipTextActive]}>Biển số: {sess.licensePlate || "Không biển"} - {timeString}</Text>
+                      <View style={{ flexDirection: 'column' }}>
+                        <Text style={[styles.typeChipText, active && styles.typeChipTextActive]}>Xe: {sess.licensePlate || "Không biển"}</Text>
+                        <Text style={[styles.typeChipText, { fontSize: 10, marginTop: 2 }, active ? styles.typeChipTextActive : { color: Colors.textTertiary }]}>{slotText} - Vô lúc: {timeString}</Text>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}

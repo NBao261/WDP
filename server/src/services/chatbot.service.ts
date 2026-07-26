@@ -7,6 +7,12 @@ import { ParkingFacility } from '../models/parkingFacility.model';
 import { Exception, ExceptionStatus, ExceptionType } from '../models/exception.model';
 import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Feedback, FeedbackStatus } from '../models/feedback.model';
+import { Reservation, ReservationStatus } from '../models/reservation.model';
+import { Vehicle } from '../models/vehicle.model';
+import { User } from '../models/user.model';
+import { PricingPlan } from '../models/pricingPlan.model';
+import { ParkingSlot } from '../models/parkingSlot.model';
+import { Payment, PaymentMethod, PaymentStatus } from '../models/payment.model';
 import { AppError } from '../middlewares/error.middleware';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
@@ -46,7 +52,7 @@ VAI TRÒ:
 - Trả lời câu hỏi về nghiệp vụ, quy trình, chính sách bãi xe
 
 KHẢ NĂNG:
-1. Truy vấn dữ liệu: doanh thu, lượt xe, tỷ lệ lấp đầy, giờ cao điểm, ngoại lệ, feedback, xe đang gửi bằng cách gọi các function tương ứng.
+1. Truy vấn dữ liệu: doanh thu, lượt xe, tỷ lệ lấp đầy, giờ cao điểm, ngoại lệ, feedback, xe đang gửi, đặt chỗ, bảng giá, thanh toán, hiệu suất nhân viên bằng cách gọi các function tương ứng.
 2. Phân tích & nhận xét: so sánh xu hướng, phát hiện bất thường, đề xuất cải thiện  
 3. Tư vấn nghiệp vụ: giải thích quy trình, chính sách phí, cách xử lý ngoại lệ
 
@@ -67,6 +73,16 @@ QUY TẮC TRẢ LỜI & NHẬN XÉT:
    {"answer": "câu trả lời đầy đủ số liệu, dùng markdown", "chartType": "bar|line|pie|table|null"}
    Không thêm bất kỳ text nào nằm ngoài JSON này.
 
+HƯỚNG DẪN TRUY VẤN CHI TIẾT:
+- Khi hỏi "xe nào đang đậu" / "ai đang gửi xe" → gọi get_active_sessions, trả bảng chi tiết biển số, loại xe, tầng, thời gian gửi, tên chủ xe.
+- Khi hỏi "đặt chỗ" / "reservation" → gọi get_reservation_report.
+- Khi hỏi "giao dịch" / "thanh toán" / "tiền mặt" / "QR" → gọi get_payment_details.
+- Khi hỏi "giá" / "bảng giá" / "phí" → gọi get_pricing_info.
+- Khi hỏi "nhân viên" / "staff" / "hiệu suất" → gọi get_staff_performance.
+- Khi hỏi "ngoại lệ" / "chi tiết exception" → gọi get_exception_summary (có cả danh sách chi tiết).
+- Khi hỏi "phản hồi" / "feedback" / "khách phàn nàn" → gọi get_feedback_report (có cả chi tiết từng feedback).
+- Nếu chủ xe là "Khách vãng lai" nghĩa là xe check-in qua staff, không liên kết tài khoản driver.
+
 KNOWLEDGE BASE (Kiến thức về hệ thống):
 - Hệ thống quản lý bãi đỗ xe thông minh với 4 actor: Admin, Manager, Staff, Driver
 - Models: ParkingFacility (tòa nhà), Floor (tầng), ParkingSlot (slot), VehicleType (loại xe)
@@ -74,8 +90,8 @@ KNOWLEDGE BASE (Kiến thức về hệ thống):
 - PricingPlan: bảng giá (flat_rate, duration_based, time_window)  
 - Payment: thanh toán (cash, qr_pay, e_wallet, bank_card)
 - Exception: ngoại lệ (lost_card, wrong_plate, overtime, wrong_zone, unpaid)
-- Feedback: phản hồi khách hàng
-- Reservation: đặt chỗ trước
+- Feedback: phản hồi khách hàng (lost_card, wrong_fee, hard_to_find, slot_occupied, other)
+- Reservation: đặt chỗ trước (pending, confirmed, used, cancelled, expired)
 - Thuật toán MFD (Macroscopic Fundamental Diagram) cho occupancy heatmap
 `;
 
@@ -371,46 +387,322 @@ async function handleExceptionSummary(args: any, facilityId?: string) {
     const sessionIds = await ParkingSession.find({ facilityId }).select('_id').then((sessions) => sessions.map((s) => s._id));
     matchStage.sessionId = { $in: sessionIds };
   }
-  const [byType, byStatus, total] = await Promise.all([
+  const [byType, byStatus, total, recentExceptions] = await Promise.all([
     Exception.aggregate([{ $match: matchStage }, { $group: { _id: '$type', count: { $sum: 1 } } }]),
     Exception.aggregate([{ $match: matchStage }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
     Exception.countDocuments(matchStage),
+    Exception.aggregate([
+      { $match: matchStage },
+      { $lookup: { from: 'parkingsessions', localField: 'sessionId', foreignField: '_id', as: 'session' } },
+      { $unwind: { path: '$session', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'users', localField: 'resolvedByStaffId', foreignField: '_id', as: 'resolvedBy' } },
+      { $unwind: { path: '$resolvedBy', preserveNullAndEmptyArrays: true } },
+      { $project: {
+        _id: 0,
+        type: 1,
+        description: 1,
+        licensePlate: '$session.licensePlate',
+        status: 1,
+        source: 1,
+        resolvedByStaff: { $ifNull: ['$resolvedBy.name', null] },
+        staffNote: 1,
+        surcharge: 1,
+        createdAt: 1,
+      }},
+      { $sort: { createdAt: -1 } },
+      { $limit: 15 },
+    ]),
   ]);
   return {
     total,
     byType: byType.map((item: any) => ({ type: item._id, count: item.count })),
     byStatus: byStatus.map((item: any) => ({ status: item._id, count: item.count })),
+    recentExceptions,
   };
 }
 async function handleActiveSessions(args: any, facilityId?: string) {
   const filter: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
-  if (facilityId) filter.facilityId = facilityId;
-  const [total, byVehicleType] = await Promise.all([
+  if (facilityId) filter.facilityId = new mongoose.Types.ObjectId(facilityId);
+
+  // Summary counts
+  const [total, byVehicleType, byFloor] = await Promise.all([
     ParkingSession.countDocuments(filter),
     ParkingSession.aggregate([
       { $match: filter },
       { $lookup: { from: 'vehicletypes', localField: 'vehicleTypeId', foreignField: '_id', as: 'vehicleType' } },
       { $unwind: '$vehicleType' },
-      { $group: { _id: { vehicleTypeId: '$vehicleTypeId', vehicleTypeName: '$vehicleType.name' }, count: { $sum: 1 } } },
+      { $group: { _id: '$vehicleType.name', count: { $sum: 1 } } },
+    ]),
+    ParkingSession.aggregate([
+      { $match: filter },
+      { $lookup: { from: 'floors', localField: 'floorId', foreignField: '_id', as: 'floor' } },
+      { $unwind: '$floor' },
+      { $group: { _id: '$floor.name', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
     ]),
   ]);
+
+  // Detailed list with lookups
+  const detailedSessions = await ParkingSession.aggregate([
+    { $match: filter },
+    { $lookup: { from: 'vehicletypes', localField: 'vehicleTypeId', foreignField: '_id', as: 'vt' } },
+    { $unwind: '$vt' },
+    { $lookup: { from: 'floors', localField: 'floorId', foreignField: '_id', as: 'fl' } },
+    { $unwind: '$fl' },
+    { $lookup: { from: 'parkingslots', localField: 'slotId', foreignField: '_id', as: 'sl' } },
+    { $unwind: { path: '$sl', preserveNullAndEmptyArrays: true } },
+    // Lookup driver via licensePlate → vehicles → users
+    { $lookup: { from: 'vehicles', localField: 'licensePlate', foreignField: 'licensePlate', as: 'vehicle' } },
+    { $unwind: { path: '$vehicle', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'users', localField: 'vehicle.userId', foreignField: '_id', as: 'driver' } },
+    { $unwind: { path: '$driver', preserveNullAndEmptyArrays: true } },
+    { $project: {
+      _id: 0,
+      licensePlate: 1,
+      vehicleType: '$vt.name',
+      floor: '$fl.name',
+      slotCode: '$sl.code',
+      checkInTime: 1,
+      driverName: { $ifNull: ['$driver.name', 'Khách vãng lai'] },
+      status: 1,
+    }},
+    { $sort: { checkInTime: -1 } },
+    { $limit: 30 },
+  ]);
+
+  // Calculate parking duration for each session
+  const now = new Date();
+  const details = detailedSessions.map((s: any) => {
+    const diffMs = now.getTime() - new Date(s.checkInTime).getTime();
+    const hours = Math.floor(diffMs / 3600000);
+    const minutes = Math.floor((diffMs % 3600000) / 60000);
+    const days = Math.floor(hours / 24);
+    const remainHours = hours % 24;
+    const duration = days > 0 ? `${days} ngày ${remainHours} giờ` : `${hours} giờ ${minutes} phút`;
+    return { ...s, parkingDuration: duration };
+  });
+
   return {
     totalActiveSessions: total,
-    byVehicleType: byVehicleType.map((item: any) => ({ vehicleType: item._id.vehicleTypeName, count: item.count })),
+    byVehicleType: byVehicleType.map((item: any) => ({ vehicleType: item._id, count: item.count })),
+    byFloor: byFloor.map((item: any) => ({ floor: item._id, count: item.count })),
+    details,
   };
 }
+
+async function handleReservationReport(args: any, facilityId?: string) {
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
+  const filter: any = { createdAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } };
+  if (facilityId) filter.facilityId = new mongoose.Types.ObjectId(facilityId);
+
+  const [total, byStatus, recentReservations] = await Promise.all([
+    Reservation.countDocuments(filter),
+    Reservation.aggregate([
+      { $match: filter },
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]),
+    Reservation.aggregate([
+      { $match: filter },
+      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'vehicletypes', localField: 'vehicleTypeId', foreignField: '_id', as: 'vt' } },
+      { $unwind: { path: '$vt', preserveNullAndEmptyArrays: true } },
+      { $project: {
+        _id: 0,
+        code: 1,
+        licensePlate: 1,
+        driverName: { $ifNull: ['$user.name', 'N/A'] },
+        vehicleType: '$vt.name',
+        startTime: 1,
+        status: 1,
+        cancellationFee: 1,
+        createdAt: 1,
+      }},
+      { $sort: { createdAt: -1 } },
+      { $limit: 20 },
+    ]),
+  ]);
+
+  const statusMap: any = {};
+  byStatus.forEach((s: any) => { statusMap[s._id] = s.count; });
+  const cancelled = statusMap['cancelled'] || 0;
+  const cancellationRate = total > 0 ? ((cancelled / total) * 100).toFixed(1) + '%' : '0%';
+
+  return {
+    summary: { total, ...statusMap },
+    cancellationRate,
+    recentReservations,
+  };
+}
+
+async function handlePaymentDetails(args: any, facilityId?: string) {
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
+  const payFilter: any = { createdAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } };
+  if (args.paymentMethod) payFilter.method = args.paymentMethod;
+  if (args.paymentStatus) payFilter.status = args.paymentStatus;
+
+  // Build pipeline with facility filter
+  const basePipeline: any[] = [
+    { $match: payFilter },
+    { $lookup: { from: 'parkingsessions', localField: 'sessionId', foreignField: '_id', as: 'session' } },
+    { $unwind: '$session' },
+  ];
+  if (facilityId) {
+    basePipeline.push({ $match: { 'session.facilityId': new mongoose.Types.ObjectId(facilityId) } });
+  }
+
+  const [byStatus, byMethod, recentPayments] = await Promise.all([
+    Payment.aggregate([
+      ...basePipeline,
+      { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } },
+    ]),
+    Payment.aggregate([
+      ...basePipeline,
+      { $match: { status: 'completed' } },
+      { $group: { _id: '$method', count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } },
+    ]),
+    Payment.aggregate([
+      ...basePipeline,
+      { $lookup: { from: 'vehicletypes', localField: 'session.vehicleTypeId', foreignField: '_id', as: 'vt' } },
+      { $unwind: { path: '$vt', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'users', localField: 'staffId', foreignField: '_id', as: 'staff' } },
+      { $unwind: { path: '$staff', preserveNullAndEmptyArrays: true } },
+      { $project: {
+        _id: 0,
+        transactionCode: 1,
+        amount: 1,
+        method: 1,
+        status: 1,
+        licensePlate: '$session.licensePlate',
+        vehicleType: '$vt.name',
+        staffName: { $ifNull: ['$staff.name', 'N/A'] },
+        createdAt: 1,
+      }},
+      { $sort: { createdAt: -1 } },
+      { $limit: 20 },
+    ]),
+  ]);
+
+  const totalAll = byStatus.reduce((s: number, i: any) => s + i.count, 0);
+  const totalAmount = byStatus.filter((i: any) => i._id === 'completed').reduce((s: number, i: any) => s + i.totalAmount, 0);
+
+  return {
+    summary: {
+      totalTransactions: totalAll,
+      totalCompletedAmount: totalAmount,
+      byStatus: byStatus.map((s: any) => ({ status: s._id, count: s.count, amount: Math.round(s.totalAmount) })),
+    },
+    byMethod: byMethod.map((m: any) => ({ method: m._id, count: m.count, amount: Math.round(m.totalAmount) })),
+    recentPayments,
+  };
+}
+
+async function handlePricingInfo(args: any, facilityId?: string) {
+  const filter: any = { status: 'active', isDeleted: { $ne: true } };
+  if (facilityId) filter.facilityId = new mongoose.Types.ObjectId(facilityId);
+
+  const plans = await PricingPlan.aggregate([
+    { $match: filter },
+    { $lookup: { from: 'vehicletypes', localField: 'vehicleTypeId', foreignField: '_id', as: 'vt' } },
+    { $unwind: '$vt' },
+    { $lookup: { from: 'parkingfacilities', localField: 'facilityId', foreignField: '_id', as: 'fac' } },
+    { $unwind: '$fac' },
+    { $project: {
+      _id: 0,
+      name: 1,
+      vehicleType: '$vt.name',
+      facilityName: '$fac.name',
+      feeType: 1,
+      feeMethod: 1,
+      rates: 1,
+      overnightFee: 1,
+      overtimeFeePerHour: 1,
+      lostCardFee: 1,
+      gracePeriodMinutes: 1,
+      maxDailyFee: 1,
+    }},
+    { $sort: { facilityName: 1, vehicleType: 1 } },
+  ]);
+
+  return { totalPlans: plans.length, plans };
+}
+
+async function handleStaffPerformance(args: any, facilityId?: string) {
+  const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
+  const sessionFilter: any = { checkInTime: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } };
+  if (facilityId) sessionFilter.facilityId = new mongoose.Types.ObjectId(facilityId);
+
+  const [byCheckIn, byCheckOut, byExceptionResolved] = await Promise.all([
+    // Top staff by check-in count
+    ParkingSession.aggregate([
+      { $match: sessionFilter },
+      { $lookup: { from: 'users', localField: 'staffInId', foreignField: '_id', as: 'staff' } },
+      { $unwind: '$staff' },
+      { $group: { _id: '$staff.name', checkInCount: { $sum: 1 } } },
+      { $sort: { checkInCount: -1 } },
+      { $limit: 10 },
+    ]),
+    // Top staff by check-out count
+    ParkingSession.aggregate([
+      { $match: { ...sessionFilter, checkOutTime: { $ne: null }, staffOutId: { $ne: null } } },
+      { $lookup: { from: 'users', localField: 'staffOutId', foreignField: '_id', as: 'staff' } },
+      { $unwind: '$staff' },
+      { $group: { _id: '$staff.name', checkOutCount: { $sum: 1 } } },
+      { $sort: { checkOutCount: -1 } },
+      { $limit: 10 },
+    ]),
+    // Top staff by exception resolved
+    Exception.aggregate([
+      { $match: { status: ExceptionStatus.RESOLVED, resolvedByStaffId: { $ne: null }, updatedAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } } },
+      { $lookup: { from: 'users', localField: 'resolvedByStaffId', foreignField: '_id', as: 'staff' } },
+      { $unwind: '$staff' },
+      { $group: { _id: '$staff.name', resolvedCount: { $sum: 1 } } },
+      { $sort: { resolvedCount: -1 } },
+      { $limit: 10 },
+    ]),
+  ]);
+
+  return {
+    byCheckIn: byCheckIn.map((s: any) => ({ staffName: s._id, checkInCount: s.checkInCount })),
+    byCheckOut: byCheckOut.map((s: any) => ({ staffName: s._id, checkOutCount: s.checkOutCount })),
+    byExceptionResolved: byExceptionResolved.map((s: any) => ({ staffName: s._id, resolvedCount: s.resolvedCount })),
+  };
+}
+
 async function handleFeedbackReport(args: any, facilityId?: string) {
   const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   const filter: any = { createdAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } };
-  if (facilityId) filter.facilityId = facilityId;
+  if (facilityId) filter.facilityId = new mongoose.Types.ObjectId(facilityId);
+
   const feedbacks = await Feedback.find(filter).sort({ createdAt: -1 }).limit(100).lean();
   const summary = {
     totalFeedbacks: feedbacks.length,
     byStatus: feedbacks.reduce((acc: any, f: any) => { acc[f.status] = (acc[f.status] || 0) + 1; return acc; }, {}),
     byType: feedbacks.reduce((acc: any, f: any) => { acc[f.type] = (acc[f.type] || 0) + 1; return acc; }, {}),
-    recentComplaints: feedbacks.filter((f: any) => (f.type as string).toLowerCase() === 'complaint').slice(0, 3).map((f: any) => f.description),
   };
-  return { summary };
+
+  // Detailed recent feedbacks with driver name and facility name
+  const recentFeedbacks = await Feedback.aggregate([
+    { $match: filter },
+    { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+    { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'parkingfacilities', localField: 'facilityId', foreignField: '_id', as: 'fac' } },
+    { $unwind: { path: '$fac', preserveNullAndEmptyArrays: true } },
+    { $project: {
+      _id: 0,
+      type: 1,
+      description: 1,
+      status: 1,
+      driverName: { $ifNull: ['$user.name', 'N/A'] },
+      facilityName: { $ifNull: ['$fac.name', 'N/A'] },
+      responseNote: 1,
+      createdAt: 1,
+    }},
+    { $sort: { createdAt: -1 } },
+    { $limit: 15 },
+  ]);
+
+  return { summary, recentFeedbacks };
 }
 
 // ─── Gemini Tools (Function Declarations) ─────────────────
@@ -471,7 +763,7 @@ const reportTools: Tool[] = [{
     },
     {
       name: "get_exception_summary",
-      description: "Tóm tắt các trường hợp ngoại lệ (mất thẻ, sai biển, etc.)",
+      description: "Tóm tắt và liệt kê chi tiết các trường hợp ngoại lệ (mất thẻ, sai biển số, quá giờ, sai zone, chưa thanh toán). Trả về tổng số, phân loại theo type/status, và danh sách 15 ngoại lệ gần nhất kèm biển số xe, ai xử lý, ghi chú.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -484,7 +776,7 @@ const reportTools: Tool[] = [{
     },
     {
       name: "get_active_sessions",
-      description: "Lấy số lượng xe đang được gửi trong bãi (active sessions)",
+      description: "Lấy danh sách chi tiết xe đang gửi trong bãi: biển số, loại xe, tầng, slot, thời gian vào, thời gian đã gửi, tên chủ xe. Dùng khi manager hỏi: ai đang gửi xe, xe nào đang đậu, liệt kê xe trong bãi, có bao nhiêu xe.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -494,7 +786,7 @@ const reportTools: Tool[] = [{
     },
     {
       name: "get_feedback_report",
-      description: "Lấy báo cáo phản hồi của khách hàng",
+      description: "Lấy báo cáo phản hồi của khách hàng kèm danh sách chi tiết: loại phản hồi, mô tả, tên khách, tòa nhà, trạng thái xử lý, ghi chú phản hồi.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -514,7 +806,58 @@ const reportTools: Tool[] = [{
           facilityName: { type: SchemaType.STRING },
         }
       }
-    }
+    },
+    {
+      name: "get_reservation_report",
+      description: "Thống kê đặt chỗ trước (reservation): tổng số, phân theo trạng thái (pending/confirmed/used/cancelled/expired), tỷ lệ hủy, danh sách đặt chỗ gần đây kèm biển số, tên khách, loại xe.",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
+          facilityName: { type: SchemaType.STRING },
+        }
+      }
+    },
+    {
+      name: "get_payment_details",
+      description: "Lấy chi tiết giao dịch thanh toán: tổng số giao dịch, phân theo phương thức (tiền mặt/QR/ví điện tử/thẻ ngân hàng), phân theo trạng thái, danh sách giao dịch gần đây kèm mã giao dịch, số tiền, biển số xe, nhân viên thu.",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
+          facilityName: { type: SchemaType.STRING },
+          paymentMethod: { type: SchemaType.STRING, description: "Lọc theo phương thức: cash, qr_pay, e_wallet, bank_card" },
+          paymentStatus: { type: SchemaType.STRING, description: "Lọc theo trạng thái: pending, completed, failed, refunded" },
+        }
+      }
+    },
+    {
+      name: "get_pricing_info",
+      description: "Tra cứu bảng giá gửi xe: giá theo loại xe, theo tòa nhà, phí qua đêm, phí mất thẻ, phí quá giờ, ưu đãi giờ miễn phí. Dùng khi hỏi về giá cả, bảng phí, chi phí gửi xe.",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          facilityName: { type: SchemaType.STRING },
+        }
+      }
+    },
+    {
+      name: "get_staff_performance",
+      description: "Thống kê hiệu suất nhân viên (staff): top staff check-in nhiều nhất, top staff check-out nhiều nhất, top staff xử lý ngoại lệ nhiều nhất. Dùng khi hỏi về hiệu suất, đánh giá nhân viên.",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          timeRange: { type: SchemaType.STRING, description: timeRangeDesc },
+          customStartDate: { type: SchemaType.STRING, description: customDateDesc },
+          customEndDate: { type: SchemaType.STRING, description: customDateDesc },
+          facilityName: { type: SchemaType.STRING },
+        }
+      }
+    },
   ]
 }];
 
@@ -527,6 +870,10 @@ const FUNCTION_HANDLERS: Record<string, (args: any, facilityId?: string) => Prom
   get_active_sessions: handleActiveSessions,
   get_feedback_report: handleFeedbackReport,
   get_facility_info: handleFacilityInfo,
+  get_reservation_report: handleReservationReport,
+  get_payment_details: handlePaymentDetails,
+  get_pricing_info: handlePricingInfo,
+  get_staff_performance: handleStaffPerformance,
 };
 
 // ─── Quick Reply Suggestions ──────────────────────────────
@@ -535,7 +882,11 @@ const QUICK_REPLIES = {
   overview: ['Tình hình hôm nay thế nào?', 'Tóm tắt tuần này cho tôi'],
   revenue: ['Doanh thu hôm nay bao nhiêu?', 'So sánh doanh thu tuần này với tuần trước', 'Tòa nhà nào doanh thu cao nhất tháng này?'],
   traffic: ['Tuần này có bao nhiêu lượt xe?', 'Giờ nào đông nhất hôm nay?', 'So sánh lượt xe hôm nay và hôm qua'],
-  operations: ['Tỷ lệ lấp đầy bãi xe hiện tại?', 'Có bao nhiêu xe đang gửi?', 'Tóm tắt ngoại lệ tuần này'],
+  operations: ['Tỷ lệ lấp đầy bãi xe hiện tại?', 'Xe nào đang đậu trong bãi?', 'Tóm tắt ngoại lệ tuần này'],
+  reservations: ['Thống kê đặt chỗ tháng này', 'Tỷ lệ hủy đặt chỗ tuần này bao nhiêu?'],
+  payments: ['Liệt kê giao dịch gần đây', 'Tỷ lệ thanh toán tiền mặt vs QR?'],
+  pricing: ['Bảng giá gửi xe hiện tại', 'Giá gửi xe ô tô bao nhiêu?'],
+  staff: ['Staff nào check-in nhiều nhất?', 'Hiệu suất nhân viên tuần này'],
   insights: ['Có vấn đề gì cần chú ý không?', 'Phân tích xu hướng doanh thu 30 ngày qua', 'Khách hàng phàn nàn gì gần đây?'],
 };
 

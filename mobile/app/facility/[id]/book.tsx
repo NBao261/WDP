@@ -521,7 +521,7 @@ export default function BookingScreen() {
                 <Text style={{ fontFamily: Typography.fontFamily.semiBold }}>
                   {facilityOpenTime} – {facilityCloseTime}
                 </Text>{" "}
-                (Đặt trước tối thiểu 30p)
+                (Đặt trước tối thiểu 5p)
               </Text>
             </View>
           </View>

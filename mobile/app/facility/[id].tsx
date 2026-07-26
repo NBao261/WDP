@@ -252,16 +252,39 @@ export default function FacilityDetailScreen() {
 
         {/* ── Sticky Bottom CTA — Lime like reference ── */}
         <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={[styles.bookBtn, !isActive && styles.bookBtnDisabled]}
-            onPress={() => isActive ? router.push(`/facility/${id}/book`) : null}
-            activeOpacity={0.85}
-          >
-            <Text style={[styles.bookBtnText, !isActive && styles.bookBtnTextDisabled]}>
-              {isActive ? "Đặt chỗ ngay" : "Ngừng hoạt động"}
-            </Text>
-            {isActive && <Ionicons name="arrow-forward" size={16} color={Colors.brandDark} />}
-          </TouchableOpacity>
+          <View style={styles.bottomBtnRow}>
+            <TouchableOpacity
+              style={styles.directionsBtn}
+              onPress={() => {
+                const coords = facility.location?.coordinates;
+                const lng = coords?.[0] ?? 0;
+                const lat = coords?.[1] ?? 0;
+                router.push({
+                  pathname: '/navigation/[facilityId]',
+                  params: {
+                    facilityId: id,
+                    lat: String(lat),
+                    lng: String(lng),
+                    name: facility.name,
+                  },
+                } as any);
+              }}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="navigate" size={16} color={Colors.brandDark} />
+              <Text style={styles.directionsBtnText}>Chỉ đường</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.bookBtn, !isActive && styles.bookBtnDisabled]}
+              onPress={() => isActive ? router.push(`/facility/${id}/book`) : null}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.bookBtnText, !isActive && styles.bookBtnTextDisabled]}>
+                {isActive ? "Đặt chỗ ngay" : "Ngừng hoạt động"}
+              </Text>
+              {isActive && <Ionicons name="arrow-forward" size={16} color={Colors.brandDark} />}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </>
@@ -490,7 +513,28 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.brandGray,
   },
+  bottomBtnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  directionsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: Colors.brandGray,
+    borderRadius: 9999,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+  },
+  directionsBtnText: {
+    fontSize: 12,
+    fontFamily: Typography.fontFamily.bold,
+    color: Colors.brandDark,
+  },
   bookBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

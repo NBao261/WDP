@@ -28,7 +28,7 @@ export const getReservationsSchema = z.object({
     limit: z.string().optional().transform((val) => (val ? parseInt(val) : 10)),
     status: z.nativeEnum(ReservationStatus).optional(),
     facilityId: z.string().regex(objectIdRegex).optional(),
-    sortBy: z.string().optional(),
+    sortBy: z.enum(['createdAt', 'startTime', 'status']).optional(),
     sortOrder: z.enum(['asc', 'desc']).optional(),
   }).optional(),
 });

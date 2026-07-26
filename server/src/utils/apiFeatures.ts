@@ -22,12 +22,38 @@ export class APIFeatures<T extends Document> {
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    // Advanced filtering for >=, <=, etc.
+    // Advanced filtering: only allow safe MongoDB operators
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
-    this.query = this.query.find(JSON.parse(queryStr));
+    // Parse and sanitize — strip any disallowed $ operators to prevent NoSQL injection
+    const parsed = JSON.parse(queryStr);
+    const sanitized = this._stripUnsafeOperators(parsed);
+
+    this.query = this.query.find(sanitized);
     return this;
+  }
+
+  /**
+   * Recursively remove MongoDB operators that are NOT in the safe whitelist.
+   * Prevents injection of $ne, $regex, $where, $or, $and, etc.
+   */
+  private _stripUnsafeOperators(obj: any): any {
+    const SAFE_OPS = new Set(['$gte', '$gt', '$lte', '$lt']);
+
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map((item) => this._stripUnsafeOperators(item));
+
+    const cleaned: Record<string, any> = {};
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('$') && !SAFE_OPS.has(key)) {
+        // Skip dangerous operators
+        continue;
+      }
+      cleaned[key] = this._stripUnsafeOperators(obj[key]);
+    }
+    return cleaned;
   }
 
   sort() {

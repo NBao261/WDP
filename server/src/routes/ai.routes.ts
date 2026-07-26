@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { AIController } from '../controllers/ai.controller';
 import { verifyToken, checkPermission } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate.middleware';
+import {
+  chatQuerySchema,
+  conversationIdParamSchema,
+  renameConversationSchema,
+  aiPaginationQuerySchema,
+} from '../validations/ai.validation';
 import { PERMISSIONS } from '../config/permissions';
 
 const router = Router();
@@ -13,6 +20,7 @@ router.use(verifyToken);
 // POST /ai/chat-query — Gửi câu hỏi cho AI Chatbot
 router.post(
   '/chat-query',
+  validate(chatQuerySchema),
   checkPermission(PERMISSIONS.AI_CHATBOT),
   AIController.chatQuery
 );
@@ -20,6 +28,7 @@ router.post(
 // GET /ai/chat-history — Lịch sử chat (phân trang)
 router.get(
   '/chat-history',
+  validate(aiPaginationQuerySchema),
   checkPermission(PERMISSIONS.AI_CHATBOT),
   AIController.getChatHistory
 );
@@ -41,6 +50,7 @@ router.get(
 // GET /ai/conversations — Lấy danh sách conversation của user
 router.get(
   '/conversations',
+  validate(aiPaginationQuerySchema),
   checkPermission(PERMISSIONS.AI_CHATBOT),
   AIController.getConversations
 );
@@ -48,6 +58,7 @@ router.get(
 // GET /ai/conversations/:conversationId — Lấy tin nhắn trong conversation
 router.get(
   '/conversations/:conversationId',
+  validate(conversationIdParamSchema),
   checkPermission(PERMISSIONS.AI_CHATBOT),
   AIController.getConversationMessages
 );
@@ -55,6 +66,7 @@ router.get(
 // DELETE /ai/conversations/:conversationId — Xóa conversation
 router.delete(
   '/conversations/:conversationId',
+  validate(conversationIdParamSchema),
   checkPermission(PERMISSIONS.AI_CHATBOT),
   AIController.deleteConversation
 );
@@ -62,8 +74,10 @@ router.delete(
 // PATCH /ai/conversations/:conversationId/title — Đổi tên conversation
 router.patch(
   '/conversations/:conversationId/title',
+  validate(renameConversationSchema),
   checkPermission(PERMISSIONS.AI_CHATBOT),
   AIController.renameConversation
 );
 
 export default router;
+

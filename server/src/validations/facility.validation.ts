@@ -3,8 +3,8 @@ import { FacilityStatus } from '../models/parkingFacility.model';
 
 export const createFacilitySchema = z.object({
   body: z.object({
-    name: z.string({ required_error: 'Name is required' }).min(1),
-    address: z.string({ required_error: 'Address is required' }).min(1),
+    name: z.string({ required_error: 'Facility name is required' }).min(1, 'Facility name is required').max(200, 'Facility name too long').trim(),
+    address: z.string({ required_error: 'Address is required' }).min(1, 'Address is required').max(500, 'Address too long').trim(),
     totalFloors: z.number({ required_error: 'Total floors is required' }).min(1),
     openTime: z
       .string({ required_error: 'Open time is required' })
@@ -12,7 +12,7 @@ export const createFacilitySchema = z.object({
     closeTime: z
       .string({ required_error: 'Close time is required' })
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
-    description: z.string().optional(),
+    description: z.string().max(2000, 'Description too long').optional(),
     images: z.array(z.string()).optional(),
     // ── Toạ độ bản đồ (optional — controller xử lý fallback [0,0]) ──
     latitude: z.number().min(-90).max(90).optional(),
@@ -22,8 +22,8 @@ export const createFacilitySchema = z.object({
 
 export const updateFacilitySchema = z.object({
   body: z.object({
-    name: z.string().min(1).optional(),
-    address: z.string().min(1).optional(),
+    name: z.string().min(1, 'Facility name is required').max(200, 'Facility name too long').trim().optional(),
+    address: z.string().min(1, 'Address is required').max(500, 'Address too long').trim().optional(),
     totalFloors: z.number().min(1).optional(),
     openTime: z
       .string()

@@ -6,11 +6,11 @@ const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
 
 // Schema con cho mảng rates
 const pricingRateSchema = z.object({
-  label: z.string({ required_error: 'Rate label is required' }).min(1, 'Rate label is required'),
+  label: z.string({ required_error: 'Rate label is required' }).min(1, 'Rate label is required').max(100, 'Label too long').trim(),
   amount: z
     .number({ required_error: 'Rate amount is required' })
     .min(0, 'Rate amount must be non-negative'),
-  unit: z.string({ required_error: 'Rate unit is required' }).min(1, 'Rate unit is required'),
+  unit: z.string({ required_error: 'Rate unit is required' }).min(1, 'Rate unit is required').max(50, 'Unit too long'),
   startTime: z.string().regex(timeRegex, 'startTime must be in HH:MM format (00:00-23:59)').optional(),
   endTime: z.string().regex(timeRegex, 'endTime must be in HH:MM format (00:00-23:59)').optional(),
 });
@@ -48,7 +48,7 @@ function hasTimeWindowOverlap(rates: RateWithTime[]): boolean {
 // FR-5.1: Tạo bảng giá
 export const createPricingPlanSchema = z.object({
   body: z.object({
-    name: z.string({ required_error: 'Name is required' }).min(1, 'Name is required'),
+    name: z.string({ required_error: 'Name is required' }).min(1, 'Name is required').max(200, 'Name too long').trim(),
     vehicleTypeId: z
       .string({ required_error: 'Vehicle type ID is required' })
       .regex(objectIdRegex, 'Invalid vehicle type ID format'),
@@ -59,7 +59,8 @@ export const createPricingPlanSchema = z.object({
     feeMethod: z.nativeEnum(FeeMethod).optional(),
     rates: z
       .array(pricingRateSchema, { required_error: 'Rates are required' })
-      .min(1, 'At least one rate is required'),
+      .min(1, 'At least one rate is required')
+      .max(24, 'Maximum 24 rates allowed'),
     overnightFee: z.number().min(0, 'Overnight fee must be non-negative').optional(),
     overtimeFeePerHour: z.number().min(0, 'Overtime fee must be non-negative').optional(),
     lostCardFee: z.number().min(0, 'Lost card fee must be non-negative').optional(),
@@ -108,7 +109,7 @@ export const createPricingPlanSchema = z.object({
 // FR-5.3: Sửa bảng giá
 export const updatePricingPlanSchema = z.object({
   body: z.object({
-    name: z.string().min(1).optional(),
+    name: z.string().min(1).max(200, 'Name too long').trim().optional(),
     feeType: z.nativeEnum(FeeType).optional(),
     feeMethod: z.nativeEnum(FeeMethod).optional(),
     rates: z.array(pricingRateSchema).min(1).optional(),

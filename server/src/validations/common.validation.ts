@@ -33,10 +33,13 @@ export const paginationQuerySchema = z.object({
     page: z
       .string()
       .regex(/^\d+$/, 'Page must be a positive number')
-      .optional(),
+      .optional()
+      .refine((val) => !val || parseInt(val) >= 1, 'Page must be at least 1'),
     limit: z
       .string()
       .regex(/^\d+$/, 'Limit must be a positive number')
-      .optional(),
+      .optional()
+      .refine((val) => !val || (parseInt(val) >= 1 && parseInt(val) <= 100), 'Limit must be between 1 and 100'),
   }),
 });
+

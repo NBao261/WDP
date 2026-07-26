@@ -6,9 +6,11 @@ export const updateConfigSchema = z.object({
     key: z.string({ required_error: 'Config key is required' }).min(1, 'Config key is required'),
   }),
   body: z.object({
-    value: z.any().refine((val) => val !== undefined && val !== null, {
-      message: 'Config value is required',
-    }),
+    value: z.union([
+      z.string().max(10000, 'Config value string quá dài'),
+      z.number(),
+      z.boolean(),
+    ], { required_error: 'Config value is required' }),
   }),
 });
 

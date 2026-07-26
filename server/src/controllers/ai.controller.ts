@@ -20,15 +20,7 @@ export class AIController {
         throw new AppError('Không xác định được người dùng', 401);
       }
 
-      if (!message || typeof message !== 'string' || message.trim().length === 0) {
-        throw new AppError('Vui lòng nhập câu hỏi', 400);
-      }
-
-      if (message.length > 2000) {
-        throw new AppError('Câu hỏi quá dài (tối đa 2000 ký tự)', 400);
-      }
-
-      // Query DB để lấy assignedFacilities thực tế của user (JWT không chứa field này)
+      // message đã được validate bởi Zod middleware (min 1, max 2000, trim)
       const { User } = require('../models/user.model');
       const dbUser = await User.findById(userId).select('assignedFacilities').lean();
       const facilityScope = dbUser?.assignedFacilities?.map(
@@ -182,13 +174,7 @@ export class AIController {
       const conversationId = req.params.conversationId as string;
       const { title } = req.body;
 
-      if (!title || typeof title !== 'string' || title.trim().length === 0) {
-        throw new AppError('Vui lòng nhập tiêu đề mới', 400);
-      }
-
-      if (title.length > 200) {
-        throw new AppError('Tiêu đề quá dài (tối đa 200 ký tự)', 400);
-      }
+      // title đã được validate bởi Zod middleware (min 1, max 200, trim)
 
       const result = await ChatbotService.renameConversation(userId, conversationId, title.trim());
 

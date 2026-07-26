@@ -7,7 +7,6 @@ import {
   Animated,
   Dimensions,
   Platform,
-  Linking,
   TextInput,
   ActivityIndicator,
   StatusBar,
@@ -354,10 +353,24 @@ export default function HomeScreen() {
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-        setUserLocation({
+        let coords = {
           latitude: loc.coords.latitude,
           longitude: loc.coords.longitude,
-        });
+        };
+        // Simulator ngoài VN → dùng vị trí mặc định TP.HCM
+        const isInVietnam =
+          coords.latitude >= 8.0 && coords.latitude <= 23.5 &&
+          coords.longitude >= 102.0 && coords.longitude <= 110.0;
+        if (!isInVietnam) {
+          coords = { latitude: 10.8231, longitude: 106.6297 };
+        }
+        setUserLocation(coords);
+        // Animate map to user location
+        mapRef.current?.animateToRegion({
+          ...coords,
+          latitudeDelta: 0.035,
+          longitudeDelta: 0.035 * ASPECT_RATIO,
+        }, 500);
       }
     })();
   }, []);
@@ -496,10 +509,18 @@ export default function HomeScreen() {
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      const coords = {
+      let coords = {
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       };
+
+      // Simulator ngoài VN → dùng vị trí mặc định TP.HCM
+      const isInVietnam =
+        coords.latitude >= 8.0 && coords.latitude <= 23.5 &&
+        coords.longitude >= 102.0 && coords.longitude <= 110.0;
+      if (!isInVietnam) {
+        coords = { latitude: 10.8231, longitude: 106.6297 };
+      }
       setUserLocation(coords);
       mapRef.current?.animateToRegion(
         {
@@ -541,25 +562,15 @@ export default function HomeScreen() {
 
   // ─── Open Google Maps Directions ───────────────────
   const openDirections = (lot: ParkingLot) => {
-    const origin = userLocation
-      ? `${userLocation.latitude},${userLocation.longitude}`
-      : "";
-    const destination = `${lot.latitude},${lot.longitude}`;
-    const url = Platform.select({
-      ios: `comgooglemaps://?saddr=${origin}&daddr=${destination}&directionsmode=driving`,
-      android: `google.navigation:q=${destination}`,
-    });
-    const fallback = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-
-    if (url) {
-      Linking.canOpenURL(url)
-        .then((supported) => {
-          Linking.openURL(supported ? url : fallback);
-        })
-        .catch(() => Linking.openURL(fallback));
-    } else {
-      Linking.openURL(fallback);
-    }
+    router.push({
+      pathname: '/navigation/[facilityId]',
+      params: {
+        facilityId: lot.id,
+        lat: String(lot.latitude),
+        lng: String(lot.longitude),
+        name: lot.name,
+      },
+    } as any);
   };
 
   // ─── Filter by vehicle type helper ────────────────

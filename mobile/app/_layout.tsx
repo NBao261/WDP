@@ -131,6 +131,10 @@ export default function RootLayout() {
           name="profile/edit-vehicle"
           options={{ headerShown: false, animation: "slide_from_right" }}
         />
+        <Stack.Screen
+          name="navigation/[facilityId]"
+          options={{ headerShown: false, animation: "slide_from_bottom" }}
+        />
       </Stack>
     </>
   );

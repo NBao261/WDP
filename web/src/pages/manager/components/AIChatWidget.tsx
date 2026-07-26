@@ -405,7 +405,16 @@ function ChatBody({
                         : 'bg-white border border-[#e5e7eb] text-[#1a1a1a] rounded-bl-sm shadow-sm prose prose-sm prose-p:leading-relaxed'
                     }`}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                        table: () => null,
+                        table: (p: any) => (
+                          <div className="my-2 rounded-lg border border-[#e5e7eb] overflow-x-auto">
+                            <table className="w-full text-[12px] border-collapse" {...p} />
+                          </div>
+                        ),
+                        thead: (p: any) => <thead className="bg-[#f5f5f3]" {...p} />,
+                        tbody: (p: any) => <tbody className="divide-y divide-[#f3f4f6]" {...p} />,
+                        tr: (p: any) => <tr className="hover:bg-[#fafaf8] transition-colors" {...p} />,
+                        th: (p: any) => <th className="px-3 py-2 text-left text-[11px] font-semibold text-[#6b7280] uppercase tracking-wide whitespace-nowrap border-b border-[#e5e7eb]" {...p} />,
+                        td: (p: any) => <td className="px-3 py-2 text-[12px] text-[#1a1a1a] whitespace-nowrap" {...p} />,
                         p: (p: any) => <p className="mb-2 last:mb-0 leading-relaxed" {...p} />,
                         ul: (p: any) => <ul className="list-disc pl-5 mb-3 space-y-1" {...p} />,
                         ol: (p: any) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...p} />,

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Colors, Typography, Spacing } from "../../src/constants/theme";
 import { ReservationCard } from "../../src/components";
@@ -63,18 +64,30 @@ export default function ReservationsScreen() {
   }, []);
 
   const handleCancel = async (id: string) => {
-    setCancellingId(id);
-    try {
-      const response = (await reservationApi.cancelReservation(id)) as any;
-      if (response.success) {
-        fetchReservations(); // Tải lại danh sách sau khi hủy
-      }
-    } catch (error) {
-      console.log("Error cancelling reservation:", error);
-      // Hiển thị toast hoặc alert lỗi (nếu có UI component Toast)
-    } finally {
-      setCancellingId(null);
-    }
+    Alert.alert(
+      "Xác nhận hủy",
+      "Bạn có chắc muốn hủy đặt chỗ này không?",
+      [
+        { text: "Không", style: "cancel" },
+        {
+          text: "Hủy đặt chỗ",
+          style: "destructive",
+          onPress: async () => {
+            setCancellingId(id);
+            try {
+              const response = (await reservationApi.cancelReservation(id)) as any;
+              if (response.success) {
+                fetchReservations();
+              }
+            } catch (error) {
+              Alert.alert("Lỗi", "Không thể hủy đặt chỗ. Vui lòng thử lại.");
+            } finally {
+              setCancellingId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderEmptyState = (title: string, subtitle: string) => (

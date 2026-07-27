@@ -35,6 +35,27 @@ export class PublicService {
     return result;
   }
 
+  static async getPublicFacilityById(facilityId: string) {
+    const cacheKey = `cache:public:facility:${facilityId}`;
+    const cached = await getCache(cacheKey);
+    if (cached) return cached;
+
+    const facility = await ParkingFacility.findOne({
+      _id: new mongoose.Types.ObjectId(facilityId),
+      isDeleted: false,
+    })
+      .select('-createdAt -updatedAt')
+      .lean();
+
+    if (!facility) {
+      throw new AppError('Bãi xe không tồn tại hoặc đã bị xóa', 404);
+    }
+
+    // Cache for 10 minutes
+    await setCache(cacheKey, facility, 600);
+    return facility;
+  }
+
   static async getPublicPricing(facilityId: string) {
     const cacheKey = `cache:public:pricing:${facilityId}`;
     const cached = await getCache(cacheKey);

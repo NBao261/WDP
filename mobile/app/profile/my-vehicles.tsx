@@ -32,10 +32,12 @@ const VehicleCard = React.memo(({
   item,
   onEdit,
   onDelete,
+  onSetDefault,
 }: {
   item: VehicleItem;
   onEdit: (v: VehicleItem) => void;
   onDelete: (v: VehicleItem) => void;
+  onSetDefault: (v: VehicleItem) => void;
 }) => {
   const vtName = item.vehicleTypeId?.name || "Không rõ";
   const vtCode = item.vehicleTypeId?.code || "";
@@ -96,6 +98,14 @@ const VehicleCard = React.memo(({
 
       {/* Action Buttons */}
       <View style={styles.cardActions}>
+        {!item.isDefault && !item.isInUse && (
+          <TouchableOpacity
+            onPress={() => onSetDefault(item)}
+            style={styles.actionBtn}
+          >
+            <Ionicons name="star-outline" size={14} color="#f59e0b" />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           onPress={() => onEdit(item)}
           style={styles.actionBtn}
@@ -159,7 +169,7 @@ export default function MyVehiclesScreen() {
           onPress: async () => {
             try {
               await vehicleApi.deleteVehicle(vehicle._id);
-              setVehicles((prev) => prev.filter((v) => v._id !== vehicle._id));
+              loadVehicles(); // Reload từ server để đồng bộ isDefault, isInUse
             } catch (err: any) {
               Alert.alert("Lỗi", err.message || "Không thể xoá xe");
             }
@@ -193,8 +203,8 @@ export default function MyVehiclesScreen() {
   }, [router]);
 
   const renderVehicle = useCallback(({ item }: { item: VehicleItem }) => (
-    <VehicleCard item={item} onEdit={handleEdit} onDelete={handleDelete} />
-  ), [handleEdit, handleDelete]);
+    <VehicleCard item={item} onEdit={handleEdit} onDelete={handleDelete} onSetDefault={handleSetDefault} />
+  ), [handleEdit, handleDelete, handleSetDefault]);
 
   const renderEmpty = () => (
     <View style={styles.emptyWrap}>

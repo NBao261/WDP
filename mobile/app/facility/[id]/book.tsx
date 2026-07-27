@@ -64,6 +64,7 @@ export default function BookingScreen() {
   const [selectedVehicleType, setSelectedVehicleType] = useState<string>("");
   const [licensePlate, setLicensePlate] = useState("");
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
+  const [existingReservations, setExistingReservations] = useState<any[]>([]);
 
   const [startTime, setStartTime] = useState(
     new Date(Date.now() + 35 * 60 * 1000),
@@ -78,12 +79,13 @@ export default function BookingScreen() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [vtRes, slotRes, facilities, vehiclesRes, sessionsRes] = await Promise.all<any>([
+      const [vtRes, slotRes, facilityData, vehiclesRes, sessionsRes, reservRes] = await Promise.all<any>([
         vehicleTypeApi.getVehicleTypes(),
         api.getAvailableSlots(facilityId),
-        api.getPublicFacilities(1, 100),
+        api.getPublicFacilityById(facilityId),
         vehicleApi.getMyVehicles(),
         sessionApi.getMySessions('active'),
+        reservationApi.getReservations(),
       ]);
 
       const slots: AvailableSlot[] = slotRes || [];
@@ -96,16 +98,22 @@ export default function BookingScreen() {
         if (supported.length > 0) setSelectedVehicleType(supported[0]._id);
       }
 
-      const fac = facilities?.find((f: any) => f._id === facilityId);
-      if (fac) {
-        setFacilityName(fac.name);
-        setFacilityOpenTime(fac.openTime || "06:00");
-        setFacilityCloseTime(fac.closeTime || "22:00");
+      if (facilityData) {
+        setFacilityName(facilityData.name);
+        setFacilityOpenTime(facilityData.openTime || "06:00");
+        setFacilityCloseTime(facilityData.closeTime || "22:00");
       }
 
       // Load active sessions
       if (sessionsRes.success && sessionsRes.data) {
         setActiveSessions(sessionsRes.data);
+      }
+
+      // Load existing pending/confirmed reservations to check duplicates
+      if (reservRes.success && reservRes.data) {
+        setExistingReservations(
+          reservRes.data.filter((r: any) => ['pending', 'confirmed'].includes(r.status))
+        );
       }
 
       // Load user's vehicles
@@ -195,6 +203,21 @@ export default function BookingScreen() {
         s.licensePlate === licensePlate &&
         (s.facilityId?._id === facilityId || s.facilityId === facilityId)
     );
+
+    // Check for existing pending/confirmed reservation with same plate at same facility
+    const hasDuplicateReservation = existingReservations.some(
+      (r) =>
+        r.licensePlate === licensePlate &&
+        (r.facilityId?._id === facilityId || r.facilityId === facilityId)
+    );
+
+    if (hasDuplicateReservation) {
+      Alert.alert(
+        "Đã có đặt chỗ",
+        `Biển số ${licensePlate} đã có đặt chỗ đang chờ/xác nhận tại bãi này. Vui lòng hủy đặt chỗ cũ trước.`
+      );
+      return;
+    }
 
     if (isCurrentlyParked) {
       Alert.alert(

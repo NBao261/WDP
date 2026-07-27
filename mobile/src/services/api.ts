@@ -60,6 +60,10 @@ export const api = {
     const response = await apiClient.get<any, { success: boolean, data: AvailableSlot[] }>(`/public/facilities/${facilityId}/available-slots`);
     return response.data;
   },
+  getPublicFacilityById: async (facilityId: string) => {
+    const response: any = await apiClient.get(`/public/facilities/${facilityId}`);
+    return response.data;
+  },
 };
 
 export const sessionApi = {

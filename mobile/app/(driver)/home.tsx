@@ -61,7 +61,6 @@ interface ParkingLot {
   address: string;
   latitude: number;
   longitude: number;
-  totalSlots: number;
   availableSlots: number;
   openTime: string;
   closeTime: string;
@@ -88,18 +87,17 @@ const getVehicleIcon = (code?: string): keyof typeof Ionicons.glyphMap => {
 // ═══════════════════════════════════════════════════════
 //  SLOT AVAILABILITY BADGE
 // ═══════════════════════════════════════════════════════
-function SlotBadge({ available, total }: { available: number; total: number }) {
-  const pct = total > 0 ? available / total : 0;
+function SlotBadge({ available }: { available: number }) {
   const color =
     available === 0
       ? Colors.danger
-      : pct < 0.15
+      : available <= 10
         ? Colors.warning
         : Colors.success;
   const bgColor =
     available === 0
       ? Colors.dangerLight
-      : pct < 0.15
+      : available <= 10
         ? Colors.warningLight
         : Colors.successLight;
   const label = available === 0 ? "Hết chỗ" : `${available} chỗ trống`;
@@ -124,11 +122,10 @@ function SearchSuggestionItem({
   onPress: () => void;
   distanceText?: string;
 }) {
-  const pct = lot.totalSlots > 0 ? lot.availableSlots / lot.totalSlots : 0;
   const slotColor =
     lot.availableSlots === 0
       ? Colors.danger
-      : pct < 0.15
+      : lot.availableSlots <= 10
         ? Colors.warning
         : Colors.success;
 
@@ -267,7 +264,6 @@ export default function HomeScreen() {
 
           // Fetch available slots count
           let availableSlots = 0;
-          let totalSlots = 0;
           let slotsByType: AvailableSlot[] = [];
           try {
             const slotsData = await api.getAvailableSlots(f._id);
@@ -276,7 +272,6 @@ export default function HomeScreen() {
               (sum: number, s: any) => sum + s.availableCount,
               0,
             );
-            totalSlots = availableSlots + Math.floor(Math.random() * 50 + 20);
           } catch {}
 
           const lot: ParkingLot = {
@@ -285,7 +280,6 @@ export default function HomeScreen() {
             address: f.address,
             latitude: lat,
             longitude: lng,
-            totalSlots: totalSlots || 100,
             availableSlots,
             openTime: f.openTime || "06:00",
             closeTime: f.closeTime || "22:00",
@@ -638,7 +632,7 @@ export default function HomeScreen() {
         style={styles.map}
         provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
         initialRegion={INITIAL_REGION}
-        showsUserLocation
+        showsUserLocation={false}
         showsMyLocationButton={false}
         showsCompass={false}
         onPress={onMapPress}
@@ -696,6 +690,21 @@ export default function HomeScreen() {
             </Marker>
           );
         })}
+
+        {/* ── USER LOCATION BLUE DOT ── */}
+        {userLocation && (
+          <Marker
+            coordinate={userLocation}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+          >
+            <View style={styles.userLocationOuter}>
+              <View style={styles.userLocationInner}>
+                <View style={styles.userLocationDot} />
+              </View>
+            </View>
+          </Marker>
+        )}
       </MapView>
 
       {/* ── LOADING OVERLAY ── */}
@@ -1045,7 +1054,6 @@ export default function HomeScreen() {
                     </View>
                     <SlotBadge
                       available={selectedLot.availableSlots}
-                      total={selectedLot.totalSlots}
                     />
                   </View>
 
@@ -1870,5 +1878,33 @@ const styles = StyleSheet.create({
   },
   bookBtnTextDisabled: {
     color: UI.textMuted,
+  },
+  // ── User Location Blue Dot ──
+  userLocationOuter: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0, 122, 255, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userLocationInner: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  userLocationDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#007AFF",
   },
 });

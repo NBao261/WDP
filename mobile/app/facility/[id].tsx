@@ -34,8 +34,7 @@ export default function FacilityDetailScreen() {
 
   const loadData = async () => {
     try {
-      const facilitiesList = await api.getPublicFacilities(1, 100);
-      const found = facilitiesList.find((f: Facility) => f._id === id);
+      const found = await api.getPublicFacilityById(id);
       if (found) setFacility(found);
       const [pricingData, slotsData] = await Promise.all([
         api.getPublicPricing(id),

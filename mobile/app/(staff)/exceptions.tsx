@@ -13,40 +13,38 @@ import { exceptionApi } from "../../src/services/api";
 import { useAuthStore } from "../../src/store/useAuthStore";
 
 // Map exception types to labels and colors
+// Keys must match backend ExceptionType enum values (lowercase)
 const EXCEPTION_CONFIG: Record<
   string,
   { label: string; color: string; bg: string }
 > = {
-  LOST_CARD: { label: "Mất vé", color: "#ff9800", bg: "#fff3e0" },
-  WRONG_PLATE: { label: "Sai biển số", color: "#f44336", bg: "#ffebee" },
-  SYSTEM_ERROR: { label: "Lỗi hệ thống", color: "#9c27b0", bg: "#f3e5f5" },
-  OTHER: { label: "Khác", color: "#607d8b", bg: "#eceff1" },
+  lost_card:    { label: "Mất vé",          color: "#ff9800", bg: "#fff3e0" },
+  wrong_plate:  { label: "Sai biển số",     color: "#f44336", bg: "#ffebee" },
+  wrong_fee:    { label: "Sai phí gửi xe",  color: "#e91e63", bg: "#fce4ec" },
+  wrong_zone:   { label: "Sai khu vực đỗ",  color: "#9c27b0", bg: "#f3e5f5" },
+  overtime:     { label: "Quá giờ",         color: "#ff5722", bg: "#fbe9e7" },
+  unpaid:       { label: "Chưa thanh toán", color: "#795548", bg: "#efebe9" },
+  other:        { label: "Khác",            color: "#607d8b", bg: "#eceff1" },
 };
 
+// Keys must match backend ExceptionStatus enum values (lowercase)
 const STATUS_CONFIG: Record<
   string,
   { label: string; color: string; icon: any; bg: string; dotColor: string }
 > = {
-  PENDING: {
+  new: {
     label: "Đang chờ",
     color: Colors.brandDark,
     icon: "time-outline",
     bg: Colors.surfaceElevated,
     dotColor: "#6B7260",
   },
-  RESOLVED: {
+  resolved: {
     label: "Đã giải quyết",
     color: "#2E7D32",
     icon: "checkmark-circle-outline",
     bg: "#E8F5E9",
     dotColor: "#2E7D32",
-  },
-  REJECTED: {
-    label: "Từ chối",
-    color: "#9E9E9E",
-    icon: "close-circle-outline",
-    bg: Colors.surfaceElevated,
-    dotColor: "#9E9E9E",
   },
 };
 
@@ -157,8 +155,8 @@ export default function ExceptionsScreen() {
   };
 
   const renderItem = useCallback(({ item }: { item: any }) => {
-    const typeConfig = EXCEPTION_CONFIG[item.type] || EXCEPTION_CONFIG.OTHER;
-    const statusConfig = STATUS_CONFIG[item.status.toUpperCase()] || STATUS_CONFIG.PENDING;
+    const typeConfig = EXCEPTION_CONFIG[item.type] || EXCEPTION_CONFIG.other;
+    const statusConfig = STATUS_CONFIG[item.status] || STATUS_CONFIG.new;
     const createdDate = new Date(item.createdAt);
     const time = createdDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     const date = createdDate.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });

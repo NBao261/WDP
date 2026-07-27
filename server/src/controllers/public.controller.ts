@@ -56,4 +56,14 @@ export class PublicController {
       next(error);
     }
   }
+
+  static async getPublicFacilityById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const facilityId = req.params.facilityId as string;
+      const facility = await PublicService.getPublicFacilityById(facilityId);
+      res.status(200).json({ success: true, data: facility });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

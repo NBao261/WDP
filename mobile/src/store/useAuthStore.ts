@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { apiClient, saveTokens, clearTokens, getAccessToken } from '../services/api';
+import * as SecureStore from 'expo-secure-store';
+
+const FACILITY_KEY = 'selectedFacilityId';
 
 // ─── Types ────────────────────────────────────────────
 export type UserRole = 'admin' | 'manager' | 'staff' | 'driver';
@@ -36,7 +39,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   selectedFacilityId: null,
 
-  setSelectedFacilityId: (id) => set({ selectedFacilityId: id }),
+  setSelectedFacilityId: (id) => {
+    set({ selectedFacilityId: id });
+    // Persist to SecureStore so staff don't need to re-select after app restart
+    if (id) {
+      SecureStore.setItemAsync(FACILITY_KEY, id).catch(() => {});
+    } else {
+      SecureStore.deleteItemAsync(FACILITY_KEY).catch(() => {});
+    }
+  },
 
   login: async (email, password) => {
     const response: any = await apiClient.post('/auth/login', { email, password });
@@ -61,7 +72,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await clearTokens();
-    set({ user: null, isAuthenticated: false });
+    await SecureStore.deleteItemAsync(FACILITY_KEY).catch(() => {});
+    set({ user: null, isAuthenticated: false, selectedFacilityId: null });
   },
 
   fetchProfile: async () => {
@@ -82,7 +94,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       // Token exists — fetch profile to validate and get user data
       await useAuthStore.getState().fetchProfile();
-      set({ isAuthenticated: true, isLoading: false });
+
+      // Verify user was actually loaded (fetchProfile might silently fail)
+      const user = useAuthStore.getState().user;
+      if (user) {
+        // Restore persisted facility selection for staff
+        const savedFacilityId = await SecureStore.getItemAsync(FACILITY_KEY);
+        set({
+          isAuthenticated: true,
+          isLoading: false,
+          selectedFacilityId: savedFacilityId || null,
+        });
+      } else {
+        // Profile fetch failed — token is invalid, clear everything
+        await clearTokens();
+        set({ isAuthenticated: false, isLoading: false });
+      }
     } catch {
       set({ isLoading: false, isAuthenticated: false });
     }

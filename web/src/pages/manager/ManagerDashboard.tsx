@@ -378,6 +378,7 @@ export default function ManagerDashboard() {
               trafficData={trafficData}
               peakHoursData={peakHoursData}
               loading={loading}
+              timeFilter={timeFilter}
             />
           </div>
           <div className="lg:col-span-5">

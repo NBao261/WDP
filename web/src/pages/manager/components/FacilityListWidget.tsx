@@ -63,7 +63,7 @@ export function FacilityListWidget({ managerFacilities, staffList, facilityReven
       <div className="flex-1 overflow-auto px-3 min-h-0">
         {managerFacilities.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-2">
-            <Building2 className="w-6 h-6 text-[#86cd3d]" />
+            <Building2 className="w-6 h-6 text-[#9FE870]" />
             <p className="text-[13px] text-gray-400">Chưa có tòa nhà nào</p>
           </div>
         ) : (
@@ -101,9 +101,9 @@ export function FacilityListWidget({ managerFacilities, staffList, facilityReven
                     <div className="flex items-center gap-2">
                       <div
                         className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: 'rgba(134,205,61,0.15)' }}
+                        style={{ background: 'rgba(159,232,112,0.15)' }}
                       >
-                        <Building2 size={13} style={{ color: '#0a2012' }} />
+                        <Building2 size={13} style={{ color: '#9FE870' }} />
                       </div>
                       <div className="min-w-0">
                         <div className="font-semibold text-gray-800 truncate max-w-[140px]">
@@ -123,10 +123,11 @@ export function FacilityListWidget({ managerFacilities, staffList, facilityReven
                   </TableCell>
                   <TableCell className="text-[12px] py-2.5 px-3 text-center">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${facility.status === 'active'
-                          ? 'bg-[#86cd3d]/15 text-[#3d6b11]'
-                          : 'bg-gray-100 text-gray-400'
-                        }`}
+                      className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider`}
+                      style={facility.status === 'active'
+                        ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E' }
+                        : { background: '#f0f1f0', color: '#6b6e6b' }
+                      }
                     >
                       {facility.status === 'active' ? 'Hoạt động' : 'Ngừng'}
                     </span>

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -53,34 +54,114 @@ export function TrafficChartWidget({
   trafficData,
   peakHoursData,
   loading,
+  timeFilter,
 }: {
   trafficData: TrafficReportData | null;
   peakHoursData: PeakHoursReportData | null;
   loading: boolean;
+  timeFilter: string;
 }) {
-  let chartTraffic: any[] = [];
+  const chartTraffic = useMemo(() => {
+    // 1. Chuyển đổi dữ liệu sang Map để tra cứu O(1)
+    const trafficMap = new Map<string, { checkIn: number; checkOut: number }>();
+    if (trafficData?.data) {
+      for (const item of trafficData.data) {
+        trafficMap.set(item.label, { checkIn: item.checkIn, checkOut: item.checkOut });
+      }
+    }
 
-  if (trafficData?.data.length === 1 && peakHoursData?.hourlyDistribution) {
-    chartTraffic = peakHoursData.hourlyDistribution.map((item) => ({
-      name: `${String(item.hour).padStart(2, '0')}:00`,
-      'Xe vào': item.checkIn,
-      'Xe ra': item.checkOut,
-    }));
-  } else {
-    chartTraffic =
-      trafficData?.data.map((item) => ({
-        name: item.label,
-        'Xe vào': item.checkIn,
-        'Xe ra': item.checkOut,
-      })) || [];
-    if (chartTraffic.length === 1) {
-      chartTraffic = [
+    const getTraffic = (label: string) => trafficMap.get(label) || { checkIn: 0, checkOut: 0 };
+    const pad = (num: number) => String(num).padStart(2, '0');
+
+    let result: any[] = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthStr = pad(now.getMonth() + 1);
+
+    switch (timeFilter) {
+      case 'today':
+        if (peakHoursData?.hourlyDistribution) {
+          result = peakHoursData.hourlyDistribution.map((item) => ({
+            name: `${pad(item.hour)}:00`,
+            'Xe vào': item.checkIn,
+            'Xe ra': item.checkOut,
+          }));
+        } else {
+          result = Array.from({ length: 24 }, (_, i) => ({
+            name: `${pad(i)}:00`,
+            'Xe vào': 0,
+            'Xe ra': 0,
+          }));
+        }
+        break;
+
+      case 'week':
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const dayStr = pad(d.getDate());
+          const monthStr = pad(d.getMonth() + 1);
+          
+          const labelFormat = `${d.getFullYear()}-${monthStr}-${dayStr}`;
+          const traffic = getTraffic(labelFormat);
+          
+          result.push({
+            name: `${dayStr}/${monthStr}`,
+            'Xe vào': traffic.checkIn,
+            'Xe ra': traffic.checkOut,
+          });
+        }
+        break;
+
+      case 'month': {
+        const daysInMonth = now.getDate();
+        for (let i = 1; i <= daysInMonth; i++) {
+          const dayStr = pad(i);
+          const labelFormat = `${currentYear}-${currentMonthStr}-${dayStr}`;
+          const traffic = getTraffic(labelFormat);
+          
+          result.push({
+            name: `${dayStr}/${currentMonthStr}`,
+            'Xe vào': traffic.checkIn,
+            'Xe ra': traffic.checkOut,
+          });
+        }
+        break;
+      }
+
+      case 'year':
+        for (let i = 1; i <= 12; i++) {
+          const monthStr = pad(i);
+          const labelFormat = `${currentYear}-${monthStr}`;
+          const traffic = getTraffic(labelFormat);
+          
+          result.push({
+            name: `Th ${i}`,
+            'Xe vào': traffic.checkIn,
+            'Xe ra': traffic.checkOut,
+          });
+        }
+        break;
+
+      default:
+        result = trafficData?.data.map((item) => ({
+          name: item.label,
+          'Xe vào': item.checkIn,
+          'Xe ra': item.checkOut,
+        })) || [];
+    }
+
+    // Đệm thêm khoảng trống nếu dữ liệu chỉ có 1 điểm để biểu đồ (AreaChart) hiển thị mượt mà không bị lỗi layout
+    if (result.length === 1 && timeFilter !== 'today') {
+      return [
         { name: '', 'Xe vào': undefined, 'Xe ra': undefined },
-        chartTraffic[0],
+        result[0],
         { name: ' ', 'Xe vào': undefined, 'Xe ra': undefined },
       ] as any[];
     }
-  }
+
+    return result;
+  }, [timeFilter, trafficData, peakHoursData]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm h-[420px] flex flex-col overflow-hidden relative">

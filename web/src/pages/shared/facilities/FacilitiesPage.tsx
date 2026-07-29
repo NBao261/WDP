@@ -94,9 +94,7 @@ export default function FacilitiesPage() {
             <PageLoader />
           ) : data.paginatedFacilities.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] py-20 flex flex-col items-center gap-4">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white border-[1.5px] border-[#f0f0f0]"
-              >
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white border-[1.5px] border-[#f0f0f0]">
                 <Building2 size={28} className="text-[#9FE870]" />
               </div>
               <div className="text-center">
@@ -212,12 +210,13 @@ export default function FacilitiesPage() {
                       key={i}
                       onClick={() => typeof p === 'number' && data.setCurrentPage(p)}
                       disabled={p === '...'}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${p === '...'
-                        ? 'text-gray-400 bg-transparent cursor-default'
-                        : data.currentPage === p
-                          ? 'bg-[#062F28] text-white font-bold shadow-sm'
-                          : 'bg-white text-gray-600 hover:bg-gray-50'
-                        }`}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        p === '...'
+                          ? 'text-gray-400 bg-transparent cursor-default'
+                          : data.currentPage === p
+                            ? 'bg-[#062F28] text-white font-bold shadow-sm'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
                     >
                       {p}
                     </button>

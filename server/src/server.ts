@@ -5,6 +5,7 @@ import { logger } from './config/logger';
 import { createSocketServer } from './config/socket';
 import { getRedis } from './config/redis';
 import { initUploadQueue } from './queues/uploadQueue';
+import { initReservationQueue } from './queues/reservationQueue';
 import { ReservationService } from './services/reservation.service';
 import http from 'http';
 
@@ -27,6 +28,7 @@ const startServer = async (): Promise<void> => {
 
     // Initialize Background Queues
     initUploadQueue();
+    initReservationQueue();
 
     // Start listening
     server.listen(env.PORT, '0.0.0.0', () => {

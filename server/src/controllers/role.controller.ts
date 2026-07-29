@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { RoleService } from '../services/role.service';
 
 export class RoleController {
-  // FR-19.1: Xem danh sách vai trò
   static async getAllRoles(req: Request, res: Response, next: NextFunction) {
     try {
       const roles = await RoleService.getAllRoles();
@@ -12,7 +11,6 @@ export class RoleController {
     }
   }
 
-  // FR-19.1: Xem chi tiết vai trò
   static async getRoleById(req: Request, res: Response, next: NextFunction) {
     try {
       const role = await RoleService.getRoleById(req.params.id as string);
@@ -22,7 +20,6 @@ export class RoleController {
     }
   }
 
-  // FR-19.1: Tạo vai trò
   static async createRole(req: Request, res: Response, next: NextFunction) {
     try {
       const role = await RoleService.createRole(req.body);
@@ -32,7 +29,6 @@ export class RoleController {
     }
   }
 
-  // FR-19.2: Cập nhật quyền cho vai trò
   static async updatePermissions(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
@@ -44,7 +40,6 @@ export class RoleController {
     }
   }
 
-  // FR-19.1: Xóa vai trò (guard: default + assigned users)
   static async deleteRole(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await RoleService.deleteRole(req.params.id as string);
@@ -54,7 +49,6 @@ export class RoleController {
     }
   }
 
-  // FR-19.3: Gán vai trò cho người dùng + custom permissions (PQ-05)
   static async assignRole(req: Request, res: Response, next: NextFunction) {
     try {
       const { userId, roleCode, customPermissions } = req.body;
@@ -65,7 +59,6 @@ export class RoleController {
     }
   }
 
-  // Xem merged permissions của user
   static async getUserPermissions(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await RoleService.getUserPermissions(req.params.userId as string);
@@ -75,7 +68,6 @@ export class RoleController {
     }
   }
 
-  // Reset permissions về default
   static async resetPermissions(req: Request, res: Response, next: NextFunction) {
     try {
       const role = await RoleService.resetPermissionsToDefault(req.params.id as string);

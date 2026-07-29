@@ -2,9 +2,8 @@ import { z } from 'zod';
 import { FeeType, FeeMethod } from '../models/pricingPlan.model';
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-// Schema con cho mảng rates
 const pricingRateSchema = z.object({
   label: z.string({ required_error: 'Rate label is required' }).min(1, 'Rate label is required').max(100, 'Label too long').trim(),
   amount: z
@@ -15,7 +14,6 @@ const pricingRateSchema = z.object({
   endTime: z.string().regex(timeRegex, 'endTime must be in HH:MM format (00:00-23:59)').optional(),
 });
 
-// ── Helper: Validate time_window khung giờ ──
 type RateWithTime = { startTime?: string; endTime?: string };
 
 function getTimeWindowIntervals(rates: RateWithTime[]): Array<[number, number]> {
@@ -29,7 +27,6 @@ function getTimeWindowIntervals(rates: RateWithTime[]): Array<[number, number]> 
     if (start < end) {
       intervals.push([start, end]);
     } else if (start > end) {
-      // Khung qua đêm (VD: 22:00 - 06:00) → tách thành 2 khoảng
       intervals.push([start, 1440]);
       intervals.push([0, end]);
     }
@@ -45,7 +42,6 @@ function hasTimeWindowOverlap(rates: RateWithTime[]): boolean {
   return false;
 }
 
-// FR-5.1: Tạo bảng giá
 export const createPricingPlanSchema = z.object({
   body: z.object({
     name: z.string({ required_error: 'Name is required' }).min(1, 'Name is required').max(200, 'Name too long').trim(),
@@ -68,7 +64,6 @@ export const createPricingPlanSchema = z.object({
     maxDailyFee: z.number().min(0, 'Max daily fee must be non-negative').optional(),
     firstBlockHours: z.number().min(1, 'First block hours must be at least 1').optional(),
   }).refine((data) => {
-    // Cross-field validation: time_window rates phải có startTime + endTime
     if (data.feeMethod === FeeMethod.TIME_WINDOW) {
       return data.rates.every(r => r.startTime && r.endTime);
     }
@@ -77,7 +72,6 @@ export const createPricingPlanSchema = z.object({
     message: 'Khi feeMethod là time_window, mỗi rate phải có startTime và endTime (HH:MM)',
     path: ['rates'],
   }).refine((data) => {
-    // flat_rate chỉ được có 1 rate
     if (data.feeMethod === FeeMethod.FLAT_RATE && data.rates.length > 1) {
       return false;
     }
@@ -86,7 +80,6 @@ export const createPricingPlanSchema = z.object({
     message: 'Khi feeMethod là flat_rate, rates chỉ được có 1 phần tử',
     path: ['rates'],
   }).refine((data) => {
-    // per_turn buộc flat_rate
     if (data.feeType === FeeType.PER_TURN && data.feeMethod && data.feeMethod !== FeeMethod.FLAT_RATE) {
       return false;
     }
@@ -95,7 +88,6 @@ export const createPricingPlanSchema = z.object({
     message: 'feeType per_turn chỉ hỗ trợ feeMethod flat_rate',
     path: ['feeMethod'],
   }).refine((data) => {
-    // time_window: các khung giờ không được chồng chéo
     if (data.feeMethod === FeeMethod.TIME_WINDOW) {
       return !hasTimeWindowOverlap(data.rates);
     }
@@ -106,7 +98,6 @@ export const createPricingPlanSchema = z.object({
   }),
 });
 
-// FR-5.3: Sửa bảng giá
 export const updatePricingPlanSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(200, 'Name too long').trim().optional(),
@@ -121,7 +112,6 @@ export const updatePricingPlanSchema = z.object({
     firstBlockHours: z.number().min(1).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }).refine((data) => {
-    // Cross-field validation khi cập nhật rates với feeMethod time_window
     if (data.feeMethod === FeeMethod.TIME_WINDOW && data.rates) {
       return data.rates.every(r => r.startTime && r.endTime);
     }
@@ -130,7 +120,6 @@ export const updatePricingPlanSchema = z.object({
     message: 'Khi feeMethod là time_window, mỗi rate phải có startTime và endTime (HH:MM)',
     path: ['rates'],
   }).refine((data) => {
-    // time_window: các khung giờ không được chồng chéo
     if (data.feeMethod === FeeMethod.TIME_WINDOW && data.rates) {
       return !hasTimeWindowOverlap(data.rates);
     }

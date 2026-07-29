@@ -2,11 +2,8 @@ import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit-table';
 import path from 'path';
 
-// ── Font paths for Vietnamese diacritics support ────────────────────────
 const FONT_REGULAR = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Regular.ttf');
 const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'Roboto-Bold.ttf');
-
-// ── Interfaces for type-safety ──────────────────────────────────────────
 
 interface RevenueTimePeriod {
   label: string;
@@ -69,20 +66,16 @@ interface ComprehensiveReportData {
 
 type ReportData = RevenueReportData | TrafficReportData | OccupancyReportData | PeakHoursReportData;
 
-// ── Shared table options to force Vietnamese-compatible font ────────────
 const TABLE_OPTIONS = {
   prepareHeader: function(this: any) { this.font('Roboto-Bold').fontSize(8); },
   prepareRow: function(this: any) { this.font('Roboto').fontSize(8); },
 };
 
-/** Helper to create a TitleObject with Vietnamese-compatible font */
 const makeTitle = (label: string) => ({
   label,
   fontFamily: 'Roboto-Bold',
   fontSize: 12,
 });
-
-// ── Export Service ──────────────────────────────────────────────────────
 
 export class ExportService {
   static async generateReport(reportType: string, format: string, data: any): Promise<Buffer> {
@@ -94,9 +87,6 @@ export class ExportService {
     throw new Error('Unsupported format');
   }
 
-  /**
-   * Xuất báo cáo tổng hợp gộp 4 loại vào 1 file (Excel: 5 sheets, PDF: 5 sections)
-   */
   static async generateComprehensiveReport(format: string, data: ComprehensiveReportData): Promise<Buffer> {
     if (format === 'excel') {
       return this.generateComprehensiveExcel(data);
@@ -106,13 +96,10 @@ export class ExportService {
     throw new Error('Unsupported format');
   }
 
-  // ── Comprehensive Excel (5 sheets) ──
-
   private static async generateComprehensiveExcel(data: ComprehensiveReportData): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Smart Parking System';
 
-    // Helper: style header row
     const styleHeader = (sheet: ExcelJS.Worksheet) => {
       const headerRow = sheet.getRow(1);
       headerRow.eachCell((cell) => {
@@ -123,7 +110,6 @@ export class ExportService {
       headerRow.height = 28;
     };
 
-    // Sheet 1: Doanh Thu theo thời gian
     const revenueSheet = workbook.addWorksheet('Doanh Thu');
     revenueSheet.columns = [
       { header: 'Thời gian', key: 'label', width: 20 },
@@ -134,7 +120,6 @@ export class ExportService {
     data.revenue?.byTimePeriod?.forEach((row: any) => revenueSheet.addRow(row));
     styleHeader(revenueSheet);
 
-    // Sheet 2: Doanh Thu theo hình thức thanh toán
     const methodSheet = workbook.addWorksheet('Theo Hình Thức TT');
     methodSheet.columns = [
       { header: 'Phương thức', key: 'method', width: 20 },
@@ -144,7 +129,6 @@ export class ExportService {
     data.revenue?.byMethod?.forEach((row: any) => methodSheet.addRow(row));
     styleHeader(methodSheet);
 
-    // Sheet 3: Lượt Xe Vào Ra
     const trafficSheet = workbook.addWorksheet('Lượt Xe Vào Ra');
     trafficSheet.columns = [
       { header: 'Thời gian', key: 'label', width: 20 },
@@ -154,7 +138,6 @@ export class ExportService {
     data.traffic?.data?.forEach((row: any) => trafficSheet.addRow(row));
     styleHeader(trafficSheet);
 
-    // Sheet 4: Tỷ Lệ Lấp Đầy
     const occupancySheet = workbook.addWorksheet('Tỷ Lệ Lấp Đầy');
     occupancySheet.columns = [
       { header: 'Bãi xe', key: 'facilityName', width: 25 },
@@ -168,7 +151,6 @@ export class ExportService {
     data.occupancy?.floors?.forEach((row: any) => occupancySheet.addRow(row));
     styleHeader(occupancySheet);
 
-    // Sheet 5: Khung Giờ Cao Điểm
     const peakSheet = workbook.addWorksheet('Khung Giờ Cao Điểm');
     peakSheet.columns = [
       { header: 'Khung giờ', key: 'label', width: 22 },
@@ -183,8 +165,6 @@ export class ExportService {
     return Buffer.from(buffer as ArrayBuffer);
   }
 
-  // ── Comprehensive PDF (5 sections) ──
-
   private static async generateComprehensivePdf(data: ComprehensiveReportData): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 30, size: 'A4' });
@@ -193,7 +173,6 @@ export class ExportService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Register Vietnamese-compatible fonts
       doc.registerFont('Roboto', FONT_REGULAR);
       doc.registerFont('Roboto-Bold', FONT_BOLD);
 
@@ -201,7 +180,6 @@ export class ExportService {
       doc.font('Roboto').fontSize(10).text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, { align: 'center' });
       doc.moveDown(1.5);
 
-      // Section 1: Doanh Thu
       if (data.revenue?.byTimePeriod && data.revenue.byTimePeriod.length > 0) {
         const table1 = {
           title: makeTitle("1. DOANH THU THEO THỜI GIAN"),
@@ -212,7 +190,6 @@ export class ExportService {
         doc.moveDown();
       }
 
-      // Section 2: Theo Hình Thức TT
       if (data.revenue?.byMethod && data.revenue.byMethod.length > 0) {
         const table2 = {
           title: makeTitle("2. DOANH THU THEO HÌNH THỨC THANH TOÁN"),
@@ -223,7 +200,6 @@ export class ExportService {
         doc.moveDown();
       }
 
-      // Section 3: Lượt Xe
       if (data.traffic?.data && data.traffic.data.length > 0) {
         const table3 = {
           title: makeTitle("3. LƯỢT XE VÀO RA"),
@@ -234,7 +210,6 @@ export class ExportService {
         doc.moveDown();
       }
 
-      // Section 4: Tỷ Lệ Lấp Đầy
       if (data.occupancy?.floors && data.occupancy.floors.length > 0) {
         const table4 = {
           title: makeTitle("4. TỶ LỆ LẤP ĐẦY"),
@@ -245,7 +220,6 @@ export class ExportService {
         doc.moveDown();
       }
 
-      // Section 5: Khung Giờ Cao Điểm
       if (data.peakHours?.hourlyDistribution && data.peakHours.hourlyDistribution.length > 0) {
         const table5 = {
           title: makeTitle("5. KHUNG GIỜ CAO ĐIỂM"),
@@ -329,7 +303,6 @@ export class ExportService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Register Vietnamese-compatible fonts
       doc.registerFont('Roboto', FONT_REGULAR);
       doc.registerFont('Roboto-Bold', FONT_BOLD);
 

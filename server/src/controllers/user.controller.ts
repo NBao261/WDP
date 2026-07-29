@@ -4,7 +4,6 @@ import { AuditService } from '../services/audit.service';
 import { UserRole } from '../models/user.model';
 
 export class UserController {
-  /** GET /users/me — Profile của user hiện tại (mọi role, Staff dùng lấy assigned facilities) */
   static async getMe(req: Request, res: Response, next: NextFunction) {
     try {
       const user = await UserService.getMe(req.user!.userId);
@@ -49,7 +48,6 @@ export class UserController {
       const skip = (Number(page) - 1) * Number(limit);
       const filters: any = {};
       
-      // Nếu là Manager gọi API này, CHỈ cho phép lấy danh sách Staff
       if (req.user?.role === UserRole.MANAGER) {
         filters.role = UserRole.STAFF;
       } else if (role) {
@@ -156,7 +154,6 @@ export class UserController {
     }
   }
 
-  /** PATCH /users/:id/assign-facilities — Manager phân công tòa nhà cho Staff */
   static async assignFacilities(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
@@ -170,7 +167,6 @@ export class UserController {
     }
   }
 
-  /** PUT /users/device-token — Cập nhật device token cho user hiện tại */
   static async updateDeviceToken(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;

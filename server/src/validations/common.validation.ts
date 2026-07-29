@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// ObjectId validation dùng chung cho params :id
 export const objectIdParamSchema = z.object({
   params: z.object({
     id: z
@@ -9,7 +8,6 @@ export const objectIdParamSchema = z.object({
   }),
 });
 
-// ObjectId validation cho params :facilityId
 export const facilityIdParamSchema = z.object({
   params: z.object({
     facilityId: z
@@ -18,7 +16,6 @@ export const facilityIdParamSchema = z.object({
   }),
 });
 
-// ObjectId validation cho params :floorId
 export const floorIdParamSchema = z.object({
   params: z.object({
     floorId: z
@@ -27,7 +24,6 @@ export const floorIdParamSchema = z.object({
   }),
 });
 
-// Pagination query validation dùng chung
 export const paginationQuerySchema = z.object({
   query: z.object({
     page: z

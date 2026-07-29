@@ -33,10 +33,6 @@ interface ManagerReviewDto {
 }
 
 export class ExceptionService {
-  /**
-   * Tạo ngoại lệ mới (Staff)
-   * → Khóa session nếu cần (LOST_CARD, WRONG_PLATE, WRONG_ZONE)
-   */
   static async createException(data: CreateExceptionDto): Promise<IException> {
     const session = await ParkingSession.findById(data.sessionId);
     if (!session) {
@@ -46,7 +42,6 @@ export class ExceptionService {
       throw new AppError('Không thể tạo ngoại lệ cho lượt gửi đã kết thúc', 400);
     }
 
-    // Kiểm tra staff có được phân công tại bãi xe này không (chống IDOR)
     const staffUser = await User.findById(data.staffId).select('assignedFacilities');
     if (!staffUser) throw new AppError('Staff không tồn tại', 404);
     const isAssigned = staffUser.assignedFacilities.some(
@@ -88,10 +83,8 @@ export class ExceptionService {
         facilityId: session.facilityId,
       });
     } catch (e) {
-      // Bỏ qua lỗi socket
     }
 
-    // Upload ảnh exception lên Cloudinary (background)
     if (
       (exception.checkInImage && exception.checkInImage.startsWith('/uploads/')) ||
       (exception.checkOutImage && exception.checkOutImage.startsWith('/uploads/'))
@@ -102,9 +95,6 @@ export class ExceptionService {
     return exception;
   }
 
-  /**
-   * Lấy chi tiết một exception theo ID (bao gồm images)
-   */
   static async getExceptionById(exceptionId: string): Promise<IException> {
     const exception = await Exception.findById(exceptionId)
       .populate('staffId', 'name email')
@@ -132,9 +122,6 @@ export class ExceptionService {
     return exception as unknown as IException;
   }
 
-  /**
-   * Lấy danh sách ngoại lệ
-   */
   static async getExceptions(query: any, user: any): Promise<{ data: IException[], total: number, page: number, totalPages: number }> {
     const { page = 1, limit = 10, status, type, sessionId, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const filter: any = {};
@@ -142,7 +129,6 @@ export class ExceptionService {
     if (status) filter.status = status;
     if (type) filter.type = type;
 
-    // Filter by assigned facilities
     if (user.role !== 'admin') {
       const { User } = await import('../models/user.model');
       const dbUser = await User.findById(user.userId).select('assignedFacilities');
@@ -166,7 +152,6 @@ export class ExceptionService {
           filter.sessionId = { $in: sessionIds };
         }
       } else {
-        // No facilities assigned => no data
         return { data: [], total: 0, page: Number(page), totalPages: 0 };
       }
     } else {
@@ -223,10 +208,6 @@ export class ExceptionService {
     };
   }
 
-  /**
-   * Staff xử lý ngoại lệ
-   * → Thực hiện hành động tương ứng (đổi biển số, chuyển slot, mở khoá session)
-   */
   static async resolveException(exceptionId: string, data: ResolveExceptionDto): Promise<IException> {
     const exception = await Exception.findById(exceptionId);
     if (!exception) {
@@ -241,11 +222,9 @@ export class ExceptionService {
     exception.staffNote = data.staffNote || '';
     exception.status = ExceptionStatus.RESOLVED;
 
-    // Thực hiện các hành động tương ứng với loại ngoại lệ
     const session = await ParkingSession.findById(exception.sessionId);
     if (!session) throw new AppError('Lượt gửi xe liên quan không tồn tại', 404);
 
-    // Kiểm tra staff có được phân công tại bãi xe này không (chống IDOR)
     const staffUser = await User.findById(data.staffId).select('assignedFacilities');
     if (!staffUser) throw new AppError('Staff không tồn tại', 404);
     const isAssigned = staffUser.assignedFacilities.some(
@@ -259,10 +238,8 @@ export class ExceptionService {
       if (!data.newLicensePlate) {
         throw new AppError('Vui lòng cung cấp biển số mới khi xử lý ngoại lệ sai biển số', 400);
       }
-      // Cập nhật lại biển số đúng
       session.licensePlate = data.newLicensePlate.toUpperCase();
 
-      // Chỉ mở khóa session khi không còn ngoại lệ nào khác chưa xử lý
       const unresolvedAfterPlate = await Exception.countDocuments({
         sessionId: session._id,
         _id: { $ne: exception._id },
@@ -278,21 +255,17 @@ export class ExceptionService {
         throw new AppError('Vui lòng chọn slot mới khi xử lý ngoại lệ sai khu vực', 400);
       }
 
-      // Cập nhật lại slot thực tế
       const newSlot = await ParkingSlot.findById(data.newSlotId);
       if (!newSlot) throw new AppError('Slot mới không tồn tại', 404);
 
-      // 1. Chỉ được đổi những slot thực sự còn trống (AVAILABLE) hoặc đang khóa tạm (LOCKED)
       if (newSlot.status !== SlotStatus.AVAILABLE && newSlot.status !== SlotStatus.LOCKED) {
         throw new AppError('Slot mới không còn trống hoặc không khả dụng', 400);
       }
 
-      // 2. Không được đổi sang tòa khác (cùng facilityId)
       if (newSlot.facilityId.toString() !== session.facilityId.toString()) {
         throw new AppError('Slot mới phải thuộc cùng một tòa nhà/bãi xe', 400);
       }
 
-      // 3. Phải cùng loại xe (không cho ô tô đổi sang slot xe máy)
       if (newSlot.vehicleTypeId.toString() !== session.vehicleTypeId.toString()) {
         throw new AppError('Slot mới phải phù hợp với loại xe của lượt gửi', 400);
       }
@@ -301,14 +274,11 @@ export class ExceptionService {
       exception.oldSlot = oldSlotId as mongoose.Types.ObjectId;
       exception.newSlot = newSlot._id as mongoose.Types.ObjectId;
 
-      // Lưu trạng thái gốc của slot mới TRƯỚC khi thay đổi
       const newSlotWasLocked = newSlot.status === SlotStatus.LOCKED;
 
-      // Cập nhật session (giữ nguyên mọi thông tin, chỉ đổi slot + floor + mở khoá)
       session.slotId = newSlot._id as mongoose.Types.ObjectId;
       session.floorId = newSlot.floorId;
 
-      // Chỉ mở khóa session khi không còn ngoại lệ nào khác chưa xử lý
       const unresolvedAfterZone = await Exception.countDocuments({
         sessionId: session._id,
         _id: { $ne: exception._id },
@@ -319,22 +289,18 @@ export class ExceptionService {
       }
       await session.save();
 
-      // Cập nhật slot mới -> Occupied (xoá ghi chú cũ nếu có)
       newSlot.status = SlotStatus.OCCUPIED;
       newSlot.currentSessionId = session._id as mongoose.Types.ObjectId;
       newSlot.maintenanceReason = '';
       await newSlot.save();
 
-      // Xử lý slot cũ dựa trên trạng thái gốc của slot MỚI  
       if (oldSlotId) {
         const oldSlot = await ParkingSlot.findById(oldSlotId);
         if (oldSlot) {
           if (newSlotWasLocked) {
-            // newSlot đang Locked → xe đậu nhầm được hợp lệ hoá tại chỗ → slot cũ trống
             oldSlot.status = SlotStatus.AVAILABLE;
             oldSlot.maintenanceReason = '';
           } else {
-            // newSlot đang Available → dời xe sang chỗ mới → slot cũ có xe lạ chiếm → khoá
             oldSlot.status = SlotStatus.LOCKED;
             oldSlot.maintenanceReason = 'Đang có xe đậu sai chỗ, chờ xác minh';
           }
@@ -344,7 +310,6 @@ export class ExceptionService {
       }
     }
     else if (exception.type === ExceptionType.LOST_CARD) {
-      // Chỉ mở khóa session khi không còn ngoại lệ nào khác chưa xử lý
       const unresolvedAfterCard = await Exception.countDocuments({
         sessionId: session._id,
         _id: { $ne: exception._id },
@@ -358,7 +323,6 @@ export class ExceptionService {
 
     await exception.save();
 
-    // Lấy lại dữ liệu đã populate
     const updatedException = await Exception.findById(exception._id)
       .populate('staffId', 'name email')
       .populate('resolvedByStaffId', 'name email')
@@ -373,16 +337,11 @@ export class ExceptionService {
         facilityId: session.facilityId,
       });
     } catch (e) {
-      // Bỏ qua lỗi socket
     }
 
     return updatedException!;
   }
 
-  /**
-   * Manager review + thêm ghi chú cho ngoại lệ đã xử lý
-   * → Không thay đổi status hay session, chỉ ghi nhận review
-   */
   static async addManagerReview(exceptionId: string, data: ManagerReviewDto): Promise<IException> {
     const exception = await Exception.findById(exceptionId);
     if (!exception) {
@@ -409,9 +368,6 @@ export class ExceptionService {
     return updatedException!;
   }
 
-  /**
-   * Driver tạo báo cáo sự cố (phản hồi)
-   */
   static async createDriverReport(data: {
     sessionId: string;
     type: string;
@@ -424,12 +380,8 @@ export class ExceptionService {
       throw new AppError('Lượt gửi xe không tồn tại', 404);
     }
     
-    // Kiểm tra session có thuộc về driver không (thông qua userId của driver đã tạo xe)
-    // Ở đây tạm dùng thông tin chung, thực tế có thể cần liên kết thêm
-
     let imageUrls: string[] = [];
     if (data.images && data.images.length > 0) {
-      // Import UploadService dynamically or ensure it's imported at the top
       const { UploadService } = await import('./upload.service');
       for (const img of data.images) {
         if (img.startsWith('data:image')) {
@@ -440,7 +392,7 @@ export class ExceptionService {
             console.error('[ExceptionService] Error uploading image to Cloudinary:', error);
           }
         } else {
-          imageUrls.push(img); // Neu da la url roi
+          imageUrls.push(img);
         }
       }
     }
@@ -457,23 +409,17 @@ export class ExceptionService {
 
     await exception.save();
 
-    // Không khóa session tự động khi driver report (để staff review)
-
     try {
       getIO().to(`facility:${session.facilityId}`).emit('exception:created', {
         exception,
         facilityId: session.facilityId,
       });
     } catch (e) {
-      // Bỏ qua lỗi socket
     }
 
     return exception;
   }
 
-  /**
-   * Lấy danh sách báo cáo sự cố của Driver
-   */
   static async getDriverReports(driverId: string, query: any): Promise<{ data: IException[], total: number, page: number, totalPages: number }> {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query;
     const filter: any = { driverId: new mongoose.Types.ObjectId(driverId) };
@@ -510,13 +456,9 @@ export class ExceptionService {
     };
   }
 
-  /**
-   * Tự động phát hiện xe quá hạn (quá 24h) và tạo cảnh báo (Exception OVERTIME)
-   */
   static async detectOverdueSessions(): Promise<number> {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // Tìm các session đang active và gửi quá 24h
     const overdueSessions = await ParkingSession.find({
       status: SessionStatus.ACTIVE,
       checkInTime: { $lt: twentyFourHoursAgo }
@@ -525,7 +467,6 @@ export class ExceptionService {
     let detectedCount = 0;
 
     for (const session of overdueSessions) {
-      // Kiểm tra xem đã có ngoại lệ OVERTIME nào chưa (chưa giải quyết)
       const existingException = await Exception.findOne({
         sessionId: session._id,
         type: ExceptionType.OVERTIME,
@@ -553,7 +494,6 @@ export class ExceptionService {
               facilityId: session.facilityId,
             });
           } catch (e) {
-            // ignore
           }
         }
       }

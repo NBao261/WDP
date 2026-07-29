@@ -3,14 +3,6 @@ import { ChatbotService } from '../services/chatbot.service';
 import { AppError } from '../middlewares/error.middleware';
 
 export class AIController {
-  // ─── Chatbot (FR-6.5 / RQ5) ─────────────────────────────
-
-  /**
-   * POST /api/v1/ai/chat-query
-   * Body: { message: string }
-   * 
-   * Gửi câu hỏi cho AI Chatbot, nhận câu trả lời + dữ liệu
-   */
   static async chatQuery(req: Request, res: Response, next: NextFunction) {
     try {
       const { message, conversationId } = req.body;
@@ -20,7 +12,6 @@ export class AIController {
         throw new AppError('Không xác định được người dùng', 401);
       }
 
-      // message đã được validate bởi Zod middleware (min 1, max 2000, trim)
       const { User } = require('../models/user.model');
       const dbUser = await User.findById(userId).select('assignedFacilities').lean();
       const facilityScope = dbUser?.assignedFacilities?.map(
@@ -41,12 +32,6 @@ export class AIController {
     }
   }
 
-  /**
-   * GET /api/v1/ai/chat-history
-   * Query: page, limit
-   * 
-   * Lấy lịch sử chat của user hiện tại (phân trang)
-   */
   static async getChatHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?.userId;
@@ -64,11 +49,6 @@ export class AIController {
     }
   }
 
-  /**
-   * DELETE /api/v1/ai/chat-history
-   * 
-   * Xóa toàn bộ lịch sử chat của user hiện tại
-   */
   static async clearChatHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?.userId;
@@ -84,11 +64,6 @@ export class AIController {
     }
   }
 
-  /**
-   * GET /api/v1/ai/quick-replies
-   * 
-   * Lấy danh sách gợi ý câu hỏi nhanh
-   */
   static async getQuickReplies(_req: Request, res: Response, next: NextFunction) {
     try {
       const replies = ChatbotService.getQuickReplies();
@@ -102,10 +77,6 @@ export class AIController {
     }
   }
 
-  /**
-   * GET /api/v1/ai/conversations
-   * Lấy danh sách các cuộc hội thoại của user
-   */
   static async getConversations(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?.userId;
@@ -123,10 +94,6 @@ export class AIController {
     }
   }
 
-  /**
-   * GET /api/v1/ai/conversations/:conversationId
-   * Lấy chi tiết tin nhắn trong một cuộc hội thoại
-   */
   static async getConversationMessages(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?.userId;
@@ -143,10 +110,6 @@ export class AIController {
     }
   }
 
-  /**
-   * DELETE /api/v1/ai/conversations/:conversationId
-   * Xóa một cuộc hội thoại
-   */
   static async deleteConversation(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?.userId;
@@ -164,17 +127,11 @@ export class AIController {
     }
   }
 
-  /**
-   * PATCH /api/v1/ai/conversations/:conversationId/title
-   * Đổi tên cuộc hội thoại
-   */
   static async renameConversation(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).user?.userId;
       const conversationId = req.params.conversationId as string;
       const { title } = req.body;
-
-      // title đã được validate bởi Zod middleware (min 1, max 200, trim)
 
       const result = await ChatbotService.renameConversation(userId, conversationId, title.trim());
 

@@ -39,7 +39,6 @@ export class AuthService {
 
     const tokens = this.generateTokens(newUser);
     
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = newUser.toObject();
 
     return { user: userWithoutPassword, tokens };
@@ -64,7 +63,7 @@ export class AuthService {
       user.failedLoginAttempts += 1;
       if (user.failedLoginAttempts >= 5) {
         user.status = UserStatus.LOCKED;
-        user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // lock for 15 mins
+        user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
       }
       await user.save();
       throw new AppError('Invalid credentials', 401);
@@ -77,7 +76,6 @@ export class AuthService {
 
     const tokens = this.generateTokens(user);
 
-    // Populate assignedFacilities để Staff thấy ngay danh sách bãi xe sau login
     const populatedUser = await User.findById(user._id)
       .select('-password')
       .populate('assignedFacilities', 'name address status openTime closeTime');
@@ -111,7 +109,6 @@ export class AuthService {
         }
       }
     } catch (error) {
-      // Ignore errors if token is malformed
     }
   }
 }

@@ -15,7 +15,6 @@ export class UserService {
 
     let password = data.password;
     if (!password) {
-      // Generate a temporary password if not provided
       password = Math.random().toString(36).slice(-8);
     }
 
@@ -29,7 +28,6 @@ export class UserService {
 
     await newUser.save();
 
-    // Two-way sync: thêm user._id vào ParkingFacility.assignedUsers[] cho mỗi facility
     if (data.assignedFacilities && data.assignedFacilities.length > 0) {
       await ParkingFacility.updateMany(
         { _id: { $in: data.assignedFacilities } },
@@ -41,11 +39,10 @@ export class UserService {
   }
 
   static async updateUser(userId: string, data: Partial<IUser>): Promise<IUser | null> {
-    // Prevent updating critical fields directly
     delete data.password;
     delete data.role;
     delete data.status;
-    delete data.assignedFacilities; // Force using assignFacilities endpoint for two-way sync
+    delete data.assignedFacilities;
 
     if (data.email || data.phone) {
       const orConditions: any[] = [];
@@ -86,7 +83,6 @@ export class UserService {
     return user;
   }
 
-  /** GET /users/me — Lấy profile của chính mình (Staff dùng để lấy danh sách facility) */
   static async getMe(userId: string): Promise<IUser | null> {
     const user = await User.findById(userId)
       .select('-password -customPermissions -failedLoginAttempts -lockedUntil')
@@ -98,7 +94,6 @@ export class UserService {
     return user;
   }
 
-  /** PATCH /users/:id/assign-facilities — Manager phân công tòa nhà cho Staff */
   static async assignFacilities(
     targetUserId: string,
     facilityIds: string[],
@@ -109,7 +104,6 @@ export class UserService {
     if (!user) throw new AppError('User not found', 404);
     if (user.isDeleted) throw new AppError('User has been deleted', 400);
 
-    // Guard: chỉ cho phép gán facility cho Manager hoặc Staff
     if (user.role !== 'manager' && user.role !== 'staff') {
       throw new AppError('Can only assign facilities to Manager or Staff users', 400);
     }
@@ -120,11 +114,9 @@ export class UserService {
     const oldIds = user.assignedFacilities.map((fId) => fId.toString());
     const newIds = facilityIds;
 
-    // Xác định facility bị xóa và thêm mới
     const removedIds = oldIds.filter((fId) => !newIds.includes(fId));
     const addedIds = newIds.filter((fId) => !oldIds.includes(fId));
 
-    // Guard: Manager chỉ được assign hoặc gỡ facility mà chính mình đang quản lý
     if (callerRole === 'manager' && callerUserId) {
       const caller = await User.findById(callerUserId);
       if (!caller) throw new AppError('Caller not found', 404);
@@ -148,7 +140,6 @@ export class UserService {
       { new: true, runValidators: true }
     ).populate('assignedFacilities', 'name address status openTime closeTime');
 
-    // Two-way sync: xóa user._id khỏi ParkingFacility.assignedUsers[] cho các facility bị loại bỏ
     if (removedIds.length > 0) {
       await ParkingFacility.updateMany(
         { _id: { $in: removedIds } },
@@ -156,7 +147,6 @@ export class UserService {
       );
     }
 
-    // Two-way sync: thêm user._id vào ParkingFacility.assignedUsers[] cho các facility mới
     if (addedIds.length > 0) {
       await ParkingFacility.updateMany(
         { _id: { $in: addedIds } },
@@ -175,7 +165,6 @@ export class UserService {
   }
 
   static async lockUser(userId: string): Promise<IUser | null> {
-    // Không cho phép khoá nếu đang có đặt chỗ
     const activeReservations = await Reservation.countDocuments({
       userId,
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
@@ -200,7 +189,6 @@ export class UserService {
   }
 
   static async softDeleteUser(userId: string): Promise<IUser | null> {
-    // Không cho phép xoá nếu đang có đặt chỗ
     const activeReservations = await Reservation.countDocuments({
       userId,
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
@@ -214,7 +202,6 @@ export class UserService {
       throw new AppError('User not found', 404);
     }
 
-    // Two-way sync: xóa user._id khỏi ParkingFacility.assignedUsers[] cho tất cả facility liên quan
     if (user.assignedFacilities && user.assignedFacilities.length > 0) {
       await ParkingFacility.updateMany(
         { _id: { $in: user.assignedFacilities } },

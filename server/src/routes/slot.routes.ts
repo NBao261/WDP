@@ -11,20 +11,16 @@ const router = Router();
 
 router.use(verifyToken);
 
-// Xem slot (SRS 3.2: Admin, Manager, Staff xem trạng thái)
 router.get('/stats', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotStats);
 router.get('/floor/:floorId', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(floorIdParamSchema), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotsByFloor);
 router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotById);
 
-// Tạo/Xóa slot (SRS 3.2: chỉ Admin + Manager)
 router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createSlotSchema), checkPermission(PERMISSIONS.SLOT_CREATE), SlotController.createSlot);
 router.post('/bulk', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createBulkSlotsSchema), checkPermission(PERMISSIONS.SLOT_CREATE), SlotController.createBulkSlots);
 router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.SLOT_DELETE), SlotController.deleteSlot);
 
-// Cập nhật trạng thái slot (SRS 3.2: Admin, Manager full; Staff giới hạn)
 router.patch('/:id/status', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(updateSlotStatusSchema), checkPermission(PERMISSIONS.SLOT_UPDATE_STATUS), SlotController.updateSlotStatus);
 
-// Cập nhật thông tin slot (code, vehicleTypeId)
 router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updateSlotSchema), checkPermission(PERMISSIONS.SLOT_UPDATE_STATUS), SlotController.updateSlot);
 
 export default router;

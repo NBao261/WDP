@@ -2,11 +2,12 @@ import { Feedback, IFeedback, FeedbackStatus } from '../models/feedback.model';
 import { ParkingSession } from '../models/parkingSession.model';
 import { AppError } from '../middlewares/error.middleware';
 import { logger } from '../config/logger';
+import { getIO } from '../config/socket';
+import fs from 'fs';
+import path from 'path';
+import { UploadService } from './upload.service';
 
 export class FeedbackService {
-  /**
-   * FR-17.1: Tạo phản hồi (Driver only)
-   */
   static async createFeedback(userId: string, data: {
     sessionId: string;
     facilityId?: string;
@@ -14,13 +15,54 @@ export class FeedbackService {
     description: string;
     images?: string[];
   }): Promise<IFeedback> {
-    // Luôn validate session
     const session = await ParkingSession.findById(data.sessionId);
     if (!session) throw new AppError('Lượt gửi xe không tồn tại', 404);
     
-    // Luôn lấy facilityId từ session
     const facilityId = session.facilityId?.toString();
     if (!facilityId) throw new AppError('Không tìm thấy thông tin toà nhà của lượt gửi', 400);
+
+    let processedImages: string[] = [];
+    if (data.images && data.images.length > 0) {
+      const dir = path.join(__dirname, '../../public/uploads/feedbacks');
+      if (!fs.existsSync(dir) && !process.env.CLOUDINARY_CLOUD_NAME) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      for (const img of data.images) {
+        if (UploadService.isBase64Image(img)) {
+          if (process.env.CLOUDINARY_CLOUD_NAME) {
+            try {
+              const cloudUrl = await UploadService.uploadBase64Image(img, 'smart_parking/feedbacks');
+              processedImages.push(cloudUrl);
+            } catch (err) {
+              logger.error('Failed to upload feedback image to Cloudinary:', err);
+              const matches = img.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+              if (matches && matches.length === 3) {
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                const filename = `feedback_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                fs.writeFileSync(path.join(dir, filename), buffer);
+                processedImages.push(`/uploads/feedbacks/${filename}`);
+              }
+            }
+          } else {
+            const matches = img.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+            if (matches && matches.length === 3) {
+              const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+              const buffer = Buffer.from(matches[2], 'base64');
+              const filename = `feedback_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+              fs.writeFileSync(path.join(dir, filename), buffer);
+              processedImages.push(`/uploads/feedbacks/${filename}`);
+            } else {
+              processedImages.push(img);
+            }
+          }
+        } else {
+          processedImages.push(img);
+        }
+      }
+    }
 
     const feedback = await Feedback.create({
       userId,
@@ -28,11 +70,20 @@ export class FeedbackService {
       sessionId: data.sessionId,
       type: data.type,
       description: data.description,
-      images: data.images || [],
+      images: processedImages,
       status: FeedbackStatus.SUBMITTED,
     });
 
     logger.info(`Feedback created: ${feedback._id} by user ${userId}, type: ${data.type}`);
+
+    try {
+      getIO().to(`facility:${facilityId}`).emit('feedback:created', {
+        feedbackId: feedback._id,
+        type: data.type,
+        facilityId: facilityId,
+        message: 'Có phản hồi sự cố mới từ khách hàng',
+      });
+    } catch (e) {}
 
     return feedback.populate([
       { path: 'userId', select: 'fullName email phone' },
@@ -41,12 +92,6 @@ export class FeedbackService {
     ]);
   }
 
-  /**
-   * FR-17.2: Xem danh sách phản hồi
-   * Driver: chỉ xem của mình
-   * Manager/Admin: xem tất cả, filter
-   * Staff: xem liên quan (feedback liên quan đến session mà mình xử lý)
-   */
   static async getFeedbacks(
     userId: string,
     role: string,
@@ -58,7 +103,6 @@ export class FeedbackService {
 
     const filter: any = {};
 
-    // PQ-03: Driver chỉ xem dữ liệu của mình
     if (role === 'driver') {
       filter.userId = userId;
     }
@@ -91,10 +135,6 @@ export class FeedbackService {
     };
   }
 
-  /**
-   * FR-17.3: Xử lý phản hồi (Manager/Admin)
-   * Cập nhật trạng thái + ghi chú phản hồi
-   */
   static async updateFeedbackStatus(
     feedbackId: string,
     managerId: string,
@@ -103,7 +143,6 @@ export class FeedbackService {
     const feedback = await Feedback.findById(feedbackId);
     if (!feedback) throw new AppError('Phản hồi không tồn tại', 404);
 
-    // Không thể xử lý feedback đã resolved/rejected
     if ([FeedbackStatus.RESOLVED, FeedbackStatus.REJECTED].includes(feedback.status as FeedbackStatus)) {
       throw new AppError('Phản hồi đã được xử lý, không thể thay đổi', 400);
     }
@@ -123,9 +162,6 @@ export class FeedbackService {
     ]);
   }
 
-  /**
-   * Xem chi tiết feedback
-   */
   static async getFeedbackById(feedbackId: string): Promise<IFeedback> {
     const feedback = await Feedback.findById(feedbackId)
       .populate('userId', 'fullName email phone')

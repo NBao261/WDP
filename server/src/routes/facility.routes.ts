@@ -9,8 +9,6 @@ import { PERMISSIONS } from '../config/permissions';
 const router = Router();
 
 router.use(verifyToken);
-
-// Xem thông tin tòa nhà (Admin, Manager, Staff đều có FACILITY_READ)
 router.get(
   '/',
   checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
@@ -24,7 +22,6 @@ router.get(
   FacilityController.getFacilityById
 );
 
-// Cấu hình vận hành (Admin, Manager, Staff) — BFF endpoint cho Staff Check-in
 router.get(
   '/:id/operations-config',
   checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
@@ -32,7 +29,6 @@ router.get(
   FacilityController.getOperationsConfig
 );
 
-// Tạo/Sửa/Xóa tòa nhà (chỉ Admin + Manager theo SRS 3.1)
 router.post(
   '/',
   checkRole([UserRole.ADMIN, UserRole.MANAGER]),
@@ -48,7 +44,6 @@ router.patch(
   FacilityController.updateFacility
 );
 
-// Vô hiệu hoá facility (status → inactive, cascade floors/slots)
 router.patch(
   '/:id/deactivate',
   checkRole([UserRole.ADMIN, UserRole.MANAGER]),
@@ -56,7 +51,6 @@ router.patch(
   FacilityController.deactivateFacility
 );
 
-// Xoá mềm facility (isDeleted = true, cascade floors/slots/staff)
 router.delete(
   '/:id',
   checkRole([UserRole.ADMIN, UserRole.MANAGER]),

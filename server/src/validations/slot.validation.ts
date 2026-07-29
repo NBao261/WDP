@@ -3,7 +3,6 @@ import { SlotStatus } from '../models/parkingSlot.model';
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
-// FR-4.1: Tạo slot đỗ xe
 export const createSlotSchema = z.object({
   body: z.object({
     code: z.string({ required_error: 'Slot code is required' }).min(1, 'Slot code is required').max(20, 'Slot code too long').trim(),
@@ -19,7 +18,6 @@ export const createSlotSchema = z.object({
   }),
 });
 
-// FR-4.1: Tạo hàng loạt (bulk create)
 export const createBulkSlotsSchema = z.object({
   body: z.object({
     facilityId: z
@@ -44,7 +42,6 @@ export const createBulkSlotsSchema = z.object({
   }),
 });
 
-// Update slot info (code, vehicleTypeId)
 export const updateSlotSchema = z.object({
   body: z.object({
     code: z.string().min(1, 'Slot code is required').max(20, 'Slot code too long').trim().optional(),
@@ -57,7 +54,6 @@ export const updateSlotSchema = z.object({
   }),
 });
 
-// FR-4.2: Cập nhật trạng thái slot (BR-3.3: validate chuyển trạng thái)
 export const updateSlotStatusSchema = z.object({
   body: z.object({
     status: z.nativeEnum(SlotStatus, { required_error: 'Status is required' }),

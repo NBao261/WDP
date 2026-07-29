@@ -1,291 +1,482 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.2.9 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.2.9">
   <diagram id="system_arch" name="System Architecture">
-    <mxGraphModel dx="1400" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="800" math="0" shadow="0">
+    <mxGraphModel dx="1422" dy="875" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <!-- TITLE -->
-        <mxCell id="title" value="WDP — Smart Car Parking System Architecture" style="text;html=1;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontColor=#1E293B;" vertex="1" parent="1">
-          <mxGeometry x="400" y="15" width="500" height="30" as="geometry" />
+        <!-- ═══ TITLE ═══ -->
+        <mxCell id="title" parent="1"
+          style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontColor=#1E293B;"
+          value="Smart Car Parking — System Architecture" vertex="1">
+          <mxGeometry x="300" y="18" width="780" height="32" as="geometry" />
         </mxCell>
 
+        <!-- ═══ FRONTEND CLIENT BOX ═══ -->
+        <mxCell id="g_frontend" parent="1"
+          style="rounded=1;dashed=1;dashPattern=6 3;fillColor=#EFF6FF;strokeColor=#93C5FD;strokeWidth=2;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#1D4ED8;arcSize=4;"
+          value="Frontend Client" vertex="1">
+          <mxGeometry x="30" y="60" width="230" height="430" as="geometry" />
+        </mxCell>
 
-        <!-- LAYER 1: FRONTEND LAYER -->
-        <mxCell id="g_frontend" value="Frontend Layer" style="rounded=1;fillColor=#F8FAFC;strokeColor=#64748B;strokeWidth=1.5;align=left;verticalAlign=top;spacingLeft=15;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#334155;arcSize=6;" vertex="1" parent="1">
-          <mxGeometry x="40" y="60" width="1220" height="150" as="geometry" />
+        <!-- User icon -->
+        <mxCell id="c_user" parent="1"
+          style="shape=mxgraph.cisco.computers_and_peripherals.pc;fillColor=#DBEAFE;strokeColor=#2563EB;strokeWidth=1.5;align=center;fontSize=10;fontStyle=1;fontColor=#1E40AF;"
+          value="User" vertex="1">
+          <mxGeometry x="115" y="90" width="60" height="50" as="geometry" />
         </mxCell>
 
         <!-- React Web App -->
-        <mxCell id="c_web" value="&lt;b style=&quot;font-size:13px;&quot;&gt;React Web App&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#64748B;&quot;&gt;React 18 · Vite · TypeScript&lt;br&gt;Tailwind CSS · Zustand&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="120" y="95" width="220" height="85" as="geometry" />
+        <mxCell id="c_web" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;React Web App&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Vite · TypeScript · Zustand&lt;br&gt;React Router · Socket.IO Client&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="55" y="195" width="180" height="70" as="geometry" />
         </mxCell>
 
-        <!-- Mobile App -->
-        <mxCell id="c_mobile" value="&lt;b style=&quot;font-size:13px;&quot;&gt;Mobile App&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#64748B;&quot;&gt;React Native · Expo SDK 54&lt;br&gt;Expo Router · Zustand&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="680" y="95" width="220" height="85" as="geometry" />
+        <!-- React Native Mobile -->
+        <mxCell id="c_mobile" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;Mobile App&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;React Native · Expo SDK 54&lt;br&gt;Expo Router · Zustand&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="55" y="345" width="180" height="70" as="geometry" />
         </mxCell>
 
-
-        <!-- LAYER 2: BACKEND LAYER -->
-        <mxCell id="g_backend" value="Backend Service Layer" style="rounded=1;fillColor=#F8FAFC;strokeColor=#64748B;strokeWidth=1.5;align=left;verticalAlign=top;spacingLeft=15;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#334155;arcSize=6;" vertex="1" parent="1">
-          <mxGeometry x="40" y="250" width="1220" height="170" as="geometry" />
+        <!-- ═══ BACKEND SERVER BOX ═══ -->
+        <mxCell id="g_backend" parent="1"
+          style="rounded=1;dashed=1;dashPattern=6 3;fillColor=#F0FDF4;strokeColor=#86EFAC;strokeWidth=2;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#15803D;arcSize=4;"
+          value="Backend Server (Node.js · Express · TypeScript)" vertex="1">
+          <mxGeometry x="330" y="60" width="430" height="540" as="geometry" />
         </mxCell>
 
-        <!-- Core Server -->
-        <mxCell id="c_server" value="&lt;b style=&quot;font-size:13px;&quot;&gt;Core Backend Server&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#64748B;&quot;&gt;Node.js · Express · TypeScript&lt;br&gt;JWT Auth · Socket.IO · BullMQ&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="220" y="285" width="260" height="105" as="geometry" />
+        <!-- Backend logo label -->
+        <mxCell id="lbl_backend_tech" parent="1"
+          style="text;html=1;fontSize=10;fontStyle=1;align=right;fillColor=none;strokeColor=none;fontColor=#16A34A;"
+          value="Express.js" vertex="1">
+          <mxGeometry x="700" y="65" width="55" height="20" as="geometry" />
         </mxCell>
 
-        <!-- ALPR Service -->
-        <mxCell id="c_alpr" value="&lt;b style=&quot;font-size:13px;&quot;&gt;ALPR Microservice&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#64748B;&quot;&gt;Python · FastAPI · Uvicorn&lt;br&gt;YOLOv8 Plate · PaddleOCR v3&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="660" y="285" width="240" height="105" as="geometry" />
+        <!-- Layer 1: API / Controller Layer -->
+        <mxCell id="c_api_layer" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;shadow=0;"
+          value="&lt;b&gt;API / Controller Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Controllers, Routes, DTOs,&lt;br&gt;Validation (express-validator), Guards&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="355" y="105" width="380" height="80" as="geometry" />
         </mxCell>
 
-
-        <!-- LAYER 3: DATABASE & CACHE LAYER -->
-        <mxCell id="g_database" value="Database &amp; Cache Layer" style="rounded=1;fillColor=#F8FAFC;strokeColor=#64748B;strokeWidth=1.5;align=left;verticalAlign=top;spacingLeft=15;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#334155;arcSize=6;" vertex="1" parent="1">
-          <mxGeometry x="40" y="450" width="440" height="190" as="geometry" />
+        <!-- Layer 2: Application / Service Layer -->
+        <mxCell id="c_service_layer" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;shadow=0;"
+          value="&lt;b&gt;Application / Service Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Services, Use Cases, Business Flow,&lt;br&gt;JWT Auth, Socket.IO, BullMQ Workers&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="355" y="215" width="380" height="80" as="geometry" />
         </mxCell>
 
-        <!-- MongoDB -->
-        <mxCell id="c_db" value="&lt;b style=&quot;font-size:13px;&quot;&gt;MongoDB&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#64748B;&quot;&gt;Primary Database&lt;br&gt;(Mongoose ODM)&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=2;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="70" y="490" width="160" height="120" as="geometry" />
+        <!-- Layer 3: Domain / Business Layer -->
+        <mxCell id="c_domain_layer" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;shadow=0;"
+          value="&lt;b&gt;Domain / Business Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Entities, Models, Business Rules,&lt;br&gt;ALPR Integration, Pricing Engine&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="355" y="325" width="380" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 4: Infrastructure / Data Access Layer -->
+        <mxCell id="c_infra_layer" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;shadow=0;"
+          value="&lt;b&gt;Infrastructure / Data Access Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Repositories, Mongoose Models,&lt;br&gt;Redis Client, External API Adapters&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="355" y="435" width="380" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ALPR Microservice (inside backend area, separate box) -->
+        <mxCell id="c_alpr" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;strokeWidth=2;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:11px;&quot;&gt;ALPR Microservice&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Python · FastAPI · Uvicorn&lt;br&gt;YOLOv8 · PaddleOCR v3&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="355" y="545" width="175" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- ═══ DATA LAYER BOX ═══ -->
+        <mxCell id="g_data" parent="1"
+          style="rounded=1;dashed=1;dashPattern=6 3;fillColor=#FFFBEB;strokeColor=#FCD34D;strokeWidth=2;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#B45309;arcSize=4;"
+          value="Data Layer" vertex="1">
+          <mxGeometry x="330" y="650" width="430" height="190" as="geometry" />
         </mxCell>
 
         <!-- Redis -->
-        <mxCell id="c_redis" value="&lt;b style=&quot;font-size:13px;&quot;&gt;Redis&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;color:#64748B;&quot;&gt;Cache · Rate Limit&lt;br&gt;BullMQ · Socket.IO Pub/Sub&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#FFFFFF;strokeColor=#DC2626;strokeWidth=2;fontSize=11;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="280" y="490" width="170" height="120" as="geometry" />
+        <mxCell id="c_redis" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DC2626;strokeWidth=2;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:13px;&quot;&gt;Redis&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Cache · Rate Limit&lt;br&gt;BullMQ · Socket.IO Pub/Sub&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="355" y="690" width="175" height="110" as="geometry" />
         </mxCell>
 
-
-        <!-- LAYER 4: EXTERNAL SERVICES -->
-        <mxCell id="g_external" value="External Services" style="rounded=1;fillColor=#F8FAFC;strokeColor=#64748B;strokeWidth=1.5;align=left;verticalAlign=top;spacingLeft=15;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#334155;arcSize=6;" vertex="1" parent="1">
-          <mxGeometry x="500" y="450" width="760" height="190" as="geometry" />
+        <!-- MongoDB -->
+        <mxCell id="c_db" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=2;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:13px;&quot;&gt;MongoDB&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Primary Database&lt;br&gt;Mongoose ODM&lt;br&gt;Atlas Cloud&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="560" y="690" width="175" height="110" as="geometry" />
         </mxCell>
 
-        <!-- MoMo Payment -->
-        <mxCell id="c_momo" value="&lt;b style=&quot;font-size:12px;&quot;&gt;MoMo Payment&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Payment Gateway&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="530" y="515" width="150" height="70" as="geometry" />
+        <!-- ═══ EXTERNAL RESOURCES BOX ═══ -->
+        <mxCell id="g_external" parent="1"
+          style="rounded=1;dashed=1;dashPattern=6 3;fillColor=#FAF5FF;strokeColor=#C4B5FD;strokeWidth=2;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#7C3AED;arcSize=4;"
+          value="External Resources &amp; Third-Parties" vertex="1">
+          <mxGeometry x="840" y="60" width="510" height="780" as="geometry" />
         </mxCell>
 
-        <!-- Gemini AI -->
-        <mxCell id="c_gemini" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Google Gemini AI&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;AI Chatbot Assistant&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="715" y="515" width="150" height="70" as="geometry" />
+        <!-- Cloudinary -->
+        <mxCell id="c_cloudinary" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;Cloudinary&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Image Cloud Storage &amp; CDN&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="920" y="115" width="180" height="65" as="geometry" />
         </mxCell>
 
-        <!-- Cloudinary CDN -->
-        <mxCell id="c_cloudinary" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Cloudinary CDN&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Image Cloud Storage&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="900" y="515" width="150" height="70" as="geometry" />
+        <!-- Google OAuth -->
+        <mxCell id="c_google" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;Google OAuth 2.0&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Social Login · JWT Token&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="920" y="240" width="180" height="65" as="geometry" />
         </mxCell>
 
-        <!-- Expo Push -->
-        <mxCell id="c_push" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Expo Push Service&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Push Notifications&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" vertex="1" parent="1">
-          <mxGeometry x="1085" y="515" width="155" height="70" as="geometry" />
-        </mxCell>
-
-
-        <!-- ══════════════════════════════════════════════════════════════
-             CONNECTIONS (NON-OVERLAPPING ORTHOGONAL LINES)
-             ══════════════════════════════════════════════════════════════ -->
-
-        <!-- 1. Web App <-> Core Server -->
-        <mxCell id="e_web_req" edge="1" source="c_web" target="c_server" style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.5;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_web_req" connectable="0" parent="e_web_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;" value="HTTP Request" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-28" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_web_res" edge="1" source="c_server" target="c_web" style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.2;dashed=1;exitX=0.4;exitY=0;exitDx=0;exitDy=0;entryX=0.6;entryY=1;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_web_res" connectable="0" parent="e_web_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;" value="HTTP Response" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="30" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_ws" edge="1" source="c_server" target="c_web" style="endArrow=classic;startArrow=classic;endFill=1;startFill=1;strokeColor=#0284C7;strokeWidth=1.2;dashed=1;dashPattern=3 3;exitX=0.05;exitY=0;exitDx=0;exitDy=0;entryX=0.2;entryY=1;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_ws" connectable="0" parent="e_ws" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#0284C7;labelBackgroundColor=#FFFFFF;" value="WebSocket" vertex="1">
-          <mxGeometry relative="1" x="0.0" as="geometry">
-            <mxPoint x="-28" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-
-        <!-- 2. Mobile App <-> Core Server -->
-        <mxCell id="e_mobile_req" edge="1" source="c_mobile" target="c_server" style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.5;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_mobile_req" connectable="0" parent="e_mobile_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;" value="HTTP Request" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-28" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_mobile_res" edge="1" source="c_server" target="c_mobile" style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.2;dashed=1;exitX=0.95;exitY=0;exitDx=0;exitDy=0;entryX=0.45;entryY=1;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_mobile_res" connectable="0" parent="e_mobile_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;" value="HTTP Response" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="30" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-
-        <!-- 3. Core Server <-> ALPR Service -->
-        <mxCell id="e_alpr_req" edge="1" source="c_server" target="c_alpr" style="endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=1.5;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_alpr_req" connectable="0" parent="e_alpr_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#EA580C;labelBackgroundColor=#FFFFFF;" value="HTTP /predict" vertex="1">
-          <mxGeometry relative="1" x="-0.1" as="geometry">
-            <mxPoint y="-9" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_alpr_res" edge="1" source="c_alpr" target="c_server" style="endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=1.2;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_alpr_res" connectable="0" parent="e_alpr_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#EA580C;labelBackgroundColor=#FFFFFF;" value="Plate Result" vertex="1">
-          <mxGeometry relative="1" x="0.1" as="geometry">
-            <mxPoint y="9" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-
-        <!-- 4. Core Server <-> MongoDB -->
-        <mxCell id="e_db_req" edge="1" source="c_server" target="c_db" style="endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=1.5;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.4;entryY=0;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_db_req" connectable="0" parent="e_db_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#D97706;labelBackgroundColor=#FFFFFF;" value="DB Query" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-22" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_db_res" edge="1" source="c_db" target="c_server" style="endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.3;entryY=1;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_db_res" connectable="0" parent="e_db_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#D97706;labelBackgroundColor=#FFFFFF;" value="DB Data" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="22" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-
-        <!-- 5. Core Server <-> Redis -->
-        <mxCell id="e_redis_req" edge="1" source="c_server" target="c_redis" style="endArrow=block;endFill=1;strokeColor=#DC2626;strokeWidth=1.5;exitX=0.55;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_redis_req" connectable="0" parent="e_redis_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#DC2626;labelBackgroundColor=#FFFFFF;" value="Cache / Queue" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-26" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_redis_res" edge="1" source="c_redis" target="c_server" style="endArrow=block;endFill=1;strokeColor=#DC2626;strokeWidth=1.2;dashed=1;exitX=0.65;exitY=0;exitDx=0;exitDy=0;entryX=0.7;entryY=1;entryDx=0;entryDy=0;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_redis_res" connectable="0" parent="e_redis_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#DC2626;labelBackgroundColor=#FFFFFF;" value="Cache Return" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="26" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-
-        <!-- 6. Core Server <-> External Services (NON-OVERLAPPING DIRECT ORTHOGONAL LINES) -->
-
-        <!-- MoMo Payment -->
-        <mxCell id="e_momo_req" edge="1" source="c_server" target="c_momo" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_momo_req" connectable="0" parent="e_momo_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="Payment Intent" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-18" y="0" as="offset" />
-          </mxGeometry>
-        </mxCell>
-
-        <mxCell id="e_momo_res" edge="1" source="c_momo" target="c_server" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_momo_res" connectable="0" parent="e_momo_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="IPN Webhook" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="18" y="0" as="offset" />
-          </mxGeometry>
+        <!-- MoMo / VNPay -->
+        <mxCell id="c_momo" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;MoMo / VNPay&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Payment Gateway&lt;br&gt;IPN Webhook / Redirect&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="920" y="365" width="180" height="65" as="geometry" />
         </mxCell>
 
         <!-- Gemini AI -->
-        <mxCell id="e_gemini_req" edge="1" source="c_server" target="c_gemini" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
+        <mxCell id="c_gemini" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;Google Gemini AI&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;AI Chatbot Assistant&lt;br&gt;JSON Response&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="920" y="490" width="180" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Expo Push Service -->
+        <mxCell id="c_push" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;Expo Push Service&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Mobile Push Notifications&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="920" y="615" width="180" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Vercel Deployment -->
+        <mxCell id="c_vercel" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;"
+          value="&lt;b style=&quot;font-size:12px;&quot;&gt;Vercel&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Frontend Deployment&lt;br&gt;CI/CD · Edge Network&lt;/font&gt;"
+          vertex="1">
+          <mxGeometry x="920" y="740" width="180" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- ════════════════════════════════════════
+             ARROWS — Request &amp; Response
+             ════════════════════════════════════════ -->
+
+        <!-- User → Web App (arrow down) -->
+        <mxCell id="e_user_web" edge="1" parent="1" source="c_user" target="c_web"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.5;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="l_gemini_req" connectable="0" parent="e_gemini_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="AI Prompt" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-15" y="0" as="offset" />
+
+        <!-- User → Mobile App (arrow down) -->
+        <mxCell id="e_user_mobile" edge="1" parent="1" source="c_user" target="c_mobile"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Web → Backend: HTTP Request -->
+        <mxCell id="e_web_req" edge="1" parent="1" source="c_web" target="c_api_layer"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.8;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_web_req" connectable="0" parent="e_web_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;"
+          value="HTTP Request" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="e_gemini_res" edge="1" source="c_gemini" target="c_server" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.45;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
+        <!-- Backend → Web: HTTP Response -->
+        <mxCell id="e_web_res" edge="1" parent="1" source="c_api_layer" target="c_web"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.4;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="l_gemini_res" connectable="0" parent="e_gemini_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="AI Response" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="15" y="0" as="offset" />
+        <mxCell id="l_web_res" connectable="0" parent="e_web_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;"
+          value="HTTP Response" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
           </mxGeometry>
         </mxCell>
 
-        <!-- Cloudinary CDN -->
-        <mxCell id="e_cloudinary_req" edge="1" source="c_server" target="c_cloudinary" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
+        <!-- Backend → Web: WebSocket -->
+        <mxCell id="e_ws" edge="1" parent="1" source="c_service_layer" target="c_web"
+          style="endArrow=classic;startArrow=classic;endFill=1;startFill=1;strokeColor=#0284C7;strokeWidth=1.4;dashed=1;dashPattern=4 3;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="l_cloudinary_req" connectable="0" parent="e_cloudinary_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="Upload Image" vertex="1">
-          <mxGeometry relative="1" x="-0.2" as="geometry">
-            <mxPoint x="-15" y="0" as="offset" />
+        <mxCell id="l_ws" connectable="0" parent="e_ws"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#0284C7;labelBackgroundColor=#FFFFFF;"
+          value="WebSocket / Real-time" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="e_cloudinary_res" edge="1" source="c_cloudinary" target="c_server" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.15;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
+        <!-- Mobile → Backend: HTTP Request -->
+        <mxCell id="e_mobile_req" edge="1" parent="1" source="c_mobile" target="c_api_layer"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.8;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="l_cloudinary_res" connectable="0" parent="e_cloudinary_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="Image URL" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="15" y="0" as="offset" />
+        <mxCell id="l_mobile_req" connectable="0" parent="e_mobile_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;"
+          value="HTTP Request" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
 
-        <!-- Expo Push -> Mobile App (UPWARD ALONG RIGHT EDGE - ZERO CROSSINGS) -->
-        <mxCell id="e_push_req" edge="1" source="c_server" target="c_push" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.05;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
+        <!-- Backend → Mobile: HTTP Response -->
+        <mxCell id="e_mobile_res" edge="1" parent="1" source="c_api_layer" target="c_mobile"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.4;dashed=1;exitX=0;exitY=0.95;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="l_push_req" connectable="0" parent="e_push_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="Send Push Payload" vertex="1">
-          <mxGeometry relative="1" x="0.0" as="geometry">
-            <mxPoint y="-9" as="offset" />
+        <mxCell id="l_mobile_res" connectable="0" parent="e_mobile_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;"
+          value="HTTP Response" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
           </mxGeometry>
         </mxCell>
 
-        <mxCell id="e_push_to_mobile" edge="1" source="c_push" target="c_mobile" style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.2;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1">
+        <!-- Backend Infra → Redis: Cache/Queue -->
+        <mxCell id="e_redis_req" edge="1" parent="1" source="c_infra_layer" target="c_redis"
+          style="endArrow=block;endFill=1;strokeColor=#DC2626;strokeWidth=1.5;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_redis_req" connectable="0" parent="e_redis_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#DC2626;labelBackgroundColor=#FFFFFF;"
+          value="Cache / Queue" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-30" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Redis → Backend: Cache Return -->
+        <mxCell id="e_redis_res" edge="1" parent="1" source="c_redis" target="c_infra_layer"
+          style="endArrow=block;endFill=1;strokeColor=#DC2626;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.35;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_redis_res" connectable="0" parent="e_redis_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#DC2626;labelBackgroundColor=#FFFFFF;"
+          value="Cache Return" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="28" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Backend Infra → MongoDB: DB Query -->
+        <mxCell id="e_db_req" edge="1" parent="1" source="c_infra_layer" target="c_db"
+          style="endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=1.5;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_db_req" connectable="0" parent="e_db_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#D97706;labelBackgroundColor=#FFFFFF;"
+          value="DB Queries" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="28" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- MongoDB → Backend: DB Data -->
+        <mxCell id="e_db_res" edge="1" parent="1" source="c_db" target="c_infra_layer"
+          style="endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.9;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_db_res" connectable="0" parent="e_db_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#D97706;labelBackgroundColor=#FFFFFF;"
+          value="DB Data" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="22" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ALPR ↔ Backend domain layer -->
+        <mxCell id="e_alpr_req" edge="1" parent="1" source="c_domain_layer" target="c_alpr"
+          style="endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=1.5;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_alpr_req" connectable="0" parent="e_alpr_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#EA580C;labelBackgroundColor=#FFFFFF;"
+          value="HTTP /predict" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-35" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_alpr_res" edge="1" parent="1" source="c_alpr" target="c_domain_layer"
+          style="endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.3;entryY=1;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_alpr_res" connectable="0" parent="e_alpr_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#EA580C;labelBackgroundColor=#FFFFFF;"
+          value="Plate Result" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="28" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Backend → Cloudinary: Upload Image (HTTPS) -->
+        <mxCell id="e_cloudinary_req" edge="1" parent="1" source="c_service_layer" target="c_cloudinary"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_cloudinary_req" connectable="0" parent="e_cloudinary_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="HTTPS Image Upload" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_cloudinary_res" edge="1" parent="1" source="c_cloudinary" target="c_service_layer"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.4;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_cloudinary_res" connectable="0" parent="e_cloudinary_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="Image URL" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Backend → Google OAuth -->
+        <mxCell id="e_google_req" edge="1" parent="1" source="c_service_layer" target="c_google"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_google_req" connectable="0" parent="e_google_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="HTTPS OAuth" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_google_res" edge="1" parent="1" source="c_google" target="c_service_layer"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_google_res" connectable="0" parent="e_google_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="JWT Token" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Backend → MoMo/VNPay: Payment -->
+        <mxCell id="e_momo_req" edge="1" parent="1" source="c_domain_layer" target="c_momo"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_momo_req" connectable="0" parent="e_momo_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="HTTPS Redirect" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_momo_res" edge="1" parent="1" source="c_momo" target="c_domain_layer"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_momo_res" connectable="0" parent="e_momo_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="Payment Callback" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Backend → Gemini AI: Prompt -->
+        <mxCell id="e_gemini_req" edge="1" parent="1" source="c_service_layer" target="c_gemini"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_gemini_req" connectable="0" parent="e_gemini_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="HTTPS Prompt" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_gemini_res" edge="1" parent="1" source="c_gemini" target="c_service_layer"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_gemini_res" connectable="0" parent="e_gemini_res"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="JSON Response" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Backend → Expo Push Service -->
+        <mxCell id="e_push_req" edge="1" parent="1" source="c_infra_layer" target="c_push"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_push_req" connectable="0" parent="e_push_req"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="Push Payload" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Expo Push → Mobile: Deliver notification -->
+        <mxCell id="e_push_mobile" edge="1" parent="1" source="c_push" target="c_mobile"
+          style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.2;dashed=1;edgeStyle=orthogonalEdgeStyle;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1163" y="615" />
-              <mxPoint x="1230" y="615" />
-              <mxPoint x="1230" y="137" />
+              <mxPoint x="1260" y="647" />
+              <mxPoint x="1260" y="840" />
+              <mxPoint x="20" y="840" />
+              <mxPoint x="20" y="380" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="l_push_mobile" connectable="0" parent="e_push_to_mobile" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;" value="Deliver Push Alert" vertex="1">
-          <mxGeometry relative="1" x="0.2" as="geometry">
-            <mxPoint x="20" y="0" as="offset" />
+        <mxCell id="l_push_mobile" connectable="0" parent="e_push_mobile"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#FFFFFF;"
+          value="Deliver Push Alert" vertex="1">
+          <mxGeometry relative="1" x="0.3" as="geometry">
+            <mxPoint y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
 
-
-        <!-- CONNECTIONS LEGEND -->
-        <mxCell id="legend_box" value="&lt;b style=&quot;font-size:10px;&quot;&gt;CONNECTIONS LEGEND&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;━━━► &lt;b&gt;Request Flow&lt;/b&gt; (Solid Line)&lt;br&gt; ╌╌╌► &lt;b&gt;Response / Callback Flow&lt;/b&gt; (Dashed Line)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=1;fontSize=9;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="40" y="215" width="200" height="40" as="geometry" />
+        <!-- Vercel → Web: Deploy -->
+        <mxCell id="e_vercel_deploy" edge="1" parent="1" source="c_vercel" target="c_web"
+          style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;edgeStyle=orthogonalEdgeStyle;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="772" />
+              <mxPoint x="20" y="772" />
+              <mxPoint x="20" y="230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_vercel_deploy" connectable="0" parent="e_vercel_deploy"
+          style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;"
+          value="Deployment FE" vertex="1">
+          <mxGeometry relative="1" x="0.2" as="geometry">
+            <mxPoint y="-10" as="offset" />
+          </mxGeometry>
         </mxCell>
 
       </root>

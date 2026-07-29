@@ -33,7 +33,6 @@ export class FacilityService {
     const newFacility = new ParkingFacility(data);
     await newFacility.save();
     
-    // Invalidate public facilities cache
     await delPattern('cache:public:facilities:*');
     
     return newFacility;
@@ -95,16 +94,13 @@ export class FacilityService {
     }
 
     if (data.status === 'inactive') {
-      // Cascade: floors → inactive, slots available → maintenance
       await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'inactive' });
       await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
     } else if (data.status === 'active') {
-      // Cascade: floors → active, slots maintenance → available
       await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'active' });
       await ParkingSlot.updateMany({ facilityId: id, status: 'maintenance' }, { status: 'available' });
     }
 
-    // Invalidate caches
     await delPattern('cache:public:facilities:*');
     await delCache(`cache:public:available-slots:${id}`);
     
@@ -115,12 +111,7 @@ export class FacilityService {
     return facility;
   }
 
-  /**
-   * Vô hiệu hoá facility (chỉ đổi status, không xoá)
-   * Cascade: floors → inactive, slots available → maintenance
-   */
   static async deactivateFacility(id: string): Promise<IParkingFacility | null> {
-    // Check if there are active occupied or reserved slots before deactivating
     const activeSlots = await ParkingSlot.countDocuments({
       facilityId: id,
       status: { $in: ['occupied', 'reserved'] },
@@ -140,11 +131,9 @@ export class FacilityService {
       throw new AppError('Facility not found', 404);
     }
 
-    // Cascade: floors → inactive, slots available → maintenance
     await Floor.updateMany({ facilityId: id, isDeleted: false }, { status: 'inactive' });
     await ParkingSlot.updateMany({ facilityId: id, status: 'available' }, { status: 'maintenance' });
 
-    // Invalidate caches
     await delPattern('cache:public:facilities:*');
     await delCache(`cache:public:available-slots:${id}`);
     
@@ -155,12 +144,7 @@ export class FacilityService {
     return facility;
   }
 
-  /**
-   * Xoá mềm facility (isDeleted = true)
-   * Cascade: floors → isDeleted, slots → isDeleted, gỡ Staff assignment
-   */
   static async softDeleteFacility(id: string): Promise<IParkingFacility | null> {
-    // Check if there are active occupied or reserved slots
     const activeSlots = await ParkingSlot.countDocuments({
       facilityId: id,
       status: { $in: ['occupied', 'reserved'] },
@@ -180,11 +164,9 @@ export class FacilityService {
       throw new AppError('Facility not found', 404);
     }
 
-    // Cascade: floors + slots → isDeleted = true
     await Floor.updateMany({ facilityId: id }, { isDeleted: true, status: 'inactive' });
     await ParkingSlot.updateMany({ facilityId: id }, { isDeleted: true, status: 'maintenance' });
 
-    // Gỡ Staff assignment
     if (facility.assignedUsers && facility.assignedUsers.length > 0) {
       await User.updateMany(
         { _id: { $in: facility.assignedUsers } },
@@ -194,7 +176,6 @@ export class FacilityService {
       await facility.save();
     }
 
-    // Invalidate caches
     await delPattern('cache:public:facilities:*');
     await delCache(`cache:public:available-slots:${id}`);
     await delCache(`cache:public:pricing:${id}`);
@@ -222,11 +203,6 @@ export class FacilityService {
     return { facilities, total };
   }
 
-  /**
-   * Operational Config cho Staff (BFF pattern)
-   * Tổng hợp cấu hình vận hành: loại xe được phép trong toà nhà dựa vào Floor.allowedVehicleTypes
-   * API này an toàn với Staff (FACILITY_READ) mà không cần mở Floor API
-   */
   static async getOperationsConfig(facilityId: string): Promise<{ facilityId: string; allowedVehicleTypes: IVehicleType[] }> {
     const cacheKey = `cache:operationsConfig:${facilityId}`;
     const cached = await getCache(cacheKey);
@@ -237,14 +213,12 @@ export class FacilityService {
       throw new AppError('Facility not found', 404);
     }
 
-    // Lấy tất cả Floor active của Facility này
     const floors = await Floor.find({
       facilityId,
       status: 'active',
       isDeleted: false,
     }).select('allowedVehicleTypes').lean() as any;
 
-    // Gộp unique VehicleType IDs từ tất cả các tầng
     const vehicleTypeIdSet = new Set<string>();
     for (const floor of floors) {
       for (const vtId of floor.allowedVehicleTypes) {
@@ -252,7 +226,6 @@ export class FacilityService {
       }
     }
 
-    // Query Vehicle Types theo IDs đã gộp, loại bỏ các loại đã bị xóa
     const allowedVehicleTypes = await VehicleType.find({
       _id: { $in: Array.from(vehicleTypeIdSet) },
       isDeleted: false,
@@ -260,7 +233,6 @@ export class FacilityService {
 
     const result = { facilityId, allowedVehicleTypes };
     
-    // Cache indefinitely (until invalidated by floor/vehicle type changes)
     await setCache(cacheKey, result);
 
     return result;

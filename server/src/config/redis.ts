@@ -3,7 +3,6 @@ import Redlock from 'redlock';
 import { env } from './env';
 import { logger } from './logger';
 
-// ─── Redis Client Singleton ──────────────────────────────
 let redis: Redis | null = null;
 let isConnected = false;
 
@@ -16,7 +15,7 @@ export function getRedis(): Redis | null {
       retryStrategy(times) {
         if (times > 5) {
           logger.warn('[Redis] Max retries reached, giving up reconnection');
-          return null; // stop retrying
+          return null;
         }
         return Math.min(times * 500, 3000);
       },
@@ -57,19 +56,14 @@ export function getRedlock(): Redlock | null {
     redlock = new Redlock([client], {
       driftFactor: 0.01,
       retryCount: 10,
-      retryDelay: 200, // time in ms
-      retryJitter: 200, // time in ms
+      retryDelay: 200,
+      retryJitter: 200,
     });
     return redlock;
   }
   return null;
 }
 
-// ─── Cache Helpers (graceful fallback khi Redis down) ────
-
-/**
- * Đọc cache. Trả về null nếu miss hoặc Redis down.
- */
 export async function getCache<T = any>(key: string): Promise<T | null> {
   try {
     const client = getRedis();
@@ -81,36 +75,24 @@ export async function getCache<T = any>(key: string): Promise<T | null> {
   }
 }
 
-/**
- * Ghi cache với TTL (giây).
- */
 export async function setCache(key: string, data: any, ttlSeconds: number = 86400): Promise<void> {
   try {
     const client = getRedis();
     if (!client || !isConnected) return;
     await client.setex(key, ttlSeconds, JSON.stringify(data));
   } catch {
-    // silent fail — app vẫn hoạt động
   }
 }
 
-/**
- * Xoá 1 key.
- */
 export async function delCache(key: string): Promise<void> {
   try {
     const client = getRedis();
     if (!client || !isConnected) return;
     await client.del(key);
   } catch {
-    // silent fail
   }
 }
 
-/**
- * Xoá theo pattern (dùng SCAN, không dùng KEYS để tránh block).
- * VD: delPattern('permissions:user:*')
- */
 export async function delPattern(pattern: string): Promise<void> {
   try {
     const client = getRedis();
@@ -125,13 +107,9 @@ export async function delPattern(pattern: string): Promise<void> {
       }
     } while (cursor !== '0');
   } catch {
-    // silent fail
   }
 }
 
-/**
- * Kiểm tra membership trong SET — O(1).
- */
 export async function sIsMember(key: string, member: string): Promise<boolean> {
   try {
     const client = getRedis();
@@ -149,7 +127,6 @@ export async function sAdd(key: string, member: string): Promise<void> {
     if (!client || !isConnected) return;
     await client.sadd(key, member);
   } catch {
-    // silent fail
   }
 }
 
@@ -159,6 +136,5 @@ export async function sRem(key: string, member: string): Promise<void> {
     if (!client || !isConnected) return;
     await client.srem(key, member);
   } catch {
-    // silent fail
   }
 }

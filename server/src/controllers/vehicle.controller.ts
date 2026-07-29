@@ -2,9 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { VehicleService } from '../services/vehicle.service';
 
 export class VehicleController {
-  /**
-   * POST /vehicles — Thêm xe mới
-   */
   static async addVehicle(req: Request, res: Response, next: NextFunction) {
     try {
       const data = {
@@ -18,9 +15,6 @@ export class VehicleController {
     }
   }
 
-  /**
-   * GET /vehicles/my — Lấy danh sách xe của tôi
-   */
   static async getMyVehicles(req: Request, res: Response, next: NextFunction) {
     try {
       const vehicles = await VehicleService.getMyVehicles(req.user!.userId);
@@ -30,9 +24,6 @@ export class VehicleController {
     }
   }
 
-  /**
-   * GET /vehicles/:id — Lấy chi tiết xe
-   */
   static async getVehicleById(req: Request, res: Response, next: NextFunction) {
     try {
       const vehicle = await VehicleService.getVehicleById(
@@ -45,9 +36,6 @@ export class VehicleController {
     }
   }
 
-  /**
-   * PATCH /vehicles/:id — Cập nhật xe
-   */
   static async updateVehicle(req: Request, res: Response, next: NextFunction) {
     try {
       const vehicle = await VehicleService.updateVehicle(
@@ -61,9 +49,6 @@ export class VehicleController {
     }
   }
 
-  /**
-   * DELETE /vehicles/:id — Xoá xe
-   */
   static async deleteVehicle(req: Request, res: Response, next: NextFunction) {
     try {
       await VehicleService.deleteVehicle(req.user!.userId, req.params.id as string);

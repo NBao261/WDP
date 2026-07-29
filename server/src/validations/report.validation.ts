@@ -3,7 +3,6 @@ import { z } from 'zod';
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const isoDateRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/;
 
-// Common query fields dùng chung cho reports
 const facilityIdField = z.string().regex(objectIdRegex, 'Invalid facility ID').optional();
 const vehicleTypeIdField = z.string().regex(objectIdRegex, 'Invalid vehicle type ID').optional();
 const floorIdField = z.string().regex(objectIdRegex, 'Invalid floor ID').optional();
@@ -13,7 +12,6 @@ const groupByField = z.enum(['day', 'week', 'month'], {
   errorMap: () => ({ message: 'groupBy phải là day, week hoặc month' }),
 }).optional();
 
-// GET /reports/traffic — Báo cáo lượt xe vào/ra
 export const trafficReportQuerySchema = z.object({
   query: z.object({
     facilityId: facilityIdField,
@@ -25,7 +23,6 @@ export const trafficReportQuerySchema = z.object({
   }),
 });
 
-// GET /reports/revenue — Báo cáo doanh thu
 export const revenueReportQuerySchema = z.object({
   query: z.object({
     facilityId: facilityIdField,
@@ -37,7 +34,6 @@ export const revenueReportQuerySchema = z.object({
   }),
 });
 
-// GET /reports/occupancy — Báo cáo tỷ lệ lấp đầy
 export const occupancyReportQuerySchema = z.object({
   query: z.object({
     facilityId: facilityIdField,
@@ -45,7 +41,6 @@ export const occupancyReportQuerySchema = z.object({
   }),
 });
 
-// GET /reports/peak-hours — Báo cáo khung giờ cao điểm
 export const peakHoursReportQuerySchema = z.object({
   query: z.object({
     facilityId: facilityIdField,
@@ -55,7 +50,6 @@ export const peakHoursReportQuerySchema = z.object({
   }),
 });
 
-// GET /reports/export — Xuất báo cáo
 export const exportReportQuerySchema = z.object({
   query: z.object({
     reportType: z.enum(['traffic', 'revenue', 'occupancy', 'peak-hours', 'comprehensive'], {

@@ -43,33 +43,21 @@ interface CheckInData {
 }
 
 export class SessionService {
-  /**
-   * FR-8.1: Kiểm tra điều kiện xe vào bãi
-   * (1) Loại xe có được phục vụ không
-   * (2) Còn slot trống không
-   * (3) Trong giờ hoạt động không
-   * (4) Xe có trong blacklist không (placeholder)
-   */
   static async checkConditions(facilityId: string, vehicleTypeId: string, licensePlate?: string): Promise<CheckConditionsResult> {
-    // 1. Kiểm tra facility tồn tại + active
     const facility = await ParkingFacility.findById(facilityId).lean();
     if (!facility || facility.status !== 'active') {
       return { eligible: false, reason: 'Bãi xe không hoạt động hoặc không tồn tại' };
     }
 
-    // 2. Kiểm tra giờ hoạt động
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // Nếu openTime == closeTime → hoạt động 24h, bỏ qua check
     if (facility.openTime !== facility.closeTime) {
       let isClosed = false;
 
       if (facility.openTime < facility.closeTime) {
-        // Trường hợp bình thường: vd 06:00 - 22:00
         isClosed = currentTime < facility.openTime || currentTime >= facility.closeTime;
       } else {
-        // Trường hợp qua đêm: vd 22:00 - 06:00
         isClosed = currentTime < facility.openTime && currentTime >= facility.closeTime;
       }
 
@@ -78,20 +66,17 @@ export class SessionService {
       }
     }
 
-    // 3. Kiểm tra vehicleType tồn tại
     const vehicleType = await VehicleType.findById(vehicleTypeId).lean();
     if (!vehicleType || vehicleType.isDeleted) {
       return { eligible: false, reason: 'Loại phương tiện không hợp lệ' };
     }
 
-    // 4. Kiểm tra loại xe có được phục vụ trong facility (qua floor.allowedVehicleTypes)
     const floorsServingVehicle = await Floor.find({}).lean();
 
     if (floorsServingVehicle.length === 0) {
       return { eligible: false, reason: `Bãi xe không phục vụ loại xe "${vehicleType.name}"` };
     }
 
-    // 5. Kiểm tra slot trống
     const hasAvailableSlot = await ParkingSlot.exists({
       facilityId,
       vehicleTypeId,
@@ -103,10 +88,6 @@ export class SessionService {
       return { eligible: false, reason: `Bãi đầy cho loại xe "${vehicleType.name}"` };
     }
 
-    // 6. Blacklist check (placeholder — chưa có model Blacklist)
-    // TODO: Implement blacklist check when Blacklist model is available
-
-    // 7. Check reservation for owner name
     let ownerName = undefined;
     if (licensePlate) {
       const earlyWindow = 15 * 60 * 1000;
@@ -129,10 +110,6 @@ export class SessionService {
     return { eligible: true, ownerName };
   }
 
-  /**
-   * FR-9.1: Tạo lượt gửi xe (check-in)
-   * Tạo session + cập nhật slot → Occupied + sinh mã thẻ
-   */
   static async checkIn(data: CheckInData): Promise<IParkingSession> {
     const redlock = getRedlock();
     let checkInLock: any = null;
@@ -149,7 +126,6 @@ export class SessionService {
     try {
     let matchedReservation = null;
 
-    // 0. BR-6.6: Nếu có reservationCode → auto-fill facilityId, vehicleTypeId, licensePlate từ reservation
     if (data.reservationCode) {
       matchedReservation = await Reservation.findOne({ code: data.reservationCode }).lean();
 
@@ -157,9 +133,8 @@ export class SessionService {
         throw new AppError('Mã đặt chỗ không tồn tại hoặc đã được sử dụng/hủy', 404);
       }
 
-      // Validate thời gian check-in: chỉ cho phép trong khoảng 15 phút trước startTime → endTime
       const now = new Date();
-      const earlyWindow = 15 * 60 * 1000; // 15 phút
+      const earlyWindow = 15 * 60 * 1000;
       const resStartTime = new Date(matchedReservation.startTime);
       const earliestCheckIn = new Date(resStartTime.getTime() - earlyWindow);
 
@@ -172,45 +147,38 @@ export class SessionService {
         );
       }
 
-      const expirationTime = new Date(resStartTime.getTime() + earlyWindow); // Hết hạn sau 15 phút
+      const expirationTime = new Date(resStartTime.getTime() + earlyWindow);
 
       if (now > expirationTime) {
         throw new AppError('Đặt chỗ đã hết hạn. Vui lòng tạo đặt chỗ mới hoặc check-in walk-in.', 400);
       }
 
-      // Validate checkInImage
       if (!data.checkInImage) {
         throw new AppError('Bắt buộc phải có ảnh chụp xe lúc vào bãi khi sử dụng đặt chỗ.', 400);
       }
 
-      // Validate loại xe khớp với đặt chỗ
       if (data.vehicleTypeId && data.vehicleTypeId.toString() !== matchedReservation.vehicleTypeId.toString()) {
         throw new AppError('Loại xe không khớp với thông tin đã đặt chỗ.', 400);
       }
 
-      // Validate biển số khớp với đặt chỗ
       const normalizedReqPlate = (data.licensePlate || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
       const normalizedResPlate = matchedReservation.licensePlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (normalizedReqPlate && normalizedReqPlate !== normalizedResPlate) {
         throw new AppError(`Biển số xe vào (${data.licensePlate}) không khớp với biển số đã đặt (${matchedReservation.licensePlate}).`, 400);
       }
 
-      // Gắn facilityId từ reservation (cho chắc chắn đúng bãi)
       data.facilityId = matchedReservation.facilityId.toString();
-      // Gắn lại đúng biển số và loại xe của reservation
       data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
       data.licensePlate = matchedReservation.licensePlate;
     }
 
-    // Đảm bảo các trường bắt buộc đã có (dù từ reservation hay từ request)
     if (!data.facilityId || !data.vehicleTypeId) {
       throw new AppError('Thiếu thông tin bắt buộc: facilityId, vehicleTypeId', 400);
     }
 
     const pricingCacheKey = `pricing:active:${data.facilityId}:${data.vehicleTypeId}`;
 
-    // Thực hiện truy vấn DB song song để giảm latency (Parallelize)
-    const earlyWindow = 15 * 60 * 1000; // 30 phút — đủ rộng để auto-detect reservation từ ALPR
+    const earlyWindow = 15 * 60 * 1000;
     const [
       staffUser,
       vehicleType,
@@ -242,7 +210,6 @@ export class SessionService {
         status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
       }).lean() : Promise.resolve(null),
       getCache(pricingCacheKey),
-      // Auto-match reservation bằng biển số + facility (không cần vehicleTypeId — reservation đã có sẵn)
       (!matchedReservation && data.licensePlate) ? Reservation.findOne({
         licensePlate: data.licensePlate.toUpperCase(),
         facilityId: data.facilityId,
@@ -268,12 +235,10 @@ export class SessionService {
       throw new AppError('Thiếu thông tin bắt buộc: licensePlate', 400);
     }
 
-    // Auto-gen biển số cho xe không có biển (nếu chưa có trong request)
     if (isNoPlateVehicle && !data.licensePlate) {
       data.licensePlate = `NOPLATE-${Date.now()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
     }
 
-    // 1. Kiểm tra điều kiện (Check Conditions)
     if (!facility || facility.status !== 'active') {
       throw new AppError('Bãi xe không hoạt động hoặc không tồn tại', 400);
     }
@@ -296,13 +261,10 @@ export class SessionService {
       throw new AppError(`Bãi xe không phục vụ loại xe "${vehicleType.name}"`, 400);
     }
 
-    // Nếu có reservation đã giữ slot (RESERVED) → bỏ qua check AVAILABLE
-    // Vì slot đã RESERVED cho user này, không cần kiểm tra slot AVAILABLE khác
     if (!hasAvailableSlot && !(matchedReservation && matchedReservation.slotId)) {
       throw new AppError(`Bãi đầy cho loại xe "${vehicleType.name}"`, 400);
     }
 
-    // 2. Validate staff
     if (!staffUser) {
       throw new AppError('Staff user not found', 404);
     }
@@ -311,7 +273,6 @@ export class SessionService {
       throw new AppError('Bạn không được phân công tại bãi xe này', 403);
     }
 
-    // 3. Kiểm tra xe đang có session active (chỉ áp dụng nếu yêu cầu biển số)
     if (!isNoPlateVehicle && existingSession) {
       if (existingSession.status === SessionStatus.EXCEPTION) {
         throw new AppError(`Xe biển số "${data.licensePlate}" đang có sự cố ngoại lệ cần xử lý (${existingSession.code}), không được phép vào gửi.`, 400);
@@ -319,7 +280,6 @@ export class SessionService {
       throw new AppError(`Xe biển số "${data.licensePlate}" đang có lượt gửi chưa kết thúc (${existingSession.code})`, 400);
     }
 
-    // 4. Tìm bảng giá active
     let pricingPlan = cachedPricingPlan;
     if (!pricingPlan) {
       pricingPlan = await PricingPlan.findOne({
@@ -337,16 +297,13 @@ export class SessionService {
 
     if (autoMatchReservation) {
       matchedReservation = autoMatchReservation;
-      // Ghi đè vehicleTypeId bằng loại xe từ reservation (đúng hơn ALPR guess)
       data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
     }
 
-    // 5. Atomic Slot Assignment (Không cần Redlock vì findOneAndUpdate là atomic)
     const sessionId = new mongoose.Types.ObjectId();
     let slot: any = null;
 
     try {
-      // Nếu có reservation → dùng slot đã reserved
       if (matchedReservation && matchedReservation.slotId) {
         slot = await ParkingSlot.findOneAndUpdate(
           { _id: matchedReservation.slotId, status: SlotStatus.RESERVED, isDeleted: false },
@@ -357,7 +314,6 @@ export class SessionService {
           throw new AppError('Slot đã đặt trước không khả dụng', 400);
         }
       } else if (data.slotId) {
-        // Manual slot assignment
         slot = await ParkingSlot.findOneAndUpdate(
           { _id: data.slotId, facilityId: data.facilityId, vehicleTypeId: data.vehicleTypeId, status: SlotStatus.AVAILABLE, isDeleted: false },
           { status: SlotStatus.OCCUPIED, currentSessionId: sessionId },
@@ -367,7 +323,6 @@ export class SessionService {
           throw new AppError('Slot đã chọn không khả dụng hoặc đã có xe khác vào', 400);
         }
       } else {
-        // Auto slot assignment (Atomic)
         slot = await ParkingSlot.findOneAndUpdate(
           {
             facilityId: data.facilityId,
@@ -384,7 +339,6 @@ export class SessionService {
         }
       }
 
-      // Sinh mã session + thẻ
       let sessionCode = generateSessionCode();
 
       if (data.cardCode) {
@@ -402,10 +356,6 @@ export class SessionService {
         ? matchedReservation.code
         : data.cardCode || generateCardCode();
 
-      // Removed redundant retry loop for collision, as collisions for 16^4 combinations alongside time are negligible
-      // MongoDB's unique index on `code` will throw an error if a collision actually happens (extremely rare).
-
-      // 6. Tạo session
       const session = new ParkingSession({
         _id: sessionId,
         code: sessionCode,
@@ -425,7 +375,6 @@ export class SessionService {
         checkInImage: data.checkInImage || null,
       });
 
-      // 7. Lưu session và xử lý rollback slot nếu lỗi
       try {
         const saveOps: any[] = [session.save()];
         if (matchedReservation) {
@@ -433,7 +382,6 @@ export class SessionService {
         }
         await Promise.all(saveOps);
       } catch (err) {
-        // Rollback slot
         await ParkingSlot.updateOne(
           { _id: slot._id },
           { status: matchedReservation ? SlotStatus.RESERVED : SlotStatus.AVAILABLE, $unset: { currentSessionId: "" } }
@@ -448,12 +396,10 @@ export class SessionService {
         sAdd('activeCards', session.cardCode).catch(() => { });
       }
 
-      // Upload ảnh check-in lên Cloudinary trong background
       if (session.checkInImage) {
         addUploadJob(session._id.toString()).catch(err => console.error('[CheckIn] Upload job failed:', err));
       }
 
-      // Emit socket event
       try {
         const io = getIO();
         io.to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
@@ -466,10 +412,8 @@ export class SessionService {
         }
       } catch (err) { }
       
-      // Invalidate report cache since new check-in occurred
       delPattern('report:*').catch(() => {});
 
-      // 8. Tạo populated session object mà không cần query lại DB (Tránh DB read latency)
       const floorInfo = floorsServingVehicle.find((f: any) => f._id.toString() === slot.floorId.toString());
 
       const populatedSession = {
@@ -483,12 +427,10 @@ export class SessionService {
       };
       delete populatedSession.checkInImage;
       delete populatedSession.checkOutImage;
-      // Invalidate public available slots cache
       await delCache(`cache:public:available-slots:${data.facilityId}`);
 
       return populatedSession as any;
     } catch (error) {
-      // Rollback slot if slot was assigned
       if (slot && slot._id) {
         await ParkingSlot.updateOne(
           { _id: slot._id },
@@ -504,12 +446,7 @@ export class SessionService {
     }
   }
 
-  /**
-   * FR-8.3: Gợi ý tầng/khu vực phù hợp
-   * Danh sách tầng có slot trống cho loại xe, sorted by available DESC
-   */
   static async suggestFloors(facilityId: string, vehicleTypeId: string): Promise<SuggestedFloor[]> {
-    // Tìm floors phục vụ loại xe này
     const floors = await Floor.find({}).lean();
 
     if (floors.length === 0) {
@@ -518,7 +455,6 @@ export class SessionService {
 
     const floorIds = floors.map((f) => f._id);
 
-    // Aggregate available slots per floor
     const slotCounts = await ParkingSlot.aggregate([
       {
         $match: {
@@ -535,7 +471,6 @@ export class SessionService {
       },
     ]);
 
-    // Build result
     const floorMap = new Map<string, { available: number; total: number }>();
     for (const item of slotCounts) {
       const fid = item._id.floorId.toString();
@@ -559,16 +494,11 @@ export class SessionService {
       };
     });
 
-    // Sort by available DESC
     result.sort((a, b) => b.availableSlots - a.availableSlots);
 
     return result;
   }
 
-  /**
-   * FR-10.1: Tìm lượt gửi xe
-   * Tìm theo: cardCode, licensePlate, hoặc session code
-   */
   static async searchSession(query: { cardCode?: string; licensePlate?: string; code?: string }): Promise<IParkingSession> {
     const searchConditions: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
 
@@ -604,15 +534,12 @@ export class SessionService {
     }
 
     if (cacheKey) {
-      await setCache(cacheKey, session, 30); // 30s TTL
+      await setCache(cacheKey, session, 30);
     }
 
     return session as any;
   }
 
-  /**
-   * FR-9.2: Xem danh sách lượt gửi đang hoạt động
-   */
   static async getActiveSessions(query: any): Promise<{ data: IParkingSession[], total: number, page: number, totalPages: number }> {
     const {
       page = 1,
@@ -659,9 +586,6 @@ export class SessionService {
     };
   }
 
-  /**
-   * Lấy lưu lượng xe ra vào trong ngày hôm nay
-   */
   static async getTodayTraffic(facilityId?: string): Promise<{ trafficIn: number; trafficOut: number }> {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -685,17 +609,11 @@ export class SessionService {
     return { trafficIn, trafficOut };
   }
 
-  /**
-   * Lấy danh sách lượt gửi của tài khoản Customer (Driver)
-   * Tìm theo driverId HOẶC biển số xe đã đăng ký (cho walk-in sessions không có driverId)
-   */
   static async getMySessions(driverId: string, query: any): Promise<{ data: IParkingSession[], total: number }> {
-    // Lấy danh sách biển số xe đã đăng ký của user
     const { Vehicle } = require('../models/vehicle.model');
     const userVehicles = await Vehicle.find({ userId: driverId, isDeleted: false }).select('licensePlate').lean();
     const userPlates = userVehicles.map((v: any) => v.licensePlate.toUpperCase());
 
-    // Tìm sessions thuộc về user theo driverId HOẶC biển số xe đã đăng ký
     const orConditions: any[] = [{ driverId }];
     if (userPlates.length > 0) {
       orConditions.push({ licensePlate: { $in: userPlates }, driverId: null });
@@ -703,10 +621,10 @@ export class SessionService {
     const filter: any = { $or: orConditions };
 
     if (query.status) {
-      filter.status = query.status; // e.g., 'active' or 'completed'
+      filter.status = query.status;
     }
 
-    const sort: any = { checkInTime: -1 }; // Mới nhất lên đầu
+    const sort: any = { checkInTime: -1 };
 
     const [data, total] = await Promise.all([
       ParkingSession.find(filter)
@@ -724,10 +642,6 @@ export class SessionService {
     return { data: data as any[], total };
   }
 
-  /**
-   * FR-10.2: Tính phí tự động
-   * Hỗ trợ 3 phương thức: flat_rate, duration_based, time_window
-   */
   static async calculateFee(sessionIdOrSession: any, checkOutTime: Date = new Date()): Promise<{ totalFee: number, details: any }> {
     let session: any;
     let sessionId: string;
@@ -738,7 +652,6 @@ export class SessionService {
     } else {
       session = sessionIdOrSession;
       sessionId = session._id.toString();
-      // If it's a mongoose document, use populate if needed. If it's from Redis, it's already an object.
       if (typeof session.populate === 'function' && !session.populated('pricingPlanId')) {
         await session.populate('pricingPlanId');
       }
@@ -748,7 +661,7 @@ export class SessionService {
     const pricingPlan: any = session.pricingPlanId;
     if (!pricingPlan) throw new AppError('Không tìm thấy bảng giá cho session này', 400);
 
-    const checkInTime = new Date(session.checkInTime); // Parse in case it's a string from Redis
+    const checkInTime = new Date(session.checkInTime);
     const durationMs = checkOutTime.getTime() - checkInTime.getTime();
     if (durationMs < 0) {
       throw new AppError('Thời gian ra phải sau thời gian vào', 400);
@@ -757,9 +670,7 @@ export class SessionService {
     const durationMinutes = durationMs / (1000 * 60);
     const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
 
-    // ── Grace Period: miễn phí nếu gửi trong thời gian cho phép ──
     if (pricingPlan.gracePeriodMinutes > 0 && durationMinutes <= pricingPlan.gracePeriodMinutes) {
-      // Vẫn tính exception surcharge nếu có
       let exceptionSurcharge = 0;
       let lostCardFeeTotal = 0;
       const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED }).lean();
@@ -783,25 +694,19 @@ export class SessionService {
     let overnightFee = 0;
     let overtimeFee = 0;
 
-    // Tính số ngày chênh lệch (dùng cho flat_rate / duration_based overnight)
     const startDay = new Date(checkInTime.getFullYear(), checkInTime.getMonth(), checkInTime.getDate());
     const endDay = new Date(checkOutTime.getFullYear(), checkOutTime.getMonth(), checkOutTime.getDate());
     const daysDiff = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
 
-    // Xác định feeMethod (backward compat: nếu chưa có feeMethod thì suy từ feeType)
     const feeMethod = pricingPlan.feeMethod ||
       (pricingPlan.feeType === 'per_turn' ? 'flat_rate' : 'duration_based');
 
-    // ═══════════════════════════════════════════════════
-    // NHÁNH 1: FLAT_RATE (đồng giá theo lượt)
-    // ═══════════════════════════════════════════════════
     if (feeMethod === 'flat_rate') {
       baseFee = pricingPlan.rates[0]?.amount || 0;
       if (daysDiff > 0 && pricingPlan.overnightFee > 0) {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
 
-      // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
       if (pricingPlan.overtimeFeePerHour > 0) {
         const facility = await ParkingFacility.findById(session.facilityId).lean();
         if (facility && facility.openTime !== facility.closeTime) {
@@ -810,11 +715,7 @@ export class SessionService {
         }
       }
     }
-    // ═══════════════════════════════════════════════════
-    // NHÁNH 2: DURATION_BASED (theo thời gian gửi)
-    // ═══════════════════════════════════════════════════
     else if (feeMethod === 'duration_based') {
-      // Dùng index thay vì .find() label text — rates[0] = giờ đầu, rates[1] = giờ tiếp theo
       const firstRate = pricingPlan.rates[0]?.amount || 0;
       const nextRate = pricingPlan.rates[1]?.amount || firstRate;
       const firstBlock = pricingPlan.firstBlockHours || 1;
@@ -825,9 +726,8 @@ export class SessionService {
         baseFee = firstRate + (durationHours - firstBlock) * nextRate;
       }
 
-      // Áp dụng maxDailyFee (giá trần mỗi ngày)
       if (pricingPlan.maxDailyFee > 0) {
-        const totalDays = Math.max(1, daysDiff + 1); // ít nhất 1 ngày
+        const totalDays = Math.max(1, daysDiff + 1);
         const maxTotal = pricingPlan.maxDailyFee * totalDays;
         if (baseFee > maxTotal) {
           baseFee = maxTotal;
@@ -838,7 +738,6 @@ export class SessionService {
         overnightFee = pricingPlan.overnightFee * daysDiff;
       }
 
-      // Phí quá giờ: tính số giờ xe đậu NGOÀI giờ hoạt động của bãi
       if (pricingPlan.overtimeFeePerHour > 0) {
         const facility = await ParkingFacility.findById(session.facilityId).lean();
         if (facility && facility.openTime !== facility.closeTime) {
@@ -847,12 +746,7 @@ export class SessionService {
         }
       }
     }
-    // ═══════════════════════════════════════════════════
-    // NHÁNH 3: TIME_WINDOW (theo khung giờ trong ngày)
-    // Rates chỉ phủ giờ hoạt động → ngoài giờ tính overtimeFeePerHour
-    // ═══════════════════════════════════════════════════
     else if (feeMethod === 'time_window') {
-      // Lookup facility operating hours
       const facility = await ParkingFacility.findById(session.facilityId).lean();
       if (!facility) throw new AppError('Facility không tồn tại', 404);
 
@@ -865,12 +759,10 @@ export class SessionService {
       baseFee = twResult.baseFee;
       overtimeFee = twResult.overtimeFee;
     }
-    // Fallback
     else {
       baseFee = pricingPlan.rates[0]?.amount || 0;
     }
 
-    // ── Cộng phí từ exception đã resolved (surcharge + lostCardFee) ──
     let exceptionSurcharge = 0;
     let lostCardFeeTotal = 0;
 
@@ -904,10 +796,6 @@ export class SessionService {
     };
   }
 
-  /**
-   * Helper: Tính số phút xe đậu NGOÀI giờ hoạt động của bãi.
-   * Dùng chung cho flat_rate và duration_based.
-   */
   private static calculateOvertimeMinutes(
     checkIn: Date, checkOut: Date,
     openTime: string, closeTime: string
@@ -925,42 +813,20 @@ export class SessionService {
       let isOutside: boolean;
 
       if (openMin < closeMin) {
-        // Bãi bình thường: VD 06:00-22:00 → ngoài giờ = trước 06:00 hoặc từ 22:00
         isOutside = minuteOfDay < openMin || minuteOfDay >= closeMin;
       } else {
-        // Bãi qua đêm: VD 22:00-06:00 → ngoài giờ = từ 06:00 đến 22:00
         isOutside = minuteOfDay >= closeMin && minuteOfDay < openMin;
       }
 
       if (isOutside) {
         overtimeMinutes++;
       }
-      cursor.setTime(cursor.getTime() + 60000); // +1 phút
+      cursor.setTime(cursor.getTime() + 60000);
     }
 
     return overtimeMinutes;
   }
 
-  /**
-   * Thuật toán tính phí theo khung giờ trong ngày (Time-Window)
-   *
-   * Logic mới:
-   * - Rates chỉ phủ giờ hoạt động (openTime → closeTime)
-   * - Ngoài giờ hoạt động → tính theo overtimeFeePerHour
-   * - Hỗ trợ: bãi 24h (openTime === closeTime → không có overtime),
-   *   bãi bình thường (VD: 06:00-22:00), bãi qua đêm (VD: 22:00-06:00)
-   *
-   * VD: Bãi 06:00-22:00, overtimeFeePerHour = 50,000đ
-   *   rates = [
-   *     { startTime: "06:00", endTime: "12:00", amount: 5000 },
-   *     { startTime: "12:00", endTime: "22:00", amount: 10000 },
-   *   ]
-   *   Gửi 21:00 → 07:00 hôm sau:
-   *     - 21:00-22:00 (1h khung 10k) = 10,000đ
-   *     - 22:00-06:00 (8h overtime @ 50k) = 400,000đ
-   *     - 06:00-07:00 (1h khung 5k) = 5,000đ
-   *     - Tổng baseFee=15k, overtimeFee=400k → Total=415k
-   */
   private static calculateTimeWindowFee(
     checkIn: Date, checkOut: Date,
     rates: Array<{ startTime?: string; endTime?: string; amount: number }>,
@@ -975,12 +841,9 @@ export class SessionService {
     const closeMin = cH * 60 + cM;
     const is24h = openMin === closeMin;
 
-    // ── Bước 1: Xây dựng danh sách interval phủ kín 24h ──
-    // Mỗi interval có: from, to (phút trong ngày), amount, isOvertime
     type Interval = { from: number; to: number; amount: number; isOvertime: boolean };
     const allIntervals: Interval[] = [];
 
-    // 1a. Thêm rate intervals (trong giờ hoạt động)
     for (const r of rates) {
       if (!r.startTime || !r.endTime) continue;
       const [sH, sM] = r.startTime.split(':').map(Number);
@@ -990,17 +853,13 @@ export class SessionService {
       if (start < end) {
         allIntervals.push({ from: start, to: end, amount: r.amount, isOvertime: false });
       } else if (start > end) {
-        // Khung qua đêm → tách thành 2 khoảng
         allIntervals.push({ from: start, to: 1440, amount: r.amount, isOvertime: false });
         allIntervals.push({ from: 0, to: end, amount: r.amount, isOvertime: false });
       }
     }
 
-    // 1b. Thêm overtime intervals (ngoài giờ hoạt động) — chỉ khi không phải 24h
     if (!is24h) {
       if (openMin < closeMin) {
-        // Bãi bình thường: VD 06:00-22:00
-        // Overtime: [0, openMin) và [closeMin, 1440)
         if (openMin > 0) {
           allIntervals.push({ from: 0, to: openMin, amount: overtimeFeePerHour, isOvertime: true });
         }
@@ -1008,8 +867,6 @@ export class SessionService {
           allIntervals.push({ from: closeMin, to: 1440, amount: overtimeFeePerHour, isOvertime: true });
         }
       } else {
-        // Bãi qua đêm: VD 22:00-06:00
-        // Overtime: [closeMin, openMin)
         if (closeMin < openMin) {
           allIntervals.push({ from: closeMin, to: openMin, amount: overtimeFeePerHour, isOvertime: true });
         }
@@ -1018,7 +875,6 @@ export class SessionService {
 
     allIntervals.sort((a, b) => a.from - b.from);
 
-    // ── Bước 2: Duyệt từ checkIn → checkOut theo từng segment ──
     let baseFee = 0;
     let overtimeFee = 0;
     const current = new Date(checkIn);
@@ -1026,18 +882,14 @@ export class SessionService {
     while (current < checkOut) {
       const minuteOfDay = current.getHours() * 60 + current.getMinutes();
 
-      // Tìm interval chứa thời điểm hiện tại
       const interval = allIntervals.find(fi => minuteOfDay >= fi.from && minuteOfDay < fi.to);
       if (!interval) {
-        // Không tìm thấy khung — skip 1 phút (safety fallback)
         current.setTime(current.getTime() + 60000);
         continue;
       }
 
-      // Xác định thời điểm kết thúc segment: ranh giới interval hoặc checkOut
       const segEndDate = new Date(current);
       if (interval.to === 1440) {
-        // Kết thúc lúc nửa đêm → 00:00 ngày hôm sau
         segEndDate.setDate(segEndDate.getDate() + 1);
         segEndDate.setHours(0, 0, 0, 0);
       } else {
@@ -1045,7 +897,6 @@ export class SessionService {
       }
       const segmentEnd = checkOut < segEndDate ? checkOut : segEndDate;
 
-      // Tính phí theo phút (tránh làm tròn lên từng segment gây tính dư)
       const durationMs = segmentEnd.getTime() - current.getTime();
       const durationMinutes = durationMs / (1000 * 60);
       const perMinuteRate = interval.amount / 60;
@@ -1056,15 +907,12 @@ export class SessionService {
         baseFee += durationMinutes * perMinuteRate;
       }
 
-      // Chuyển sang segment tiếp theo
       current.setTime(segmentEnd.getTime());
     }
 
-    // ── Bước 3: Làm tròn lên hàng đơn vị (chỉ làm tròn 1 lần ở cuối) ──
     baseFee = Math.ceil(baseFee);
     overtimeFee = Math.ceil(overtimeFee);
 
-    // ── Bước 4: Áp dụng maxDailyFee (giá trần) chỉ lên baseFee ──
     if (maxDailyFee > 0) {
       const startDay = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate());
       const endDay = new Date(checkOut.getFullYear(), checkOut.getMonth(), checkOut.getDate());
@@ -1078,15 +926,11 @@ export class SessionService {
     return { baseFee, overtimeFee };
   }
 
-  /**
-   * FR-10.3: Thu phí gửi xe và check-out (Tạo Payment tiền mặt tự động)
-   */
   static async checkOut(data: { sessionId: string, gateOut: string, staffOutId: string, checkOutImage?: string }): Promise<IParkingSession> {
     const sessionMongoose = await mongoose.startSession();
     sessionMongoose.startTransaction();
 
     try {
-      // Execute sequentially because MongoDB does not support concurrent operations on the same transaction session
       const session = await ParkingSession.findById(data.sessionId).session(sessionMongoose);
       const staffUser = await User.findById(data.staffOutId).select('assignedFacilities').session(sessionMongoose);
 
@@ -1098,7 +942,6 @@ export class SessionService {
         throw new AppError('Lượt gửi xe đang có ngoại lệ chưa được xử lý. Vui lòng giải quyết ngoại lệ trước khi checkout.', 400);
       }
 
-      // Validate staff được phân công tại facility của session này (FR-18.6)
       if (!staffUser) throw new AppError('Staff user not found', 404);
       const isAssigned = staffUser.assignedFacilities.some(
         (fId) => fId.toString() === session.facilityId.toString()
@@ -1108,13 +951,10 @@ export class SessionService {
       }
 
       const checkOutTime = new Date();
-      // Pass session object instead of ID to avoid a DB query inside calculateFee
       const feeResult = await this.calculateFee(session, checkOutTime);
 
-      // IMPORT ĐỘNG TRÁNH CIRCULAR DEPENDENCY VỚI MODEL/PAYMENT NẾU CẦN
       const { Payment, PaymentMethod, PaymentStatus } = require('../models/payment.model');
 
-      // Tự động tạo một record Payment (CASH)
       const transactionCode = `CASH${Date.now()}${Math.floor(Math.random() * 1000)}`;
       const payment = new Payment({
         sessionId: data.sessionId,
@@ -1137,7 +977,6 @@ export class SessionService {
 
       await session.save({ session: sessionMongoose });
 
-      // Update slot -> Available
       const slot = await ParkingSlot.findById(session.slotId).session(sessionMongoose);
       if (slot) {
         slot.status = SlotStatus.AVAILABLE;
@@ -1146,7 +985,6 @@ export class SessionService {
         await slot.save({ session: sessionMongoose });
       }
 
-      // Commit Transaction
       await sessionMongoose.commitTransaction();
       sessionMongoose.endSession();
 
@@ -1159,7 +997,6 @@ export class SessionService {
         .populate('staffInId', 'name email')
         .populate('staffOutId', 'name email');
 
-      // Emit socket event
       try {
         const io = getIO();
         io.to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
@@ -1171,13 +1008,10 @@ export class SessionService {
           io.to(`user:${session.driverId}`).emit('session:completed', { sessionId: session._id });
         }
       } catch (err) {
-        // Ignore if socket is not initialized
       }
       
-      // Invalidate report cache since new checkout/payment occurred
       delPattern('report:*').catch(() => {});
 
-      // Invalidate search caches & remove from active set
       if (session.licensePlate) {
         await delCache(`session:plate:${session.licensePlate}`);
       }
@@ -1186,11 +1020,9 @@ export class SessionService {
         await sRem('activeCards', session.cardCode);
       }
 
-      // Defer Background Upload (Push to BullMQ)
       console.log(`[Checkout] Triggering upload job for session ${session._id}`);
       addUploadJob(session._id.toString()).catch(err => console.error('[Checkout] Upload job failed:', err));
 
-      // Invalidate public available slots cache
       await delCache(`cache:public:available-slots:${session.facilityId}`);
 
       return populatedSession!;

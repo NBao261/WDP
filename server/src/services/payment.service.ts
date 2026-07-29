@@ -13,9 +13,6 @@ import { UploadService } from './upload.service';
 import { addUploadJob } from '../queues/uploadQueue';
 
 export class PaymentService {
-  /**
-   * Tạo Payment Intent (Dành cho thanh toán Online trước khi ra cổng)
-   */
   static async createPaymentIntent(data: {
     sessionId: string;
     method: PaymentMethod;
@@ -31,11 +28,9 @@ export class PaymentService {
       throw new AppError('Lượt gửi xe đã kết thúc', 400);
     }
 
-    // Tính toán số tiền hiện tại
     const feeResult = await SessionService.calculateFee(data.sessionId, new Date());
     const totalFee = feeResult.totalFee;
 
-    // Sinh mã giao dịch ngẫu nhiên
     const transactionCode = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
     const payment = new Payment({
@@ -59,7 +54,6 @@ export class PaymentService {
     let qrCodeUrl;
 
     if (data.method === PaymentMethod.E_WALLET || data.method === PaymentMethod.QR_PAY) {
-      // Integration with Momo API
       const accessKey = env.MOMO_ACCESS_KEY;
       const secretKey = env.MOMO_SECRET_KEY;
       const partnerCode = env.MOMO_PARTNER_CODE;
@@ -110,56 +104,44 @@ export class PaymentService {
     return { payment, paymentUrl, qrCodeUrl };
   }
 
-  /**
-   * Xử lý Webhook khi thanh toán online thành công
-   * Sử dụng MongoDB Transaction để đảm bảo tính toàn vẹn
-   */
   static async confirmPaymentWebhook(transactionCode: string): Promise<void> {
     const sessionMongoose = await mongoose.startSession();
     sessionMongoose.startTransaction();
 
     try {
-      // 1. Tìm Payment PENDING
       const payment = await Payment.findOne({ transactionCode }).session(sessionMongoose);
       if (!payment) {
         throw new AppError('Không tìm thấy giao dịch', 404);
       }
       if (payment.status === PaymentStatus.COMPLETED) {
-        // Idempotency: Giao dịch đã được xử lý
         await sessionMongoose.abortTransaction();
         sessionMongoose.endSession();
         return;
       }
 
-      // 2. Tìm Session liên quan
       const session = await ParkingSession.findById(payment.sessionId).session(sessionMongoose);
       if (!session) {
         throw new AppError('Không tìm thấy lượt gửi xe', 404);
       }
 
-      // 3. Tìm Slot
       const slot = await ParkingSlot.findById(session.slotId).session(sessionMongoose);
 
-      // 4. Cập nhật Payment -> COMPLETED
       payment.status = PaymentStatus.COMPLETED;
       await payment.save({ session: sessionMongoose });
 
-      // 5. Cập nhật Session -> COMPLETED
       session.checkOutTime = new Date();
       session.status = SessionStatus.COMPLETED;
       session.totalFee = payment.amount;
 
-      // Khôi phục checkOutImage, gateOut, staffOutId từ metadata payment.note
       try {
         const meta = JSON.parse(payment.note || '{}');
         if (meta.checkOutImage) session.checkOutImage = meta.checkOutImage;
         if (meta.gateOut) session.gateOut = meta.gateOut;
         if (meta.staffOutId) session.staffOutId = new mongoose.Types.ObjectId(meta.staffOutId);
-      } catch (_) { /* note không phải JSON, bỏ qua */ }
+      } catch (_) { }
 
       await session.save({ session: sessionMongoose });
 
-      // 6. Cập nhật Slot -> AVAILABLE
       if (slot) {
         slot.status = SlotStatus.AVAILABLE;
         slot.currentSessionId = null;
@@ -167,11 +149,9 @@ export class PaymentService {
         await slot.save({ session: sessionMongoose });
       }
 
-      // Commit Transaction
       await sessionMongoose.commitTransaction();
       sessionMongoose.endSession();
 
-      // Xử lý Async / Side-effects sau khi commit thành công
       try {
         const io = getIO();
         io.to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
@@ -187,7 +167,6 @@ export class PaymentService {
           io.to(`user:${session.driverId}`).emit('session:completed', { sessionId: session._id });
         }
       } catch (e) {
-        // Bỏ qua lỗi socket
       }
       
       delPattern('report:*').catch(() => {});
@@ -200,9 +179,6 @@ export class PaymentService {
     }
   }
 
-  /**
-   * Kiểm tra trạng thái giao dịch Momo (Dành cho Polling)
-   */
   static async checkMomoOrderStatus(transactionCode: string): Promise<boolean> {
     const payment = await Payment.findOne({ transactionCode });
     if (!payment) return false;
@@ -228,9 +204,7 @@ export class PaymentService {
         signature
       });
       
-      // resultCode = 0 nghĩa là giao dịch thành công
       if (response.data && response.data.resultCode === 0) {
-        // Gọi lại webhook logic để chốt đơn
         await this.confirmPaymentWebhook(transactionCode);
         return true;
       }
@@ -241,9 +215,6 @@ export class PaymentService {
     }
   }
 
-  /**
-   * Lấy lịch sử payment của một Session (Tuỳ chọn)
-   */
   static async getPaymentsBySession(sessionId: string): Promise<IPayment[]> {
     return await Payment.find({ sessionId }).sort({ createdAt: -1 }).populate('staffId', 'name email');
   }

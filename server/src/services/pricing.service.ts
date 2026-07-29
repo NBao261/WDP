@@ -5,7 +5,6 @@ import { ParkingSession } from '../models/parkingSession.model';
 import { AppError } from '../middlewares/error.middleware';
 import { delCache } from '../config/redis';
 
-// ── Helper: Validate time_window rates phủ kín giờ hoạt động ──
 function getTimeWindowIntervals(rates: Array<{ startTime?: string; endTime?: string }>): Array<[number, number]> {
   const intervals: Array<[number, number]> = [];
   for (const rate of rates) {
@@ -35,7 +34,6 @@ function validateTimeWindowCoverage(
   const closeMin = cH * 60 + cM;
   const is24h = openMin === closeMin;
 
-  // Tính tổng phút giờ hoạt động
   let operatingMinutes: number;
   let operatingIntervals: Array<[number, number]>;
 
@@ -43,20 +41,16 @@ function validateTimeWindowCoverage(
     operatingMinutes = 1440;
     operatingIntervals = [[0, 1440]];
   } else if (openMin < closeMin) {
-    // Bình thường: VD 06:00-22:00
     operatingMinutes = closeMin - openMin;
     operatingIntervals = [[openMin, closeMin]];
   } else {
-    // Qua đêm: VD 22:00-06:00
     operatingMinutes = (1440 - openMin) + closeMin;
     operatingIntervals = [[openMin, 1440], [0, closeMin]];
   }
 
-  // Flatten rates thành intervals
   const rateIntervals = getTimeWindowIntervals(rates);
   const rateMinutes = rateIntervals.reduce((sum, [s, e]) => sum + (e - s), 0);
 
-  // Check tổng phút khớp
   if (rateMinutes !== operatingMinutes) {
     throw new AppError(
       `Các khung giờ phải phủ kín giờ hoạt động (${openTime} - ${closeTime} = ${operatingMinutes} phút). Hiện tại rates chỉ phủ ${rateMinutes} phút.`,
@@ -64,7 +58,6 @@ function validateTimeWindowCoverage(
     );
   }
 
-  // Check mỗi rate interval nằm trong giờ hoạt động
   for (const [rStart, rEnd] of rateIntervals) {
     const isWithinOperating = operatingIntervals.some(
       ([oStart, oEnd]) => rStart >= oStart && rEnd <= oEnd
@@ -82,19 +75,16 @@ function validateTimeWindowCoverage(
 
 export class PricingService {
   static async createPricingPlan(data: Partial<IPricingPlan>): Promise<IPricingPlan> {
-    // Validate vehicleType tồn tại
     const vehicleType = await VehicleType.findById(data.vehicleTypeId);
     if (!vehicleType || vehicleType.isDeleted) {
       throw new AppError('Loại phương tiện không tồn tại hoặc đã bị xoá', 400);
     }
 
-    // Validate facility tồn tại
     const facility = await ParkingFacility.findById(data.facilityId);
     if (!facility) {
       throw new AppError('Bãi xe không tồn tại', 400);
     }
 
-    // Auto-set feeMethod nếu không truyền
     if (!data.feeMethod) {
       if (data.feeType === 'per_turn') {
         data.feeMethod = FeeMethod.FLAT_RATE;
@@ -103,13 +93,10 @@ export class PricingService {
       }
     }
 
-    // Validate time_window: rates phải phủ kín giờ hoạt động
     if (data.feeMethod === FeeMethod.TIME_WINDOW && data.rates) {
       validateTimeWindowCoverage(data.rates, facility.openTime, facility.closeTime);
     }
 
-    // Deactivate existing active plans for same facility+vehicleType
-    // (status defaults to 'active' in schema, so deactivate unless explicitly creating as inactive)
     if (data.status !== 'inactive') {
       await PricingPlan.updateMany(
         { facilityId: data.facilityId, vehicleTypeId: data.vehicleTypeId, status: 'active' },
@@ -134,7 +121,6 @@ export class PricingService {
       throw new AppError('Pricing plan not found', 404);
     }
 
-    // ── Chặn sửa giá khi có session active đang dùng bảng giá này ──
     const pricingAffectingFields: (keyof IPricingPlan)[] = [
       'rates', 'feeType', 'feeMethod', 'overnightFee', 'overtimeFeePerHour',
       'firstBlockHours', 'maxDailyFee', 'gracePeriodMinutes', 'lostCardFee',
@@ -155,7 +141,6 @@ export class PricingService {
             break;
           }
         } else {
-          // Normalize values for comparison
           let newVal = data[field];
           let oldVal = planToUpdate[field as keyof IPricingPlan];
           
@@ -184,7 +169,6 @@ export class PricingService {
       }
     }
 
-    // Validate time_window coverage khi cập nhật rates
     const effectiveFeeMethod = data.feeMethod || (await PricingPlan.findById(id))?.feeMethod;
     if (effectiveFeeMethod === FeeMethod.TIME_WINDOW && data.rates) {
       const planForFacility = await PricingPlan.findById(id);
@@ -196,14 +180,12 @@ export class PricingService {
       }
     }
 
-    // If the plan is being set to active, deactivate others
     if (data.status === 'active') {
       await PricingPlan.updateMany(
         { facilityId: planToUpdate.facilityId, vehicleTypeId: planToUpdate.vehicleTypeId, _id: { $ne: id }, status: 'active' },
         { status: 'inactive' }
       );
     } else if (data.status === 'inactive' || data.isDeleted) {
-      // Prevent deactivating the last active plan
       if (planToUpdate.status === 'active') {
         const activeCount = await PricingPlan.countDocuments({
           facilityId: planToUpdate.facilityId,
@@ -270,9 +252,6 @@ export class PricingService {
     return { pricingPlans, total };
   }
 
-  /**
-   * Kiểm tra số lượt gửi xe đang active sử dụng bảng giá này
-   */
   static async getActiveSessionCount(pricingPlanId: string): Promise<number> {
     const count = await ParkingSession.countDocuments({
       pricingPlanId,

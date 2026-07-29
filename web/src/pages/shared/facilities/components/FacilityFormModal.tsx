@@ -645,28 +645,8 @@ export function FacilityFormModal({
                   errors.location ? 'border-red-400' : 'border-gray-200'
                 }`}
               >
-                <MapContainer
-                  center={DEFAULT_CENTER}
-                  zoom={DEFAULT_ZOOM}
-                  style={{ height: 300, width: '100%' }}
-                  scrollWheelZoom={true}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  {/* Click anywhere on map → reverse geocode */}
-                  <MapClickHandler onLocationSelect={handleMapClick} />
-                  {/* FlyTo when selecting a suggestion or clicking map */}
-                  {mapTarget && <MapFlyTo lat={mapTarget.lat} lng={mapTarget.lng} />}
-                  {/* Marker at selected coordinates */}
-                  {form.latitude !== null && form.longitude !== null && (
-                    <Marker position={[form.latitude, form.longitude]} icon={defaultIcon} />
-                  )}
-                </MapContainer>
-
                 {/* ── MAP SEARCH BAR ── */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md" style={{ zIndex: 9999 }}>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md z-[1000]">
                   <div className="relative shadow-md rounded-xl bg-white/90 backdrop-blur-sm">
                     <Search
                       size={16}
@@ -718,6 +698,7 @@ export function FacilityFormModal({
                     </div>
                   )}
                 </div>
+
                 <MapContainer
                   center={DEFAULT_CENTER}
                   zoom={DEFAULT_ZOOM}

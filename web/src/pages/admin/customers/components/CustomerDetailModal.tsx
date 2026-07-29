@@ -33,6 +33,13 @@ export function CustomerDetailModal({
 }: CustomerDetailModalProps) {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      document.body.style.pointerEvents = '';
+      document.body.style.overflow = '';
+    }
+  }, [isOpen]);
+
   const handleToggleLock = async () => {
     if (!user) return;
     setIsActionLoading(true);

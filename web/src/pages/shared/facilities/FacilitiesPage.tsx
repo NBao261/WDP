@@ -347,7 +347,7 @@ export default function FacilitiesPage() {
           floor={editingFloor}
           facilityId={data.viewFacility._id}
           vehicleTypes={data.vehicleTypes}
-          onSuccess={data.refreshFloors}
+          onSuccess={() => data.fetchAll(true)}
           currentFloorCount={data.filteredFloors.length}
           maxFloors={data.viewFacility.totalFloors}
         />

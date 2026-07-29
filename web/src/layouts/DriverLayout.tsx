@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { LogOut, User, Car, Clock, LayoutDashboard } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { PageTransition } from '../components/ui/PageTransition';
 
 const DriverLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -76,16 +76,9 @@ const DriverLayout: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-[1400px] mx-auto p-4 md:p-8 relative">
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-          className="h-full"
-        >
+        <PageTransition>
           <Outlet />
-        </motion.div>
+        </PageTransition>
       </main>
 
       {/* Mobile Bottom Nav */}

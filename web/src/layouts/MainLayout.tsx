@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MainContent } from './MainContent';
+import { PageTransition } from '../components/ui/PageTransition';
 
 const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,7 +15,9 @@ const MainLayout = () => {
       <MainContent>
         <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         <div className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4 lg:pb-8 pt-[10px] flex flex-col min-h-0">
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </div>
       </MainContent>
     </div>

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store';
 import { ConfirmModal } from '../components/ConfirmModal';
 import TerminalToolbar from '../pages/staff/vehicleCheck/components/TerminalToolbar';
 import GlobalExceptionPanel from '../pages/staff/vehicleCheck/components/GlobalExceptionPanel';
+import { PageTransition } from '../components/ui/PageTransition';
 
 export default function StaffLayout() {
   const { logout } = useAuthStore();
@@ -38,7 +39,9 @@ export default function StaffLayout() {
     <div className="flex flex-col h-screen bg-[#eff0ef] text-brand font-sans overflow-hidden">
       {/* MAIN CONTENT - No top header, full screen layout */}
       <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
 
       <TerminalToolbar />
@@ -61,7 +64,7 @@ export default function StaffLayout() {
           currentSession={exceptionContext?.currentSession || null}
           onClose={() => setShowGlobalException(false)}
           onExceptionCreated={() => {
-            window.dispatchEvent(new CustomEvent("RESET_CHECKOUT"));
+            window.dispatchEvent(new CustomEvent('RESET_CHECKOUT'));
           }}
         />
       )}

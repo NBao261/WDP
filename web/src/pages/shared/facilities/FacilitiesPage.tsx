@@ -300,10 +300,6 @@ export default function FacilitiesPage() {
                   a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
                 );
                 data.setMapSlots(sorted);
-                data.setAllSlots((prev: ParkingSlot[]) => [
-                  ...prev.filter((s) => s.floorId !== data.mapFloor!._id),
-                  ...sorted,
-                ]);
               } catch {
                 toast.error('Lỗi tải dữ liệu');
               } finally {

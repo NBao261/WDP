@@ -21,7 +21,6 @@ export function useFacilitiesData() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [slotStatsByFloor, setSlotStatsByFloor] = useState<Record<string, FloorSlotStats>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [viewFacility, setViewFacility] = useState<Facility | null>(null);

@@ -22,6 +22,7 @@ import {
   Phone,
   Mail,
   CalendarClock,
+  Wrench,
 } from 'lucide-react';
 import { getOptimizedImageUrl } from '../../../../utils/cloudinary';
 import {
@@ -924,15 +925,29 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                 {/* Right Column: Image */}
                 <div className="bg-[#fafafa] flex flex-col items-center p-7 relative overflow-hidden">
                   {!session && !reservation ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                        {(() => { const DefIcon = ICON_MAP[DEFAULT_ICON]; return <DefIcon size={24} className="text-gray-300" />; })()}
+                    displaySlot.status === 'maintenance' || displaySlot.status === 'locked' ? (
+                      <div className="flex flex-col items-center justify-center h-full text-center text-amber-500">
+                        <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center shadow-sm mb-4 border-2 border-amber-200">
+                          <Wrench size={32} className="text-amber-500" />
+                        </div>
+                        <p className="text-[14px] font-bold text-amber-700 mb-1">
+                          {displaySlot.status === 'maintenance' ? 'Đang bảo trì' : 'Đã khóa'}
+                        </p>
+                        <p className="text-[13px] text-amber-600/80">
+                          {displaySlot.maintenanceReason || 'Vị trí này tạm thời không khả dụng.'}
+                        </p>
                       </div>
-                      <p className="text-[14px] font-medium text-gray-500 mb-1">
-                        Vị trí đang trống
-                      </p>
-                      <p className="text-[13px]">Chưa có xe nào đang đỗ tại đây.</p>
-                    </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                          {(() => { const DefIcon = ICON_MAP[DEFAULT_ICON]; return <DefIcon size={24} className="text-gray-300" />; })()}
+                        </div>
+                        <p className="text-[14px] font-medium text-gray-500 mb-1">
+                          Vị trí đang trống
+                        </p>
+                        <p className="text-[13px]">Chưa có xe nào đang đỗ tại đây.</p>
+                      </div>
+                    )
                   ) : reservation && !session ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                       <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center shadow-sm mb-4 border-2 border-blue-200">

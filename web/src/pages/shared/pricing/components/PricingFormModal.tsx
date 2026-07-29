@@ -46,6 +46,27 @@ interface FormModalProps {
   selectedVehicleTypeId?: string;
 }
 
+const getMidTime = (open: string, close: string) => {
+  if (!open || !close) return '12:00';
+  const parse = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  const format = (m: number) => {
+    const h = Math.floor(m / 60) % 24;
+    const mins = Math.floor(m % 60);
+    return `${h.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  const o = parse(open);
+  let c = parse(close);
+  if (c <= o) {
+    c += 24 * 60;
+  }
+  const mid = o + (c - o) / 2;
+  return format(mid);
+};
+
 export function PricingFormModal({
   plan,
   facilities,
@@ -923,60 +944,75 @@ export function PricingFormModal({
                             </div>
                           </div>
                           
-                          {!hasActiveSessions && (
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {currentFacility && currentFacility.openTime && currentFacility.closeTime && (
+                          {!hasActiveSessions && currentFacility && currentFacility.openTime && currentFacility.closeTime && (() => {
+                            const open = currentFacility.openTime;
+                            const close = currentFacility.closeTime;
+                            const mid = getMidTime(open, close);
+                            return (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setValue(`rates.${idx}.startTime`, currentFacility.openTime);
-                                    setValue(`rates.${idx}.endTime`, currentFacility.closeTime);
+                                    setValue(`rates.${idx}.startTime`, open);
+                                    setValue(`rates.${idx}.endTime`, close);
                                     trigger(`rates.${idx}.startTime`);
                                     trigger(`rates.${idx}.endTime`);
                                   }}
                                   className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-[#9FE870]/20 text-[#062F28] hover:bg-[#9FE870]/40 transition-colors border border-[#9FE870]/30"
                                 >
-                                  Giờ HĐ toà nhà
+                                  Giờ HĐ ({open}-{close})
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setValue(`rates.${idx}.startTime`, '00:00');
-                                  setValue(`rates.${idx}.endTime`, '23:59');
-                                  trigger(`rates.${idx}.startTime`);
-                                  trigger(`rates.${idx}.endTime`);
-                                }}
-                                className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                              >
-                                Cả ngày (24h)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setValue(`rates.${idx}.startTime`, '06:00');
-                                  setValue(`rates.${idx}.endTime`, '18:00');
-                                  trigger(`rates.${idx}.startTime`);
-                                  trigger(`rates.${idx}.endTime`);
-                                }}
-                                className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                              >
-                                Ngày (06:00-18:00)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setValue(`rates.${idx}.startTime`, '18:00');
-                                  setValue(`rates.${idx}.endTime`, '06:00');
-                                  trigger(`rates.${idx}.startTime`);
-                                  trigger(`rates.${idx}.endTime`);
-                                }}
-                                className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                              >
-                                Đêm (18:00-06:00)
-                              </button>
-                            </div>
-                          )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setValue(`rates.${idx}.startTime`, open);
+                                    setValue(`rates.${idx}.endTime`, mid);
+                                    trigger(`rates.${idx}.startTime`);
+                                    trigger(`rates.${idx}.endTime`);
+                                  }}
+                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                                >
+                                  Nửa đầu ({open}-{mid})
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setValue(`rates.${idx}.startTime`, mid);
+                                    setValue(`rates.${idx}.endTime`, close);
+                                    trigger(`rates.${idx}.startTime`);
+                                    trigger(`rates.${idx}.endTime`);
+                                  }}
+                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                                >
+                                  Nửa sau ({mid}-{close})
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setValue(`rates.${idx}.startTime`, close);
+                                    setValue(`rates.${idx}.endTime`, open);
+                                    trigger(`rates.${idx}.startTime`);
+                                    trigger(`rates.${idx}.endTime`);
+                                  }}
+                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                                >
+                                  Ngoài HĐ ({close}-{open})
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setValue(`rates.${idx}.startTime`, '00:00');
+                                    setValue(`rates.${idx}.endTime`, '23:59');
+                                    trigger(`rates.${idx}.startTime`);
+                                    trigger(`rates.${idx}.endTime`);
+                                  }}
+                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                                >
+                                  Cả ngày (24h)
+                                </button>
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
 

@@ -81,9 +81,9 @@ export function CustomerDetailModal({
   if (!user) return null;
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AnimatePresence>
-        {isOpen && (
+    <AnimatePresence>
+      {isOpen && (
+        <Dialog.Root open={true} onOpenChange={(open) => !open && onClose()}>
           <Dialog.Portal forceMount>
             <Dialog.Overlay asChild>
               <motion.div
@@ -177,8 +177,8 @@ export function CustomerDetailModal({
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>
-        )}
-      </AnimatePresence>
-    </Dialog.Root>
+        </Dialog.Root>
+      )}
+    </AnimatePresence>
   );
 }

@@ -263,8 +263,8 @@ export function FloorFormModal({
     filledGroups.forEach((g) => {
       const i = slotGroups.indexOf(g);
       if (!g.prefix.trim()) newErrors[`slotGroup_${i}_prefix`] = 'Nhập tiền tố';
-      if (g.count === '' || Number(g.count) < 0)
-        newErrors[`slotGroup_${i}_count`] = 'Nhập số lượng';
+      if (Number(g.count) < 0)
+        newErrors[`slotGroup_${i}_count`] = 'Số lượng không hợp lệ';
     });
 
     // In create mode, must have at least some slots
@@ -776,10 +776,9 @@ export function FloorFormModal({
                                       if (val > maxAllowed) val = maxAllowed;
                                       updateSlotGroup(index, { count: val });
                                     }}
-                                    placeholder="50"
+                                    placeholder="0"
                                     className={`w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
-                                      errors[`slotGroup_${index}_count`] ||
-                                      Number(group.count) > maxAllowed
+                                      errors[`slotGroup_${index}_count`] || Number(group.count) > maxAllowed
                                         ? 'border-red-400'
                                         : 'border-gray-200'
                                     }`}

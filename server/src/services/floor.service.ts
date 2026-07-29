@@ -14,7 +14,7 @@ export class FloorService {
     });
 
     if (existingFloor) {
-      throw new AppError('Floor name already exists in this facility', 400);
+      throw new AppError('Tên tầng đã tồn tại trong cơ sở này', 400);
     }
 
     const newFloor = new Floor(data);
@@ -46,10 +46,23 @@ export class FloorService {
       }
     }
 
-    const floor = await Floor.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    const floor = await Floor.findById(id);
     if (!floor) {
       throw new AppError('Floor not found', 404);
     }
+
+    if (data.name && data.name !== floor.name) {
+      const existingFloor = await Floor.findOne({
+        name: data.name,
+        facilityId: floor.facilityId,
+        isDeleted: false
+      });
+      if (existingFloor) {
+        throw new AppError('Tên tầng đã tồn tại trong cơ sở này', 400);
+      }
+    }
+
+    const updatedFloor = await Floor.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
     if (data.status === 'inactive') {
       // Cascade: slots available → maintenance

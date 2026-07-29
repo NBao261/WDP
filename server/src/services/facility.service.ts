@@ -10,9 +10,24 @@ import { getIO } from '../config/socket';
 
 export class FacilityService {
   static async createFacility(data: Partial<IParkingFacility>): Promise<IParkingFacility> {
-    const existingFacility = await ParkingFacility.findOne({ name: data.name });
-    if (existingFacility) {
-      throw new AppError('Facility name already exists', 400);
+    const existingName = await ParkingFacility.findOne({ name: data.name });
+    if (existingName) {
+      throw new AppError('Tên toà nhà đã tồn tại', 400);
+    }
+
+    const existingAddress = await ParkingFacility.findOne({ address: data.address });
+    if (existingAddress) {
+      throw new AppError('Địa chỉ toà nhà đã tồn tại', 400);
+    }
+
+    if (data.location?.coordinates && data.location.coordinates.length === 2) {
+      const [lng, lat] = data.location.coordinates;
+      if (lng !== 0 || lat !== 0) {
+        const existingLocation = await ParkingFacility.findOne({ 'location.coordinates': [lng, lat] });
+        if (existingLocation) {
+          throw new AppError('Vị trí bản đồ này đã được sử dụng cho toà nhà khác', 400);
+        }
+      }
     }
 
     const newFacility = new ParkingFacility(data);
@@ -25,6 +40,30 @@ export class FacilityService {
   }
 
   static async updateFacility(id: string, data: Partial<IParkingFacility>): Promise<IParkingFacility | null> {
+    if (data.name) {
+      const existingName = await ParkingFacility.findOne({ name: data.name, _id: { $ne: id } });
+      if (existingName) {
+        throw new AppError('Tên toà nhà đã tồn tại', 400);
+      }
+    }
+
+    if (data.address) {
+      const existingAddress = await ParkingFacility.findOne({ address: data.address, _id: { $ne: id } });
+      if (existingAddress) {
+        throw new AppError('Địa chỉ toà nhà đã tồn tại', 400);
+      }
+    }
+
+    if (data.location?.coordinates && data.location.coordinates.length === 2) {
+      const [lng, lat] = data.location.coordinates;
+      if (lng !== 0 || lat !== 0) {
+        const existingLocation = await ParkingFacility.findOne({ 'location.coordinates': [lng, lat], _id: { $ne: id } });
+        if (existingLocation) {
+          throw new AppError('Vị trí bản đồ này đã được sử dụng cho toà nhà khác', 400);
+        }
+      }
+    }
+
     if (data.status === 'inactive') {
       const activeSlots = await ParkingSlot.countDocuments({
         facilityId: id,

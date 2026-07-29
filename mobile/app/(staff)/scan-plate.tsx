@@ -8,14 +8,13 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
-  TextInput,
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
+
 import * as ImageManipulator from "expo-image-manipulator";
 
 let NfcManager: any = null;
@@ -40,7 +39,7 @@ import {
   sessionApi,
   paymentApi,
   facilityApi,
-  exceptionApi,
+
   getBaseUrl,
 } from "../../src/services/api";
 import { useAuthStore } from "../../src/store/useAuthStore";
@@ -63,13 +62,7 @@ export default function StaffScanScreen() {
     plate: string;
     imageUrl: string;
   } | null>(null);
-  const [exceptionModalVisible, setExceptionModalVisible] = useState(false);
 
-  // Exception States
-  const [exceptionType, setExceptionType] = useState("LOST_CARD");
-  const [exceptionDesc, setExceptionDesc] = useState("");
-  const [exceptionPlate, setExceptionPlate] = useState("");
-  const [submittingException, setSubmittingException] = useState(false);
 
   // Checkout Specific States
   const [checkoutSession, setCheckoutSession] = useState<any>(null);
@@ -149,27 +142,7 @@ export default function StaffScanScreen() {
     return selectedFacilityId;
   };
 
-  const submitException = async () => {
-    if (!selectedFacilityId) return;
-    setSubmittingException(true);
-    try {
-      await exceptionApi.createException({
-        type: exceptionType,
-        description: exceptionDesc,
-        facilityId: selectedFacilityId,
-        actualPlate: exceptionPlate,
-        checkInImage: plateData?.imageUrl || undefined,
-      });
-      Alert.alert("Thành công", "Đã báo cáo sự cố!");
-      setExceptionModalVisible(false);
-      setExceptionDesc("");
-      setExceptionPlate("");
-    } catch (e: any) {
-      Alert.alert("Lỗi", e.message || "Không thể báo cáo sự cố");
-    } finally {
-      setSubmittingException(false);
-    }
-  };
+
 
   if (!permission) return <View />;
 
@@ -260,7 +233,7 @@ export default function StaffScanScreen() {
       const { licensePlate, imageUrl } = alprRes.data;
       const formattedPlate = formatPlate(licensePlate);
       setPlateData({ plate: formattedPlate, imageUrl });
-      setExceptionPlate(formattedPlate);
+
 
       // 2. Search for active session with this plate
       try {
@@ -434,16 +407,7 @@ export default function StaffScanScreen() {
                   Tự động nhận diện biển số xe
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => setExceptionModalVisible(true)}
-                style={styles.iconButton}
-              >
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={22}
-                  color={Colors.white}
-                />
-              </TouchableOpacity>
+
             </SafeAreaView>
 
             {/* Corner brackets viewfinder */}
@@ -714,81 +678,7 @@ export default function StaffScanScreen() {
         </View>
       </Modal>
 
-      {/* Exception Report Modal */}
-      <Modal
-        visible={exceptionModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setExceptionModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.dragHandle} />
 
-            <View style={styles.modalHeader}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Ionicons name="alert-circle" size={22} color={Colors.warning} />
-                <Text style={styles.modalTitle}>Báo cáo sự cố</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setExceptionModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color={Colors.textTertiary} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.modalLabel}>BIỂN SỐ XE (NẾU CÓ)</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="E.g., 29A-123.45"
-              value={exceptionPlate}
-              onChangeText={(text) => setExceptionPlate(formatPlate(text))}
-              placeholderTextColor={Colors.placeholder}
-            />
-
-            <Text style={styles.modalLabel}>LOẠI SỰ CỐ</Text>
-            <View style={styles.pickerWrap}>
-              <Picker
-                selectedValue={exceptionType}
-                onValueChange={(val) => setExceptionType(val)}
-                style={{ color: Colors.brandDark }}
-              >
-                <Picker.Item label="Mất vé" value="LOST_CARD" />
-                <Picker.Item label="Sai biển số" value="WRONG_PLATE" />
-                <Picker.Item label="Lỗi hệ thống" value="SYSTEM_ERROR" />
-                <Picker.Item label="Khác" value="OTHER" />
-              </Picker>
-            </View>
-
-            <Text style={styles.modalLabel}>CHI TIẾT SỰ CỐ</Text>
-            <TextInput
-              style={[styles.modalInput, { height: 80, textAlignVertical: "top" }]}
-              placeholder="Mô tả cụ thể diễn biến sự cố..."
-              multiline
-              value={exceptionDesc}
-              onChangeText={setExceptionDesc}
-              placeholderTextColor={Colors.placeholder}
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.primaryButton,
-                { flex: 0, width: "100%", marginTop: 8 },
-                submittingException && styles.disabledButton,
-              ]}
-              onPress={submitException}
-              disabled={submittingException}
-            >
-              {submittingException ? (
-                <ActivityIndicator color={Colors.brandDark} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Gửi Báo Cáo</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

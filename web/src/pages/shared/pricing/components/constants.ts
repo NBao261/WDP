@@ -28,7 +28,7 @@ export const rateSchema = z.object({
     (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)),
     z
       .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
-      .min(0, 'Không được nhập số âm')
+      .refine((val) => val === 0 || val >= 1000, 'Giá phải từ 1000 trở lên (hoặc 0 = Miễn phí)')
   ),
   unit: z.string().min(1, 'Bắt buộc'),
   startTime: z.string().optional(),
@@ -52,19 +52,19 @@ export const formSchema = z
       (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
       z
         .number({ invalid_type_error: 'Phải là số' })
-        .min(0, 'Không được nhập số âm')
+        .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0)')
     ),
     overtimeFeePerHour: z.preprocess(
       (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
       z
         .number({ invalid_type_error: 'Phải là số' })
-        .min(0, 'Không được nhập số âm')
+        .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0)')
     ),
     lostCardFee: z.preprocess(
       (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
       z
         .number({ invalid_type_error: 'Phải là số' })
-        .min(0, 'Không được nhập số âm')
+        .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0)')
     ),
     gracePeriodMinutes: z.preprocess(
       (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
@@ -77,7 +77,7 @@ export const formSchema = z
       (val) => (val === '' || val === null || val === undefined ? 0 : Number(val)),
       z
         .number({ invalid_type_error: 'Phải là số' })
-        .min(0, 'Không được nhập số âm')
+        .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0 = Không giới hạn)')
     ),
     firstBlockHours: z.preprocess(
       (val) => (val === '' || val === null || val === undefined ? 1 : Number(val)),

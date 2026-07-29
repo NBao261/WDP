@@ -1,7 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Building2, MapPin, Clock, Layers, FileText, Loader2, Navigation } from 'lucide-react';
+import {
+  X,
+  Building2,
+  MapPin,
+  Clock,
+  Layers,
+  FileText,
+  Loader2,
+  Navigation,
+  Search,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -68,9 +78,11 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
+      <div className="flex justify-between items-center min-h-[32px] mb-1.5">
+        <label className="block text-sm font-semibold text-gray-700">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      </div>
       <div className="relative">
         <Icon
           size={16}
@@ -124,7 +136,12 @@ export function FacilityFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ── Address search hook (Nominatim autocomplete + reverse geocoding) ──
+  const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const {
     query: addressQuery,
     setQuery: setAddressQuery,
@@ -134,6 +151,17 @@ export function FacilityFormModal({
     hideDropdown,
     clearSearch,
     reverseGeocode,
+  } = useAddressSearch();
+
+  // ── Map Search hook ────────────────────────────────────────────────────
+  const {
+    query: mapSearchQuery,
+    setQuery: setMapSearchQuery,
+    suggestions: mapSuggestions,
+    isLoading: isMapSearching,
+    showDropdown: showMapDropdown,
+    hideDropdown: hideMapDropdown,
+    clearSearch: clearMapSearch,
   } = useAddressSearch();
 
   // ── Track map center for flyTo ─────────────────────────────────────────
@@ -178,46 +206,66 @@ export function FacilityFormModal({
   }, [isOpen, facility]);
 
   // ── Select a suggestion from the dropdown (Forward Geocoding) ──────────
-  const handleSelectSuggestion = useCallback((result: NominatimResult) => {
+  const handleSelectSuggestion = useCallback(
+    (result: NominatimResult) => {
+      const lat = parseFloat(result.lat);
+      const lng = parseFloat(result.lon);
+
+      // Update form with address and coordinates
+      setForm((prev) => ({
+        ...prev,
+        address: result.display_name,
+        latitude: lat,
+        longitude: lng,
+      }));
+
+      // Update address input & hide dropdown
+      setAddressQuery(result.display_name);
+      hideDropdown();
+
+      // Fly map to the selected location
+      setMapTarget({ lat, lng });
+
+      // Clear location error
+      if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
+      if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
+    },
+    [errors, hideDropdown, setAddressQuery]
+  );
+
+  // ── Handle map click — Reverse Geocoding ───────────────────────────────
+  const handleMapClick = useCallback(
+    async (lat: number, lng: number) => {
+      // Update coordinates immediately
+      setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+      setMapTarget({ lat, lng });
+
+      // Clear errors
+      if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
+
+      // Reverse geocode: get address from coordinates
+      const address = await reverseGeocode(lat, lng);
+      if (address) {
+        setForm((prev) => ({ ...prev, address }));
+        if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
+      }
+    },
+    [errors, reverseGeocode]
+  );
+
+  const handleMapSearchSelect = (result: any) => {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
 
-    // Update form with address and coordinates
-    setForm((prev) => ({
-      ...prev,
-      address: result.display_name,
-      latitude: lat,
-      longitude: lng,
-    }));
-
-    // Update address input & hide dropdown
-    setAddressQuery(result.display_name);
-    hideDropdown();
-
-    // Fly map to the selected location
-    setMapTarget({ lat, lng });
-
-    // Clear location error
-    if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
-    if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
-  }, [errors, hideDropdown, setAddressQuery]);
-
-  // ── Handle map click — Reverse Geocoding ───────────────────────────────
-  const handleMapClick = useCallback(async (lat: number, lng: number) => {
-    // Update coordinates immediately
+    // Set coordinates and center map
     setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
     setMapTarget({ lat, lng });
-
-    // Clear errors
     if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
 
-    // Reverse geocode: get address from coordinates
-    const address = await reverseGeocode(lat, lng);
-    if (address) {
-      setForm((prev) => ({ ...prev, address }));
-      if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
-    }
-  }, [errors, reverseGeocode]);
+    // Update map search input text & close dropdown
+    setMapSearchQuery(result.display_name, true);
+    hideMapDropdown();
+  };
 
   // ── Handle address input change (linked to autocomplete) ───────────────
   const handleAddressChange = (value: string) => {
@@ -259,6 +307,28 @@ export function FacilityFormModal({
           setErrors({ name: 'Tên tòa nhà / bãi đỗ này đã tồn tại' });
           setIsSubmitting(false);
           return;
+        }
+
+        const duplicateAddress = existing.find(
+          (f) => f.address.toLowerCase() === form.address.trim().toLowerCase()
+        );
+        if (duplicateAddress) {
+          setErrors({ address: 'Địa chỉ này đã được đăng ký cho một cơ sở khác' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (form.latitude !== 0 && form.longitude !== 0) {
+          const duplicateLocation = existing.find(
+            (f) =>
+              f.location?.coordinates?.[0] === form.longitude &&
+              f.location?.coordinates?.[1] === form.latitude
+          );
+          if (duplicateLocation) {
+            setErrors({ location: 'Vị trí bản đồ này đã được sử dụng cho một cơ sở khác' });
+            setIsSubmitting(false);
+            return;
+          }
         }
       }
 
@@ -327,12 +397,21 @@ export function FacilityFormModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="p-6 overflow-y-auto flex-1 flex flex-col justify-between"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* ═══════════════ LEFT COLUMN ═══════════════ */}
               <div className="space-y-4">
                 {/* Facility Name */}
-                <FormField label="Tên tòa nhà / bãi đỗ" required icon={Building2} error={errors.name}>
+                <FormField
+                  label="Tên tòa nhà / bãi đỗ"
+                  required
+                  icon={Building2}
+                  error={errors.name}
+                >
                   <input
                     type="text"
                     value={form.name}
@@ -347,9 +426,11 @@ export function FacilityFormModal({
 
                 {/* ── ADDRESS WITH AUTOCOMPLETE ── */}
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Địa chỉ <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center min-h-[32px] mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Địa chỉ <span className="text-red-500">*</span>
+                    </label>
+                  </div>
                   <div className="relative">
                     <MapPin size={16} className="absolute left-3 top-3 text-gray-400 z-10" />
                     <textarea
@@ -412,10 +493,12 @@ export function FacilityFormModal({
                     max={50}
                     placeholder="5"
                     value={form.totalFloors}
+                    onKeyDown={handleNumberKeyDown}
                     onChange={(e) => {
                       setForm({
                         ...form,
-                        totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
+                        totalFloors:
+                          e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
                       });
                       if (errors.totalFloors) setErrors({ ...errors, totalFloors: '' });
                     }}
@@ -425,16 +508,71 @@ export function FacilityFormModal({
               </div>
 
               {/* ═══════════════ RIGHT COLUMN ═══════════════ */}
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col h-full">
                 {/* Operating Hours */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Giờ hoạt động <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex justify-between items-center min-h-[32px] mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Giờ hoạt động <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-1 bg-gray-100/80 p-1 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, openTime: '00:00', closeTime: '23:59' });
+                          if (errors.openTime || errors.closeTime)
+                            setErrors({ ...errors, openTime: '', closeTime: '' });
+                        }}
+                        className={`text-[10px] px-2.5 py-1 rounded-md font-semibold transition-all ${
+                          form.openTime === '00:00' && form.closeTime === '23:59'
+                            ? 'bg-[#9FE870] text-[#062F28] shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                        }`}
+                        title="Mở cửa cả ngày"
+                      >
+                        24/24h
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, openTime: '06:00', closeTime: '18:00' });
+                          if (errors.openTime || errors.closeTime)
+                            setErrors({ ...errors, openTime: '', closeTime: '' });
+                        }}
+                        className={`text-[10px] px-2.5 py-1 rounded-md font-semibold transition-all ${
+                          form.openTime === '06:00' && form.closeTime === '18:00'
+                            ? 'bg-[#9FE870] text-[#062F28] shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                        }`}
+                        title="Mở cửa ban ngày"
+                      >
+                        6h - 18h
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, openTime: '08:00', closeTime: '22:00' });
+                          if (errors.openTime || errors.closeTime)
+                            setErrors({ ...errors, openTime: '', closeTime: '' });
+                        }}
+                        className={`text-[10px] px-2.5 py-1 rounded-md font-semibold transition-all ${
+                          form.openTime === '08:00' && form.closeTime === '22:00'
+                            ? 'bg-[#9FE870] text-[#062F28] shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                        }`}
+                        title="Mở cửa hành chính & tối"
+                      >
+                        8h - 22h
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex gap-3 items-start">
                     <div className="flex-1">
                       <div className="relative">
-                        <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Clock
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
                         <input
                           type="time"
                           value={form.openTime}
@@ -445,12 +583,17 @@ export function FacilityFormModal({
                           className={getInputClass('openTime')}
                         />
                       </div>
-                      {errors.openTime && <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>}
+                      {errors.openTime && (
+                        <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>
+                      )}
                     </div>
                     <span className="text-gray-400 font-medium text-sm mt-2.5">đến</span>
                     <div className="flex-1">
                       <div className="relative">
-                        <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Clock
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
                         <input
                           type="time"
                           value={form.closeTime}
@@ -461,21 +604,24 @@ export function FacilityFormModal({
                           className={getInputClass('closeTime')}
                         />
                       </div>
-                      {errors.closeTime && <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>}
+                      {errors.closeTime && (
+                        <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả</label>
-                  <div className="relative">
-                    <FileText size={16} className="absolute left-3 top-3 text-gray-400" />
+                <div className="flex-1 flex flex-col min-h-[120px]">
+                  <div className="flex items-center min-h-[32px] mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">Mô tả</label>
+                  </div>
+                  <div className="relative flex-1 flex">
+                    <FileText size={16} className="absolute left-3 top-3 text-gray-400 z-10" />
                     <textarea
-                      rows={3}
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all resize-none"
+                      className="w-full flex-1 pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all resize-none"
                       placeholder="Mô tả ngắn gọn về tòa nhà / bãi đỗ..."
                     />
                   </div>
@@ -490,14 +636,69 @@ export function FacilityFormModal({
                 Vị trí trên bản đồ <span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-gray-500 mb-2">
-                Chọn một địa chỉ gợi ý phía trên để tự động cắm ghim, hoặc click trực tiếp vào bản đồ.
+                Chọn một địa chỉ gợi ý phía trên để tự động cắm ghim, hoặc click trực tiếp vào bản
+                đồ.
               </p>
 
               <div
-                className={`rounded-xl overflow-hidden border-2 transition-colors ${
+                className={`rounded-xl overflow-hidden border-2 transition-colors relative ${
                   errors.location ? 'border-red-400' : 'border-gray-200'
                 }`}
               >
+                {/* ── MAP SEARCH BAR ── */}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md z-[1000]">
+                  <div className="relative shadow-md rounded-xl bg-white/90 backdrop-blur-sm">
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
+                    />
+                    <input
+                      type="text"
+                      value={mapSearchQuery}
+                      onChange={(e) => setMapSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-10 py-2.5 bg-transparent border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
+                      placeholder="Tìm kiếm vị trí trên bản đồ..."
+                    />
+                    {isMapSearching && (
+                      <Loader2
+                        size={16}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin"
+                      />
+                    )}
+                    {!isMapSearching && mapSearchQuery.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          clearMapSearch();
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* MAP SEARCH DROPDOWN */}
+                  {showMapDropdown && mapSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 max-h-52 overflow-y-auto z-[1000]">
+                      {mapSuggestions.map((result) => (
+                        <button
+                          key={result.place_id}
+                          type="button"
+                          onClick={() => handleMapSearchSelect(result)}
+                          className="w-full text-left px-4 py-3 hover:bg-[#9FE870]/10 transition-colors flex items-start gap-3 border-b border-gray-50 last:border-0"
+                        >
+                          <MapPin size={14} className="text-[#5E8F25] mt-0.5 shrink-0" />
+                          <span className="text-sm text-gray-700 leading-snug line-clamp-2">
+                            {result.display_name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <MapContainer
                   center={DEFAULT_CENTER}
                   zoom={DEFAULT_ZOOM}

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
 import { X, RefreshCw, AlertCircle } from 'lucide-react';
 import { User as UserType } from '../../../../types/user.types';
 import { useCustomerForm } from '../hooks/useCustomerForm';
@@ -22,6 +23,13 @@ export function CustomerFormModal({ isOpen, onClose, user, onSuccess }: Customer
     handleSubmit,
     canSubmit,
   } = useCustomerForm(isOpen, user, onSuccess, onClose);
+
+  useEffect(() => {
+    if (!isOpen) {
+      document.body.style.pointerEvents = '';
+      document.body.style.overflow = '';
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

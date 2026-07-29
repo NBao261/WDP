@@ -61,9 +61,12 @@ export function FloorFormModal({
   // Vehicle types that have existing slots (edit mode only) — cannot be deselected
   const [lockedVehicleTypeIds, setLockedVehicleTypeIds] = useState<Set<string>>(new Set());
   // Existing slots grouped by vehicleTypeId — for display in step 2
-  const [existingSlotsMap, setExistingSlotsMap] = useState<Record<string, { codes: string[]; count: number; slots: any[] }>>({}); 
+  const [existingSlotsMap, setExistingSlotsMap] = useState<
+    Record<string, { codes: string[]; count: number; slots: any[] }>
+  >({});
   // Number of existing slots (edit mode) — used for display in step 2
   const [existingSlotCount, setExistingSlotCount] = useState(0);
+  const [activeSlotCount, setActiveSlotCount] = useState(0);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Slot groups — auto-generated from selected vehicle types
@@ -96,6 +99,7 @@ export function FloorFormModal({
       setStep(1);
       setLockedVehicleTypeIds(new Set());
       setExistingSlotCount(0);
+      setActiveSlotCount(0);
       if (floor) {
         setName(floor.name);
         setTotalSlotsInput(floor.totalSlots || '');
@@ -106,32 +110,46 @@ export function FloorFormModal({
 
         // Fetch existing slots to lock vehicle types that have slots
         setLoadingSlots(true);
-        slotService.getByFloor(floor._id).then((res) => {
-          const slots = res.data || [];
-          setExistingSlotCount(slots.length);
-          const vtIdsWithSlots = new Set<string>();
-          const slotsMap: Record<string, { codes: string[]; count: number; slots: any[] }> = {};
-          slots.forEach((slot) => {
-            const vtId = typeof slot.vehicleTypeId === 'object' && slot.vehicleTypeId
-              ? slot.vehicleTypeId._id
-              : slot.vehicleTypeId;
-            if (vtId) {
-              vtIdsWithSlots.add(vtId);
-              if (!slotsMap[vtId]) slotsMap[vtId] = { codes: [], count: 0, slots: [] };
-              slotsMap[vtId].codes.push(slot.code);
-              slotsMap[vtId].slots.push(slot);
-              slotsMap[vtId].count++;
-            }
+        slotService
+          .getByFloor(floor._id)
+          .then((res) => {
+            const slots = res.data || [];
+            setExistingSlotCount(slots.length);
+
+            let active = 0;
+            slots.forEach((s: any) => {
+              if (s.status === 'occupied' || s.status === 'reserved') active++;
+            });
+            setActiveSlotCount(active);
+
+            const vtIdsWithSlots = new Set<string>();
+            const slotsMap: Record<string, { codes: string[]; count: number; slots: any[] }> = {};
+            slots.forEach((slot) => {
+              const vtId =
+                typeof slot.vehicleTypeId === 'object' && slot.vehicleTypeId
+                  ? slot.vehicleTypeId._id
+                  : slot.vehicleTypeId;
+              if (vtId) {
+                vtIdsWithSlots.add(vtId);
+                if (!slotsMap[vtId]) slotsMap[vtId] = { codes: [], count: 0, slots: [] };
+                slotsMap[vtId].codes.push(slot.code);
+                slotsMap[vtId].slots.push(slot);
+                slotsMap[vtId].count++;
+              }
+            });
+            // Sort codes naturally within each group
+            Object.values(slotsMap).forEach((g) =>
+              g.codes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+            );
+            setExistingSlotsMap(slotsMap);
+            setLockedVehicleTypeIds(vtIdsWithSlots);
+          })
+          .catch(() => {
+            // fallback
+          })
+          .finally(() => {
+            setLoadingSlots(false);
           });
-          // Sort codes naturally within each group
-          Object.values(slotsMap).forEach((g) => g.codes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
-          setExistingSlotsMap(slotsMap);
-          setLockedVehicleTypeIds(vtIdsWithSlots);
-        }).catch(() => {
-          // fallback
-        }).finally(() => {
-          setLoadingSlots(false);
-        });
       } else {
         setName('');
         setTotalSlotsInput('');
@@ -175,8 +193,14 @@ export function FloorFormModal({
   const goToStep2 = () => {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Vui lòng nhập tên tầng';
-    if (!totalSlotsInput || Number(totalSlotsInput) < 1)
+    if (!totalSlotsInput || Number(totalSlotsInput) < 1) {
       newErrors.totalSlots = 'Vui lòng nhập giới hạn slot (≥ 1)';
+    } else if (isEdit && Number(totalSlotsInput) < existingSlotCount) {
+      // The user wants: "nếu có ít nhất 1 xe đang gửi thì không cho hạ xuống quá 1 xe đó"
+      // But logically, they cannot lower below existingSlotCount without deleting slots first.
+      newErrors.totalSlots = `Không thể giảm giới hạn xuống ${totalSlotsInput}. Tầng đang có ${existingSlotCount} slot được phân bổ (trong đó ${activeSlotCount} slot đang dùng). Vui lòng xoá bớt slot trước.`;
+    }
+
     if (selectedVehicleTypes.length === 0)
       newErrors.vehicleTypes = 'Vui lòng chọn ít nhất một loại xe';
 
@@ -203,7 +227,7 @@ export function FloorFormModal({
         if (match) {
           defaultPrefix = match[1];
           let maxNum = 0;
-          codes.forEach(c => {
+          codes.forEach((c) => {
             const numMatch = c.match(/\d+$/);
             if (numMatch) {
               const num = parseInt(numMatch[0], 10);
@@ -232,20 +256,56 @@ export function FloorFormModal({
     e.preventDefault();
 
     // Validate step 2 slot groups (only groups that have data and are not skipped)
-    const filledGroups = slotGroups.filter((g) => !g.isSkipped && (g.prefix.trim() || Number(g.count) > 0));
+    const filledGroups = slotGroups.filter(
+      (g) => !g.isSkipped && (g.prefix.trim() || Number(g.count) > 0)
+    );
     const newErrors: Record<string, string> = {};
     filledGroups.forEach((g) => {
       const i = slotGroups.indexOf(g);
       if (!g.prefix.trim()) newErrors[`slotGroup_${i}_prefix`] = 'Nhập tiền tố';
-      if (!g.count || Number(g.count) < 1)
-        newErrors[`slotGroup_${i}_count`] = 'Nhập số lượng';
+      if (Number(g.count) < 0) newErrors[`slotGroup_${i}_count`] = 'Số lượng không hợp lệ';
     });
+
+    // Check for duplicates across groups
+    const generatedCodes = new Set<string>();
+    let hasDuplicate = false;
+    filledGroups.forEach((g) => {
+      const i = slotGroups.indexOf(g);
+      const start = Number(g.startNumber) || 1;
+      const count = Number(g.count) || 0;
+      const prefix = g.prefix.trim().toUpperCase();
+
+      if (prefix && count > 0) {
+        for (let j = 0; j < count; j++) {
+          const code = `${prefix}${start + j}`;
+          if (generatedCodes.has(code)) {
+            hasDuplicate = true;
+            newErrors[`slotGroup_${i}_prefix`] = `Trùng lặp mã: ${code}`;
+          }
+          generatedCodes.add(code);
+        }
+      }
+    });
+
+    if (hasDuplicate) {
+      toast.error('Có sự trùng lặp mã vị trí giữa các loại xe. Vui lòng kiểm tra lại.');
+    }
 
     // In create mode, must have at least some slots
     if (!isEdit && filledGroups.length === 0) {
       slotGroups.forEach((_, i) => {
         newErrors[`slotGroup_${i}_count`] = 'Nhập số lượng';
       });
+    }
+
+    // Validate step 2 limit
+    const currentTotalSlots = Number(totalSlotsInput) || 0;
+    const totalAllocated = isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots;
+    if (totalAllocated > currentTotalSlots) {
+      toast.error(
+        `Tổng số slot phân bổ (${totalAllocated}) không được vượt quá giới hạn tầng (${currentTotalSlots}).`
+      );
+      return;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -263,15 +323,14 @@ export function FloorFormModal({
     try {
       if (isEdit) {
         // Edit mode: update floor + assign vehicle types + create new slots
-        const newTotal = Math.max(Number(totalSlotsInput) || 0, existingSlotCount + computedTotalSlots);
-        await floorService.update(floor!._id, { name, totalSlots: newTotal });
+        await floorService.update(floor!._id, { name, totalSlots: currentTotalSlots });
         await floorService.assignVehicleTypes(floor!._id, selectedVehicleTypes);
 
         // Update existing slots if prefix changed, and create new slots for filled groups
         for (const group of filledGroups) {
           const newPrefix = group.prefix.toUpperCase();
           const oldPrefix = group.originalPrefix || '';
-          
+
           if (oldPrefix && oldPrefix !== newPrefix && existingSlotsMap[group.vehicleTypeId]) {
             const slotsToUpdate = existingSlotsMap[group.vehicleTypeId].slots;
             for (const slot of slotsToUpdate) {
@@ -294,9 +353,10 @@ export function FloorFormModal({
           }
         }
 
-        const msg = computedTotalSlots > 0
-          ? `Cập nhật tầng "${name}" thành công, thêm ${computedTotalSlots} slot mới`
-          : `Cập nhật tầng "${name}" thành công`;
+        const msg =
+          computedTotalSlots > 0
+            ? `Cập nhật tầng "${name}" thành công, thêm ${computedTotalSlots} slot mới`
+            : `Cập nhật tầng "${name}" thành công`;
         toast.success(msg);
       } else {
         // Create mode: create floor + assign vehicle types + create slots
@@ -358,9 +418,7 @@ export function FloorFormModal({
                 {isEdit ? 'Sửa tầng' : 'Thêm tầng mới'}
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                {step === 1
-                  ? 'Bước 1/2 — Thông tin tầng'
-                  : 'Bước 2/2 — Phân bổ slot'}
+                {step === 1 ? 'Bước 1/2 — Thông tin tầng' : 'Bước 2/2 — Phân bổ slot'}
               </p>
             </div>
             <button
@@ -377,9 +435,7 @@ export function FloorFormModal({
               <div className="flex items-center gap-2">
                 <div
                   className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
-                    step === 1
-                      ? 'bg-[#9FE870] text-[#062F28]'
-                      : 'bg-[#062F28] text-white'
+                    step === 1 ? 'bg-[#9FE870] text-[#062F28]' : 'bg-[#062F28] text-white'
                   }`}
                 >
                   {step > 1 ? <Check size={14} /> : '1'}
@@ -391,19 +447,21 @@ export function FloorFormModal({
                 />
                 <div
                   className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
-                    step === 2
-                      ? 'bg-[#9FE870] text-[#062F28]'
-                      : 'bg-gray-200 text-gray-400'
+                    step === 2 ? 'bg-[#9FE870] text-[#062F28]' : 'bg-gray-200 text-gray-400'
                   }`}
                 >
                   2
                 </div>
               </div>
               <div className="flex justify-between mt-1.5 mb-1">
-                <span className={`text-[11px] font-medium ${step === 1 ? 'text-[#062F28]' : 'text-gray-400'}`}>
+                <span
+                  className={`text-[11px] font-medium ${step === 1 ? 'text-[#062F28]' : 'text-gray-400'}`}
+                >
                   Thông tin
                 </span>
-                <span className={`text-[11px] font-medium ${step === 2 ? 'text-[#062F28]' : 'text-gray-400'}`}>
+                <span
+                  className={`text-[11px] font-medium ${step === 2 ? 'text-[#062F28]' : 'text-gray-400'}`}
+                >
                   Phân bổ slot
                 </span>
               </div>
@@ -456,9 +514,7 @@ export function FloorFormModal({
                           className={getInputClass('name')}
                           placeholder="Floor B1, Floor 1, Zone A..."
                         />
-                        {errors.name && (
-                          <p className="text-xs text-red-500 mt-1">{errors.name}</p>
-                        )}
+                        {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                       </div>
 
                       {/* Total slots limit */}
@@ -474,8 +530,17 @@ export function FloorFormModal({
                           min={1}
                           value={totalSlotsInput}
                           onChange={(e) => {
-                            setTotalSlotsInput(e.target.value === '' ? '' : Number(e.target.value));
+                            setTotalSlotsInput(
+                              e.target.value === ''
+                                ? ''
+                                : Math.max(1, Math.floor(Number(e.target.value)))
+                            );
                             if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
+                          }}
+                          onKeyDown={(e) => {
+                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                              e.preventDefault();
+                            }
                           }}
                           className={getInputClass('totalSlots')}
                           placeholder="Ví dụ: 50, 100..."
@@ -512,13 +577,18 @@ export function FloorFormModal({
                         <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
                           {filteredTypes.map((vt) => {
                             const isSelected = selectedVehicleTypes.includes(vt._id);
-                            const isLocked = isEdit && isSelected && lockedVehicleTypeIds.has(vt._id);
+                            const isLocked =
+                              isEdit && isSelected && lockedVehicleTypeIds.has(vt._id);
                             return (
                               <button
                                 key={vt._id}
                                 type="button"
                                 onClick={() => toggleVehicle(vt._id)}
-                                title={isLocked ? 'Không thể bỏ — tầng đang có slot loại xe này' : undefined}
+                                title={
+                                  isLocked
+                                    ? 'Không thể bỏ — tầng đang có slot loại xe này'
+                                    : undefined
+                                }
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${
                                   isSelected
                                     ? isLocked
@@ -530,7 +600,9 @@ export function FloorFormModal({
                                 <span className="mr-1">
                                   {(() => {
                                     const IconComp =
-                                      vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : ICON_MAP[DEFAULT_ICON];
+                                      vt.icon && ICON_MAP[vt.icon]
+                                        ? ICON_MAP[vt.icon]
+                                        : ICON_MAP[DEFAULT_ICON];
                                     return <IconComp size={16} />;
                                   })()}
                                 </span>
@@ -590,18 +662,19 @@ export function FloorFormModal({
                         <label className="block text-sm font-semibold text-gray-700">
                           {isEdit ? 'Thêm slot mới' : 'Phân bổ slot cho từng loại xe'}
                         </label>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
-                          computedTotalSlots > Number(totalSlotsInput)
-                            ? 'text-red-600 bg-red-50'
-                            : 'text-[#062F28] bg-[#9FE870]/30'
-                        }`}>
+                        <span
+                          className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
+                            (isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots) >
+                            Number(totalSlotsInput)
+                              ? 'text-red-600 bg-red-50'
+                              : 'text-[#062F28] bg-[#9FE870]/30'
+                          }`}
+                        >
                           {isEdit && existingSlotCount > 0
                             ? `${existingSlotCount + computedTotalSlots} / ${Number(totalSlotsInput) || '?'} slot`
                             : `${computedTotalSlots} / ${Number(totalSlotsInput) || '?'} slot`}
                         </span>
                       </div>
-
-
 
                       <div className="space-y-3">
                         {slotGroups.map((group, index) => {
@@ -610,6 +683,11 @@ export function FloorFormModal({
                             group.vehicleTypeIcon && ICON_MAP[group.vehicleTypeIcon]
                               ? ICON_MAP[group.vehicleTypeIcon]
                               : ICON_MAP[DEFAULT_ICON];
+
+                          const currentTotal = Number(totalSlotsInput) || 0;
+                          const baseSlots = isEdit ? existingSlotCount : 0;
+                          const otherGroupsSum = computedTotalSlots - (Number(group.count) || 0);
+                          const maxAllowed = Math.max(0, currentTotal - baseSlots - otherGroupsSum);
 
                           return (
                             <div
@@ -629,7 +707,13 @@ export function FloorFormModal({
                                 {isEdit && (
                                   <button
                                     type="button"
-                                    onClick={() => updateSlotGroup(index, { isSkipped: true, count: '', prefix: group.originalPrefix || group.prefix })}
+                                    onClick={() =>
+                                      updateSlotGroup(index, {
+                                        isSkipped: true,
+                                        count: '',
+                                        prefix: group.originalPrefix || group.prefix,
+                                      })
+                                    }
                                     title="Bỏ qua loại xe này"
                                     className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                   >
@@ -644,11 +728,17 @@ export function FloorFormModal({
                                   <p className="text-xs text-gray-500">
                                     Hiện có:{' '}
                                     <span className="font-bold text-[#062F28]">
-                                      {existingSlotsMap[group.vehicleTypeId].codes[0]} → {existingSlotsMap[group.vehicleTypeId].codes[existingSlotsMap[group.vehicleTypeId].codes.length - 1]}
+                                      {existingSlotsMap[group.vehicleTypeId].codes[0]} →{' '}
+                                      {
+                                        existingSlotsMap[group.vehicleTypeId].codes[
+                                          existingSlotsMap[group.vehicleTypeId].codes.length - 1
+                                        ]
+                                      }
                                     </span>
                                     {'  '}
                                     <span className="text-gray-400">
-                                      ({group.vehicleTypeName} — {existingSlotsMap[group.vehicleTypeId].count} slot)
+                                      ({group.vehicleTypeName} —{' '}
+                                      {existingSlotsMap[group.vehicleTypeId].count} slot)
                                     </span>
                                   </p>
                                 </div>
@@ -693,9 +783,16 @@ export function FloorFormModal({
                                     onChange={(e) =>
                                       updateSlotGroup(index, {
                                         startNumber:
-                                          e.target.value === '' ? '' : Number(e.target.value),
+                                          e.target.value === ''
+                                            ? ''
+                                            : Math.max(1, Math.floor(Number(e.target.value))),
                                       })
                                     }
+                                    onKeyDown={(e) => {
+                                      if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                        e.preventDefault();
+                                      }
+                                    }}
                                     placeholder="1"
                                     className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870]"
                                   />
@@ -706,18 +803,28 @@ export function FloorFormModal({
                                   </label>
                                   <input
                                     type="number"
-                                    min={1}
-                                    max={999}
+                                    min={0}
+                                    max={maxAllowed}
                                     value={group.count}
-                                    onChange={(e) =>
-                                      updateSlotGroup(index, {
-                                        count:
-                                          e.target.value === '' ? '' : Number(e.target.value),
-                                      })
-                                    }
-                                    placeholder="50"
+                                    onChange={(e) => {
+                                      if (e.target.value === '') {
+                                        updateSlotGroup(index, { count: '' });
+                                        return;
+                                      }
+                                      let val = Math.floor(Number(e.target.value));
+                                      if (val < 0) val = 0;
+                                      if (val > maxAllowed) val = maxAllowed;
+                                      updateSlotGroup(index, { count: val });
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    placeholder="0"
                                     className={`w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
-                                      errors[`slotGroup_${index}_count`]
+                                      errors[`slotGroup_${index}_count`] ||
+                                      Number(group.count) > maxAllowed
                                         ? 'border-red-400'
                                         : 'border-gray-200'
                                     }`}
@@ -734,9 +841,7 @@ export function FloorFormModal({
                               {group.prefix && Number(group.count) > 0 && (
                                 <div className="bg-white rounded-lg px-3 py-2 border border-gray-100">
                                   <p className="text-xs text-gray-500">
-                                    <span className="font-semibold text-[#062F28]">
-                                      Dự kiến:
-                                    </span>{' '}
+                                    <span className="font-semibold text-[#062F28]">Dự kiến:</span>{' '}
                                     <span className="font-mono font-semibold text-[#062F28]">
                                       {group.prefix}
                                       {Number(group.startNumber) || 1}
@@ -763,8 +868,6 @@ export function FloorFormModal({
                         })}
                       </div>
 
-
-
                       {/* Step 2 buttons */}
                       <div className="pt-2 flex justify-between gap-3 border-t border-gray-100">
                         <button
@@ -781,7 +884,11 @@ export function FloorFormModal({
                         </button>
                         <button
                           type="submit"
-                          disabled={isSubmitting}
+                          disabled={
+                            isSubmitting ||
+                            (isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots) >
+                              (Number(totalSlotsInput) || 0)
+                          }
                           className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
                         >
                           {isSubmitting && <Loader2 size={16} className="animate-spin" />}

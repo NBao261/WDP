@@ -63,43 +63,45 @@ export function useFacilitiesData() {
       setFloors(scopedFloors);
       setVehicleTypes(vtRes.data);
 
-      if (!silent) setIsLoading(false);
+        if (fetchedFloors.length > 0) {
+          try {
+            const slotResults = await Promise.all(
+              fetchedFloors.map((fl: Floor) =>
+                slotService.getByFloor(fl._id).catch(() => ({ data: [] as ParkingSlot[] }))
+              )
+            );
+            const slots = slotResults.flatMap((r: { data: ParkingSlot[] }) => r.data);
+            setAllSlots(slots);
 
-      if (fetchedFloors.length > 0) {
-        try {
-          const slotResults = await Promise.all(
-            fetchedFloors.map((fl: Floor) =>
-              slotService.getByFloor(fl._id).catch(() => ({ data: [] as ParkingSlot[] }))
-            )
-          );
-          const slots = slotResults.flatMap((r: { data: ParkingSlot[] }) => r.data);
-          setAllSlots(slots);
-
-          // Keep mapFloor and mapSlots in sync if currently viewing map
-          setMapFloor((prevFloor) => {
-            if (prevFloor) {
-              setMapSlots(
-                slots
-                  .filter((s) => s.floorId === prevFloor._id)
-                  .sort((a, b) =>
-                    a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
-                  )
-              );
-              return fetchedFloors.find((f: Floor) => f._id === prevFloor._id) || prevFloor;
-            }
-            return null;
-          });
-        } catch {
+            // Keep mapFloor and mapSlots in sync if currently viewing map
+            setMapFloor((prevFloor) => {
+              if (prevFloor) {
+                setMapSlots(
+                  slots
+                    .filter((s) => s.floorId === prevFloor._id)
+                    .sort((a, b) =>
+                      a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
+                    )
+                );
+                return fetchedFloors.find((f: Floor) => f._id === prevFloor._id) || prevFloor;
+              }
+              return null;
+            });
+          } catch {
+            setAllSlots([]);
+          }
+        } else {
           setAllSlots([]);
         }
-      } else {
-        setAllSlots([]);
+
+        if (!silent) setIsLoading(false);
+      } catch (err: any) {
+        toast.error(err.message || 'Lỗi tải dữ liệu');
+        if (!silent) setIsLoading(false);
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi tải dữ liệu');
-      if (!silent) setIsLoading(false);
-    }
-  }, [assignedFacilityIds]);
+    },
+    [assignedFacilityIds]
+  );
 
   useEffect(() => {
     fetchAll();
@@ -187,7 +189,7 @@ export function useFacilitiesData() {
     }
     for (const floor of floors) {
       const floorSlots = byFloor[floor._id] ?? [];
-      const total = floorSlots.length;
+      const total = floor.totalSlots || floorSlots.length;
       const occupied = floorSlots.filter((s) => s.status === 'occupied').length;
       const reserved = floorSlots.filter((s) => s.status === 'reserved').length;
       const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;

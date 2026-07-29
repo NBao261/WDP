@@ -14,8 +14,6 @@ const router = Router();
 
 router.use(verifyToken);
 
-// BR-6.4: Tự động hủy reservation quá hạn — Admin/Cron
-// ⚠️ PHẢI đặt trước /:id routes để tránh bị match nhầm
 router.post(
   '/auto-expire',
   checkRole([UserRole.ADMIN]),
@@ -23,7 +21,6 @@ router.post(
   ReservationController.autoExpire
 );
 
-// FR-14.1: Tạo đặt chỗ trước — Driver only (SRS 3.2: chỉ Driver đặt chỗ)
 router.post(
   '/',
   checkRole([UserRole.DRIVER]),
@@ -32,7 +29,6 @@ router.post(
   ReservationController.createReservation
 );
 
-// FR-14.2: Xem danh sách đặt chỗ — Driver xem của mình, Manager/Admin xem tất cả
 router.get(
   '/',
   checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.DRIVER]),
@@ -41,8 +37,7 @@ router.get(
   ReservationController.getReservations
 );
 
-// Tra cứu reservation theo mã — Staff/Manager dùng tại cổng check-in (QR hoặc nhập tay)
-// ⚠️ PHẢI đặt trước /:id routes để tránh bị match nhầm
+
 router.get(
   '/by-code/:code',
   checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
@@ -50,8 +45,6 @@ router.get(
   ReservationController.getByCode
 );
 
-// Tra cứu reservation theo biển số — Staff tự động detect khi ALPR quét
-// ⚠️ PHẢI đặt trước /:id routes để tránh bị match nhầm
 router.get(
   '/by-plate/:plate',
   checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
@@ -59,7 +52,6 @@ router.get(
   ReservationController.getByPlate
 );
 
-// Xem chi tiết reservation
 router.get(
   '/:id',
   checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.DRIVER]),
@@ -67,7 +59,6 @@ router.get(
   ReservationController.getReservationById
 );
 
-// FR-14.2: Hủy đặt chỗ — Driver only
 router.post(
   '/:id/cancel',
   checkRole([UserRole.DRIVER]),

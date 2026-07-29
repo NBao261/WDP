@@ -5,10 +5,6 @@ import { ParkingSession } from '../models/parkingSession.model';
 import { Exception } from '../models/exception.model';
 
 export class UploadService {
-  /**
-   * Background task: Xử lý gộp cả ảnh checkIn và checkOut
-   * khi xe ra khỏi bãi (COMPLETED session).
-   */
   static async processCompletedSessionImages(sessionId: string): Promise<void> {
     try {
       console.log(`[UploadService] Starting upload for session ${sessionId}`);
@@ -38,14 +34,10 @@ export class UploadService {
       }
     } catch (error) {
       console.error(`[UploadService] [FAIL] Sync background thất bại cho session ${sessionId}:`, error);
-      throw error; // Throw so BullMQ can retry
+      throw error;
     }
   }
 
-  /**
-   * Background task: Upload ảnh exception (checkInImage, checkOutImage) lên Cloudinary
-   * Gọi khi tạo exception mới có ảnh local
-   */
   static async processExceptionImages(exceptionId: string): Promise<void> {
     try {
       console.log(`[UploadService] Starting upload for exception ${exceptionId}`);
@@ -103,24 +95,16 @@ export class UploadService {
       return cloudinaryUrl;
     } catch (err) {
       console.error(`[UploadService] Lỗi xử lý file ${filename}:`, err);
-      throw err; // Throw so BullMQ can retry
+      throw err;
     }
   }
 
-  /**
-   * Upload ảnh base64 trực tiếp lên Cloudinary.
-   * Cloudinary hỗ trợ nhận chuỗi data URI (data:image/...;base64,...) natively.
-   * @param base64String - chuỗi base64 hoặc data URI
-   * @param folder - thư mục trên Cloudinary (default: 'smart_parking/vehicles')
-   * @returns URL ảnh trên Cloudinary (secure_url)
-   */
   static async uploadBase64Image(base64String: string, folder = 'smart_parking/vehicles'): Promise<string> {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
       console.warn('[UploadService] CLOUDINARY_CLOUD_NAME not set, keeping base64 as-is');
       return base64String;
     }
 
-    // Đảm bảo chuỗi có prefix data URI
     let dataUri = base64String;
     if (!dataUri.startsWith('data:')) {
       dataUri = `data:image/jpeg;base64,${dataUri}`;
@@ -130,8 +114,8 @@ export class UploadService {
       folder,
       resource_type: 'image',
       transformation: [
-        { width: 800, height: 600, crop: 'limit' }, // giới hạn kích thước tối đa
-        { quality: 'auto', fetch_format: 'auto' },   // tự tối ưu chất lượng & format
+        { width: 800, height: 600, crop: 'limit' },
+        { quality: 'auto', fetch_format: 'auto' },
       ],
     });
 
@@ -139,9 +123,6 @@ export class UploadService {
     return result.secure_url;
   }
 
-  /**
-   * Kiểm tra chuỗi có phải base64 / data URI không.
-   */
   static isBase64Image(str: string): boolean {
     return str.startsWith('data:image/') || /^[A-Za-z0-9+/=]{100,}/.test(str);
   }

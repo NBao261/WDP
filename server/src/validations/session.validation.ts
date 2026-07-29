@@ -3,7 +3,6 @@ import { z } from 'zod';
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const licensePlateRegex = /^[0-9A-Z\-.\s]{4,15}$/;
 
-// FR-8.1: Kiểm tra điều kiện xe vào bãi
 export const checkConditionsSchema = z.object({
   body: z.object({
     facilityId: z
@@ -15,10 +14,6 @@ export const checkConditionsSchema = z.object({
   }),
 });
 
-// FR-9.1: Tạo lượt gửi xe (check-in)
-// Hai chế độ:
-//   1. Có reservationCode → chỉ cần gateIn, hệ thống tự fill từ reservation
-//   2. Không có reservationCode → bắt buộc facilityId + vehicleTypeId + licensePlate + gateIn
 export const checkInSchema = z.object({
   body: z.object({
     facilityId: z
@@ -62,7 +57,6 @@ export const checkInSchema = z.object({
   ),
 });
 
-// FR-8.3: Gợi ý tầng/khu vực
 export const suggestFloorSchema = z.object({
   query: z.object({
     facilityId: z
@@ -74,7 +68,6 @@ export const suggestFloorSchema = z.object({
   }),
 });
 
-// FR-9.2: Lấy danh sách session active
 export const getActiveSessionsSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/, 'Page must be a number').optional(),
@@ -88,7 +81,6 @@ export const getActiveSessionsSchema = z.object({
   }),
 });
 
-// FR-10.1: Tìm lượt gửi xe
 export const searchSessionSchema = z.object({
   query: z
     .object({
@@ -102,7 +94,6 @@ export const searchSessionSchema = z.object({
     ),
 });
 
-// FR-10.3: Thu phí gửi xe và check-out
 export const checkOutSchema = z.object({
   params: z.object({
     id: z.string().regex(objectIdRegex, 'Invalid session ID format'),

@@ -1,26 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 
-/**
- * Sanitize middleware — Strip HTML tags, null bytes, and trim strings.
- * Áp dụng đệ quy cho tất cả string values trong req.body, req.query, req.params.
- *
- * Chống:
- *  - XSS (strip <script>, <img onerror>, etc.)
- *  - Null byte injection (\0)
- *  - Whitespace padding
- */
-
-// Regex strip HTML tags (bao gồm self-closing và attributes)
 const HTML_TAG_RE = /<\/?[^>]+(>|$)/g;
-// Null bytes
 const NULL_BYTE_RE = /\0/g;
 
 function sanitizeValue(value: unknown): unknown {
   if (typeof value === 'string') {
     return value
-      .replace(NULL_BYTE_RE, '')   // Remove null bytes
-      .replace(HTML_TAG_RE, '')    // Strip HTML tags
-      .trim();                     // Trim whitespace
+      .replace(NULL_BYTE_RE, '')
+      .replace(HTML_TAG_RE, '')
+      .trim();
   }
 
   if (Array.isArray(value)) {

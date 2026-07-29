@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { UserRole } from '../models/user.model';
 
-// FR-18.1: Register (Admin tạo tài khoản)
 export const registerSchema = z.object({
   body: z.object({
     name: z.string({ required_error: 'Name is required' }).min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters').trim(),
@@ -18,7 +17,6 @@ export const registerSchema = z.object({
   }),
 });
 
-// Login
 export const loginSchema = z.object({
   body: z.object({
     email: z
@@ -30,7 +28,6 @@ export const loginSchema = z.object({
   }),
 });
 
-// Refresh Token
 export const refreshTokenSchema = z.object({
   body: z.object({
     refreshToken: z

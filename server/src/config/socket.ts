@@ -37,9 +37,7 @@ export const createSocketServer = (httpServer: HttpServer): SocketServer => {
           socket.join(`user:${decoded.userId}`);
           logger.debug(`Socket ${socket.id} joined user:${decoded.userId}`);
         }
-      } catch (err) {
-        // invalid token, ignore
-      }
+      } catch (err) {}
     }
 
     socket.on('join:facility', (facilityId: string) => {

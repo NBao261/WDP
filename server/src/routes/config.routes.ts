@@ -8,10 +8,8 @@ import { PERMISSIONS } from '../config/permissions';
 
 const router = Router();
 
-// SRS 3.7: Quản trị hệ thống — chỉ Admin
 router.use(verifyToken);
 router.use(checkRole([UserRole.ADMIN]));
-
 router.get('/', checkPermission(PERMISSIONS.CONFIG_MANAGE), ConfigController.getAllConfigs);
 router.get('/logs', validate(getAuditLogsSchema), checkPermission(PERMISSIONS.LOG_VIEW), ConfigController.getAuditLogs);
 router.get('/:key', validate(getConfigSchema), checkPermission(PERMISSIONS.CONFIG_MANAGE), ConfigController.getConfig);

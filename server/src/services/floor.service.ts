@@ -21,7 +21,6 @@ export class FloorService {
       throw new AppError(`Không thể thêm khu vực. Toà nhà này chỉ cho phép tối đa ${facility.totalFloors} khu vực/tầng.`, 400);
     }
 
-    // Check if floor with same name exists in the same facility
     const existingFloor = await Floor.findOne({ 
       name: data.name, 
       facilityId: data.facilityId,
@@ -42,7 +41,6 @@ export class FloorService {
       );
     }
     
-    // Invalidate OperationsConfig Cache
     await delCache(`cache:operationsConfig:${data.facilityId}`);
     await delCache(`cache:public:available-slots:${data.facilityId}`);
 
@@ -80,11 +78,9 @@ export class FloorService {
     const updatedFloor = await Floor.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
     if (data.status === 'inactive') {
-      // Cascade: slots available → maintenance
       await ParkingSlot.updateMany({ floorId: id, status: 'available' }, { status: 'maintenance' });
     }
     
-    // Invalidate OperationsConfig Cache
     await delCache(`cache:operationsConfig:${floor.facilityId}`);
     await delCache(`cache:public:available-slots:${floor.facilityId}`);
 
@@ -92,7 +88,6 @@ export class FloorService {
   }
 
   static async assignVehicleTypes(id: string, vehicleTypeIds: string[]): Promise<IFloor | null> {
-    // Lấy floor hiện tại để diff
     const currentFloor = await Floor.findById(id);
     if (!currentFloor) {
       throw new AppError('Floor not found', 404);
@@ -101,12 +96,10 @@ export class FloorService {
     const oldIds = currentFloor.allowedVehicleTypes.map((vtId) => vtId.toString());
     const newIds = vehicleTypeIds;
 
-    // Xác định vehicleType bị xóa và thêm mới
     const removedIds = oldIds.filter((vtId) => !newIds.includes(vtId));
     const addedIds = newIds.filter((vtId) => !oldIds.includes(vtId));
 
     if (removedIds.length > 0) {
-      // Check if there are any slots for the removed vehicle types
       const existingSlots = await ParkingSlot.countDocuments({
         floorId: id,
         vehicleTypeId: { $in: removedIds },
@@ -118,14 +111,12 @@ export class FloorService {
       }
     }
 
-    // Cập nhật Floor
     const floor = await Floor.findByIdAndUpdate(
       id,
       { $set: { allowedVehicleTypes: vehicleTypeIds } },
       { new: true, runValidators: true }
     );
 
-    // Two-way sync: xóa floor._id khỏi VehicleType.floors[] cho các vehicleType bị loại bỏ
     if (removedIds.length > 0) {
       await VehicleType.updateMany(
         { _id: { $in: removedIds } },
@@ -133,7 +124,6 @@ export class FloorService {
       );
     }
 
-    // Two-way sync: thêm floor._id vào VehicleType.floors[] cho các vehicleType mới
     if (addedIds.length > 0) {
       await VehicleType.updateMany(
         { _id: { $in: addedIds } },
@@ -141,7 +131,6 @@ export class FloorService {
       );
     }
     
-    // Invalidate OperationsConfig Cache
     await delCache(`cache:operationsConfig:${currentFloor.facilityId}`);
     await delCache(`cache:public:available-slots:${currentFloor.facilityId}`);
 
@@ -149,7 +138,6 @@ export class FloorService {
   }
 
   static async softDeleteFloor(id: string): Promise<IFloor | null> {
-    // Check if there are any existing slots before deleting
     const existingSlots = await ParkingSlot.countDocuments({
       floorId: id,
       isDeleted: false,
@@ -164,7 +152,6 @@ export class FloorService {
       throw new AppError('Floor not found', 404);
     }
 
-    // Two-way sync: xóa floor._id khỏi VehicleType.floors[] cho tất cả vehicleType liên quan
     if (floor.allowedVehicleTypes && floor.allowedVehicleTypes.length > 0) {
       await VehicleType.updateMany(
         { _id: { $in: floor.allowedVehicleTypes } },
@@ -172,7 +159,6 @@ export class FloorService {
       );
     }
     
-    // Invalidate OperationsConfig Cache
     await delCache(`cache:operationsConfig:${floor.facilityId}`);
     await delCache(`cache:public:available-slots:${floor.facilityId}`);
 

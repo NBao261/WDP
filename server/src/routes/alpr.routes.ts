@@ -6,13 +6,12 @@ import { UserRole } from '../models/user.model';
 
 const router = Router();
 
-// Only allow image uploads (JPEG, PNG, WebP, BMP)
 const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/bmp'];
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit — đồng bộ với ALPR Python service
+    fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
@@ -23,7 +22,6 @@ const upload = multer({
   },
 });
 
-// Route for scanning license plate from image — Staff/Admin only
 router.post(
   '/scan',
   verifyToken,

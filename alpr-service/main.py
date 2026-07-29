@@ -42,7 +42,7 @@ try:
 except Exception as _e:
     print(f"[INIT] torch preload warning: {_e}")
 
-# ── Globals ───────────────────────────────────────────────────────────────────
+# Globals
 ocr  = None   # PaddleOCR instance
 yolo = None   # YOLO plate detector
 
@@ -50,8 +50,6 @@ _PLATE_MODEL_PATH = Path(__file__).parent / "yolov8n_plate.pt"
 _HF_REPO          = "Koushim/yolov8-license-plate-detection"
 _HF_FILENAME      = "best.pt"
 
-
-# ── Lifespan: load both models (dung lifespan thay on_event de tranh async issue) ──
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -65,23 +63,23 @@ app = FastAPI(title="ALPR Service", lifespan=lifespan)
 def _load_models():
     global ocr, yolo
 
-    # ── 1. PaddleOCR ────────────────────────────────────────────────────────
+    # 1. PaddleOCR
     try:
         from paddleocr import PaddleOCR
         ocr = PaddleOCR(
-            use_textline_orientation=False,   # bien so khong can xoay → nhanh hon
+            use_textline_orientation=False,
             lang='en',
             text_det_thresh=0.2,
             text_det_box_thresh=0.3,
-            det_limit_side_len=960,           # tang kich thuoc detection len 960 de OCR toan anh ro hon
-            ocr_version='PP-OCRv3'            # Dung v3 de on dinh tren CPU khong co tap lenh AVX moi
+            det_limit_side_len=960,
+            ocr_version='PP-OCRv3'
         )
         print("[OK] PaddleOCR loaded")
     except Exception as e:
         print(f"[FAIL] PaddleOCR: {e}")
         ocr = None
 
-    # ── 2. YOLO license plate detector ──────────────────────────────────────
+    # 2. YOLO license plate detector
     try:
         from ultralytics import YOLO
 
@@ -90,7 +88,6 @@ def _load_models():
             try:
                 from huggingface_hub import hf_hub_download, login as hf_login
 
-                # Auto-login nếu có HF_TOKEN trong env
                 hf_token = os.environ.get("HF_TOKEN")
                 if hf_token:
                     hf_login(token=hf_token, add_to_git_credential=False)
@@ -99,7 +96,7 @@ def _load_models():
                 cached = hf_hub_download(
                     repo_id=_HF_REPO,
                     filename=_HF_FILENAME,
-                    token=hf_token,  # None = dùng cached login
+                    token=hf_token,
                 )
                 import shutil
                 shutil.copy2(cached, _PLATE_MODEL_PATH)
@@ -122,7 +119,7 @@ def _load_models():
         yolo = None
 
 
-# ── Preprocessing ─────────────────────────────────────────────────────────────
+# Preprocessing
 
 def _ensure_min_height(img: np.ndarray, min_h: int = 64) -> np.ndarray:
     h, w = img.shape[:2]
@@ -184,7 +181,7 @@ def preprocess_morph(img: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(opened, cv2.COLOR_GRAY2BGR)
 
 
-# ── PaddleOCR output parser ────────────────────────────────────────────────────
+# PaddleOCR Output Parser
 
 def parse_paddle_result(result) -> list:
     """
@@ -207,7 +204,6 @@ def parse_paddle_result(result) -> list:
             items.append((yc, xc, str(text).strip(), conf))
         return items
 
-    # list format (v2.x compat)
     data = result
     if len(data) == 1 and isinstance(data[0], list) and data[0] and isinstance(data[0][0], list):
         data = data[0]
@@ -254,23 +250,17 @@ def avg_conf(items: list) -> float:
     return sum(i[3] for i in items) / len(items) if items else 0.0
 
 
-# ── VN plate normalization (v2 — bidirectional, position-aware) ───────────────
-# Based on PP. [3][4] — character correction at known positions
+# VN Plate Normalization (bidirectional, position-aware - PP. [3][4])
 
-_D2L = {'8': 'B', '0': 'D', '6': 'G', '1': 'I', '5': 'S'}   # digit→letter (letter positions)
-_L2D = {'O': '0', 'I': '1', 'B': '8', 'S': '5', 'Z': '2',    # letter→digit (digit positions)
+_D2L = {'8': 'B', '0': 'D', '6': 'G', '1': 'I', '5': 'S'}   # digit→letter
+_L2D = {'O': '0', 'I': '1', 'B': '8', 'S': '5', 'Z': '2',    # letter→digit
         'G': '6', 'D': '0'}
 
-# VN plate formats:
-#   Type A (xe may): PPL-NNNNN    e.g. 30K-12345, 30K-555.55
-#   Type A2 (xe may 2-char): PPLD-NNNN   e.g. 63B9-1234, 63B9-999.99
-#   Type B (o to):   PP-LNNNNN   e.g. 30-A12345, 30-AB1234
-# PP = province (2 digits), L = series letter(s), D = optional digit, N = digits
 _VN_PLATE_RE = re.compile(
     r'^(?:'
-    r'\d{2}[A-Z]{1,2}\d?-[\d.]{4,6}'      # Type A/A2: 30K-555.55, 63B9-1234, 66AA-138.61
+    r'\d{2}[A-Z]{1,2}\d?-[\d.]{4,6}'
     r'|'
-    r'\d{2}-[A-Z]{1,2}[\d.]{4,6}'    # Type B: 30-A12345, 30-AB1234
+    r'\d{2}-[A-Z]{1,2}[\d.]{4,6}'
     r')$'
 )
 
@@ -278,51 +268,37 @@ _VN_PLATE_RE = re.compile(
 def fix_vn_plate(raw: str) -> str:
     s = raw.strip().upper()
 
-    # 1. Normalize separator noise
     s = re.sub(r'[*#@\\\\/|]', '-', s)
     s = re.sub(r'[^A-Z0-9\s.\-]', '', s)
     s = re.sub(r'\s+', ' ', s).strip()
 
-    # 1b. Phat hien space lam ranh gioi series/so truoc khi xoa space
-    #     Vi du: "63-B9 999.99" → space sau "B9" la ranh gioi → "63-B9-999.99"
-    #     Pattern: DD-LD<space>NNN  hoac  DD-L<space>NNN hoac DD-LL<space>NNN
     s = re.sub(r'^(\d{2}-[A-Z]{1,2}\d?) (\d)', r'\1-\2', s)
     s = re.sub(r'^(\d{2}[A-Z]{1,2}\d?) (\d)', r'\1-\2', s)
 
-    s = s.replace(' ', '')  # remove spaces for parsing
+    s = s.replace(' ', '')
 
-    # 2. KEY FIX: "DD-L-rest" → "DDL-rest"  (also handles "DD-L9-rest" → "DDL9-rest")
-    #    OCR thuong chen dash thua giua province va series letter
-    #    Vi du: "30-K-S55.55" → "30K-S55.55"
-    #    Vi du: "63-B9-999.99" → "63B9-999.99"
     s = re.sub(r'^(\d{2})-([A-Z]{1,2}\d?)-', r'\1\2-', s)
 
-    # 3. Auto-insert dash neu thieu: "30K55555" → "30K-55555" (Type A)
-    #    Khong ap dung neu da co dash
     if '-' not in s:
-        s = re.sub(r'^(\d{2}[A-Z]{1,2})(\d)', r'\1-\2', s)  # Type A
+        s = re.sub(r'^(\d{2}[A-Z]{1,2})(\d)', r'\1-\2', s)
         if '-' not in s:
-            s = re.sub(r'^(\d{2}[A-Z]{1,2})(\d)', r'\1-\2', s)  # still no match?
-            s = re.sub(r'^(\d{2})([A-Z])', r'\1-\2', s)           # Type B fallback
+            s = re.sub(r'^(\d{2}[A-Z]{1,2})(\d)', r'\1-\2', s)
+            s = re.sub(r'^(\d{2})([A-Z])', r'\1-\2', s)
 
-    # 4. Split tai dash dau tien
     parts = s.split('-', 1)
     if len(parts) != 2:
         return s
     prefix_raw, number_raw = parts[0], parts[1]
 
-    # 5. Phan tich prefix: province (2 digits) + series (letters/digits)
     m_pre = re.match(r'^(\d{2})([A-Z0-9]*)$', prefix_raw)
     if not m_pre:
         return s
     province = m_pre.group(1)
     series   = list(m_pre.group(2))
 
-    # Sua series: ky tu dau tien cua series phai la chu cai
     if series and series[0] in _D2L:
         series[0] = _D2L[series[0]]
 
-    # 6. Neu series rong ma number bat dau bang letter (hoac so giong letter) → do la series letter (Type B plate)
     if not series and number_raw and (number_raw[0].isalpha() or number_raw[0] in _D2L):
         after_letter = number_raw[1:]
         has_dot = '.' in after_letter
@@ -332,10 +308,8 @@ def fix_vn_plate(raw: str) -> str:
         if pure_digits >= 6:
             is_two_char = True
         elif pure_digits == 5 and not has_dot:
-            # Assume 1-char series + 5 digits is more common
             is_two_char = False
             
-        # Neu ki tu thu hai sau so dau tien cung giong chu cai, ep kieu no luon
         if after_letter and (after_letter[0].isalpha() or after_letter[0] in _D2L):
             is_two_char = True
 
@@ -346,11 +320,9 @@ def fix_vn_plate(raw: str) -> str:
             series = [number_raw[0]]
             number_raw = after_letter
 
-        # Fix series chars (letter positions: digit → letter)
         for i, c in enumerate(series):
             if c in _D2L: series[i] = _D2L[c]
 
-    # 7. Sua number: letter-looking chars → digits (giu lai dau cham)
     number = list(number_raw)
     for i, c in enumerate(number):
         if c == '.':
@@ -360,8 +332,6 @@ def fix_vn_plate(raw: str) -> str:
 
     number_str = ''.join(number)
     
-    # Remove any trailing non-digits (e.g. random text like "HIEU" caught by OCR)
-    # We only want digits and dots at the beginning of the number part
     m = re.match(r'^([\d.]+)', number_str)
     if m:
         number_str = m.group(1).rstrip('.')
@@ -370,28 +340,22 @@ def fix_vn_plate(raw: str) -> str:
 
     series_str = ''.join(series)
 
-    # 8. Tra ve dung format
     if series_str:
-        # Co series: quet xem Type A (DDL-NNN) hay Type B (DD-LNNN)
-        # Neu prefix da chua series ("30K") → Type A
-        # Neu prefix chi co province ("30") va series vua trich tu number → Type B
         return f"{province}{series_str}-{number_str}"
     else:
         return f"{province}-{number_str}"
 
 
 def is_valid_vn_plate(text: str) -> bool:
-    """Kiem tra format bien so VN (Type A: DDL-NNNNN, Type B: DD-LNNNNN)"""
     return bool(_VN_PLATE_RE.match(text.replace(' ', '')))
 
 
-# ── YOLO plate detection ──────────────────────────────────────────────────────
+# YOLO Plate Detection
 
 def detect_plates(img: np.ndarray, conf_thresh: float = 0.25) -> list:
     """
-    Dung YOLO de detect bien so xe.
+    Dung YOLO de detect bien so xe (PP. [1] DOI 10.1109/ACCESS.2024.3430857).
     Returns: list of (crop_image, yolo_confidence)
-    Based on PP. [1] DOI 10.1109/ACCESS.2024.3430857
     """
     if yolo is None:
         return []
@@ -410,8 +374,6 @@ def detect_plates(img: np.ndarray, conf_thresh: float = 0.25) -> list:
             x1, y1, x2, y2 = (int(v) for v in box.xyxy[0].tolist())
             det_conf = float(box.conf[0])
 
-            # Proportional padding (PP. [2])
-            # Tăng padding lên 15% chiều ngang và 20% chiều dọc để DBNet không bị cắt lẹm viền chữ số
             pw = max(6, int((x2 - x1) * 0.15))
             ph = max(4, int((y2 - y1) * 0.40))
             x1 = max(0, x1 - pw)
@@ -427,17 +389,13 @@ def detect_plates(img: np.ndarray, conf_thresh: float = 0.25) -> list:
     return crops
 
 
-# ── Multi-pass OCR với early-exit ─────────────────────────────────────────────
+# Multi-pass OCR với Early-Exit
 
 _RESIZE_MAX_W  = 640
-_EARLY_EXIT    = 0.88   # exit ngay khi dat nguong nay (tang len 0.88 de cho phep chay them cac buoc xu ly hinh anh cho cac bien so hoi mo hoac bi nham 5 va 3)
+_EARLY_EXIT    = 0.88
 
 
 def _resize(img: np.ndarray, min_w: int = 480) -> np.ndarray:
-    """
-    Chỉ upscale ảnh nếu quá nhỏ để cải thiện OCR. 
-    Không downscale ảnh lớn vì sẽ làm mất chi tiết chữ số (đặc biệt số 5).
-    """
     h, w = img.shape[:2]
     if w < min_w:
         scale = min_w / w
@@ -452,10 +410,6 @@ def preprocess_binary(img: np.ndarray) -> np.ndarray:
 
 
 def ocr_image(img: np.ndarray) -> tuple[str, float]:
-    """
-    Multi-pass OCR voi lazy preprocessing va early-exit.
-    Uu tien original → binary → normal → morph → glare → dark.
-    """
     img = _resize(img)
 
     preprocessors = [
@@ -467,7 +421,7 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
         ("dark",     lambda: preprocess_dark(img)),
     ]
 
-    best = None  # (text, conf, valid)
+    best = None
 
     for name, make_img in preprocessors:
         try:
@@ -479,7 +433,6 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
 
             raw  = assemble_rows(items)
             print(f"[DEBUG] raw: {raw}", flush=True)
-            # Filter noise words
             noise_words = {"honda", "yamaha", "suzuki", "sym", "piaggio", "hotline", "xemay", "xe"}
             words = [w for w in raw.split() if w.lower() not in noise_words and not w.lower().startswith("hotline")]
             
@@ -509,7 +462,6 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
             if len(alnum) >= 4:
                 print(f"    [{name}] → '{text}' (conf={conf:.3f}, valid={valid})")
                 
-                # Prefer valid VN plates; otherwise track best by conf
                 if best is None:
                     best = (text, conf, valid)
                 else:
@@ -519,7 +471,6 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
                     elif valid == best_valid and conf > best_conf:
                         best = (text, conf, valid)
                         
-                # Only early exit if the plate is actually valid
                 if conf >= _EARLY_EXIT and valid:
                     print(f"    [early-exit] conf={conf:.3f}")
                     return (best[0], best[1])
@@ -530,7 +481,7 @@ def ocr_image(img: np.ndarray) -> tuple[str, float]:
     return (best[0], best[1]) if best else ("", 0.0)
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+# FastAPI Routes
 
 @app.get("/health")
 def health():
@@ -552,8 +503,7 @@ async def predict(file: UploadFile = File(...)):
     try:
         contents = await file.read()
 
-        # ── File size validation (max 10MB) ──────────────────────────────
-        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+        MAX_FILE_SIZE = 10 * 1024 * 1024
         if len(contents) == 0:
             raise HTTPException(400, "Empty file")
         if len(contents) > MAX_FILE_SIZE:
@@ -568,7 +518,6 @@ async def predict(file: UploadFile = File(...)):
 
         all_results = []
 
-        # ── Stage 1: YOLO detect → crop → OCR ────────────────────────────
         plate_crops = detect_plates(img)
 
         if plate_crops:
@@ -577,7 +526,6 @@ async def predict(file: UploadFile = File(...)):
                 text, ocr_conf = ocr_image(crop)
                 if not text:
                     continue
-                # Combined confidence: 30% YOLO + 70% OCR (PP. [1])
                 combined = round(det_conf * 0.30 + ocr_conf * 0.70, 4)
                 all_results.append({
                     "text":       text,
@@ -586,7 +534,6 @@ async def predict(file: UploadFile = File(...)):
                     "source":     "yolo+ocr",
                 })
 
-        # ── Stage 2: Fallback — full-image OCR ────────────────────────────
         if not any(r["valid"] for r in all_results):
             print("[ALPR] Fallback: full-image OCR")
             text, conf = ocr_image(img)
@@ -598,7 +545,6 @@ async def predict(file: UploadFile = File(...)):
                     "source":     "ocr-only",
                 })
 
-        # Sort: valid plates first, then by confidence
         all_results.sort(key=lambda x: (x["valid"], x["confidence"]), reverse=True)
 
         print(f"[ALPR] Final: {all_results}")

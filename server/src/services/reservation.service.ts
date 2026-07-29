@@ -8,14 +8,9 @@ import { logger } from '../config/logger';
 import { generateReservationCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
 import { getCache, setCache, delPattern } from '../config/redis';
+import { addReservationExpiryAlertJob } from '../queues/reservationQueue';
 
 export class ReservationService {
-  /**
-   * FR-14.1: Tạo đặt chỗ trước
-   * BR-6.1: Chỉ đặt chỗ khi còn slot
-   * BR-6.2: Phải đặt trước ít nhất 30 phút
-   * BR-6.3: Tối đa 2 reservation active / user
-   */
   static async createReservation(userId: string, data: {
     facilityId: string;
     vehicleTypeId: string;
@@ -27,12 +22,10 @@ export class ReservationService {
     const start = new Date(startTime);
     const now = new Date();
 
-    // Validate facility exists and is active
     const facility = await ParkingFacility.findById(facilityId).lean();
     if (!facility) throw new AppError('Bãi xe không tồn tại', 404);
     if (facility.status !== 'active') throw new AppError('Bãi xe hiện đang không hoạt động', 400);
 
-    // Validate facility operating hours
     const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
 
     if (facility.openTime !== facility.closeTime) {
@@ -41,18 +34,15 @@ export class ReservationService {
           throw new AppError(`Thời gian đặt chỗ phải nằm trong giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
         }
       } else {
-        // Qua đêm (ví dụ 22:00 - 06:00) -> Không hợp lệ nếu nằm trong khoảng 06:00 - 22:00
         if (startStr < facility.openTime && startStr >= facility.closeTime) {
           throw new AppError(`Thời gian đặt chỗ phải nằm trong giờ hoạt động: ${facility.openTime} - ${facility.closeTime}`, 400);
         }
       }
     }
 
-    // Validate vehicle type exists
     const vehicleType = await VehicleType.findById(vehicleTypeId).lean();
     if (!vehicleType) throw new AppError('Loại xe không tồn tại', 404);
 
-    // Validate pricing plan exists
     const pricingPlan = await PricingPlan.findOne({
       facilityId,
       vehicleTypeId,
@@ -64,13 +54,11 @@ export class ReservationService {
       throw new AppError('Bãi xe chưa có bảng giá áp dụng cho loại xe này', 400);
     }
 
-    // BR-6.2: Phải đặt trước ít nhất 5 phút
     const minAdvanceMs = 5 * 60 * 1000;
     if (start.getTime() - now.getTime() < minAdvanceMs) {
       throw new AppError('Phải đặt trước ít nhất 5 phút so với thời gian bắt đầu', 400);
     }
 
-    // BR-6.3: Tối đa 2 reservation active / user
     const activeCount = await Reservation.countDocuments({
       userId,
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
@@ -79,7 +67,6 @@ export class ReservationService {
       throw new AppError('Bạn chỉ có thể có tối đa 2 đặt chỗ đang hoạt động', 400);
     }
 
-    // Chặn tạo nhiều đặt chỗ cho cùng một biển số (chống trùng lặp thời gian chờ)
     const existingPlateReservation = await Reservation.findOne({
       licensePlate: normalizedPlate,
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
@@ -88,19 +75,21 @@ export class ReservationService {
       throw new AppError(`Biển số ${normalizedPlate} đang có một đặt chỗ chưa sử dụng. Vui lòng sử dụng hoặc hủy đặt chỗ hiện tại trước khi tạo mới.`, 400);
     }
 
-    // BR-6.1: Tìm slot trống cho loại xe tại facility
-    const availableSlot = await ParkingSlot.findOne({
-      facilityId,
-      vehicleTypeId,
-      status: SlotStatus.AVAILABLE,
-      isDeleted: false,
-    });
+    const availableSlot = await ParkingSlot.findOneAndUpdate(
+      {
+        facilityId,
+        vehicleTypeId,
+        status: SlotStatus.AVAILABLE,
+        isDeleted: false,
+      },
+      { status: SlotStatus.RESERVED },
+      { new: true },
+    );
 
     if (!availableSlot) {
       throw new AppError('Không còn slot trống cho loại xe này trong khung giờ yêu cầu', 400);
     }
 
-    // Sinh mã reservation (đảm bảo unique)
     let reservationCode = generateReservationCode();
     let retries = 5;
     while (retries > 0) {
@@ -110,25 +99,26 @@ export class ReservationService {
       retries--;
     }
     if (retries === 0) {
+      await ParkingSlot.findByIdAndUpdate(availableSlot._id, { status: SlotStatus.AVAILABLE });
       throw new AppError('Không thể tạo mã đặt chỗ. Vui lòng thử lại.', 500);
     }
 
-    // Tạo reservation + lock slot
-    const reservation = await Reservation.create({
-      code: reservationCode,
-      userId,
-      facilityId,
-      vehicleTypeId,
-      slotId: availableSlot._id,
-      licensePlate: normalizedPlate,
-      startTime: start,
-      status: ReservationStatus.CONFIRMED,
-    });
-
-    // Chuyển slot sang Reserved
-    await ParkingSlot.findByIdAndUpdate(availableSlot._id, {
-      status: SlotStatus.RESERVED,
-    });
+    let reservation: IReservation;
+    try {
+      reservation = await Reservation.create({
+        code: reservationCode,
+        userId,
+        facilityId,
+        vehicleTypeId,
+        slotId: availableSlot._id,
+        licensePlate: normalizedPlate,
+        startTime: start,
+        status: ReservationStatus.CONFIRMED,
+      });
+    } catch (err) {
+      await ParkingSlot.findByIdAndUpdate(availableSlot._id, { status: SlotStatus.AVAILABLE });
+      throw err;
+    }
     
     try {
       getIO().to(`facility:${facilityId}`).emit('slot:statusChanged', {
@@ -138,13 +128,18 @@ export class ReservationService {
       });
     } catch (e) {}
 
-    // Invalidate reservation cache
     delPattern(`cache:reservations:user:${userId}:*`).catch(() => {});
     if (facilityId) {
       delPattern(`cache:reservations:facility:${facilityId}:*`).catch(() => {});
     }
 
     logger.info(`Reservation created: ${reservation._id} (${reservationCode}) by user ${userId}, slot ${availableSlot.code}, plate ${normalizedPlate}`);
+
+    const alertTime = new Date(reservation.startTime.getTime() + 5 * 60 * 1000);
+    const delayMs = alertTime.getTime() - Date.now();
+    if (delayMs > 0) {
+      await addReservationExpiryAlertJob(reservation._id.toString(), delayMs);
+    }
 
     return reservation.populate([
       { path: 'facilityId', select: 'name address' },
@@ -153,40 +148,30 @@ export class ReservationService {
     ]);
   }
 
-  /**
-   * FR-14.2: Hủy đặt chỗ
-   * BR-6.5: Chính sách hủy — hủy trước ≥2h: miễn phí, trong 2h: có phí
-   */
   static async cancelReservation(reservationId: string, userId: string): Promise<IReservation> {
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) throw new AppError('Đặt chỗ không tồn tại', 404);
 
-    // Chỉ user tạo mới được hủy
     if (reservation.userId.toString() !== userId) {
       throw new AppError('Bạn không có quyền hủy đặt chỗ này', 403);
     }
 
-    // Chỉ hủy được reservation chưa sử dụng
     if (![ReservationStatus.PENDING, ReservationStatus.CONFIRMED].includes(reservation.status)) {
       throw new AppError('Không thể hủy đặt chỗ đã sử dụng hoặc đã hủy', 400);
     }
 
-    // BR-6.5: Tính phí hủy
     const now = new Date();
     const hoursUntilStart = (reservation.startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
     let cancellationFee = 0;
 
     if (hoursUntilStart < 2) {
-      // Hủy trong vòng 2 giờ: phí cố định 10,000 VND (có thể cấu hình qua SystemConfig)
       cancellationFee = 10000;
     }
 
-    // Cập nhật reservation
     reservation.status = ReservationStatus.CANCELLED;
     reservation.cancellationFee = cancellationFee;
     await reservation.save();
 
-    // Trả lại slot → Available
     if (reservation.slotId) {
       await ParkingSlot.findByIdAndUpdate(reservation.slotId, {
         status: SlotStatus.AVAILABLE,
@@ -201,7 +186,6 @@ export class ReservationService {
       } catch (e) {}
     }
     
-    // Invalidate reservation cache
     delPattern(`cache:reservations:user:${userId}:*`).catch(() => {});
     if (reservation.facilityId) {
       delPattern(`cache:reservations:facility:${reservation.facilityId}:*`).catch(() => {});
@@ -212,11 +196,6 @@ export class ReservationService {
     return reservation;
   }
 
-  /**
-   * FR-14.2: Xem danh sách đặt chỗ
-   * Driver: chỉ xem của mình
-   * Manager/Admin: xem tất cả (filter theo facility)
-   */
   static async getReservations(
     userId: string,
     role: string,
@@ -228,7 +207,6 @@ export class ReservationService {
 
     const filter: any = {};
 
-    // Driver chỉ xem của mình
     if (role === 'driver') {
       filter.userId = userId;
     }
@@ -272,21 +250,16 @@ export class ReservationService {
     };
     
     if (cacheKey) {
-      await setCache(cacheKey, result, 300); // 5 mins
+      await setCache(cacheKey, result, 300);
     }
     
     return result;
   }
 
-  /**
-   * BR-6.4: Tự động hủy reservation quá hạn
-   * Gọi bởi cron job — chạy mỗi 5 phút
-   */
   static async autoExpireReservations(): Promise<number> {
     const now = new Date();
-    const graceMs = 15 * 60 * 1000; // 15 phút
+    const graceMs = 15 * 60 * 1000;
 
-    // Tìm reservation đã quá hạn 15 phút mà chưa đến
     const expiredReservations = await Reservation.find({
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
       startTime: { $lte: new Date(now.getTime() - graceMs) },
@@ -297,7 +270,6 @@ export class ReservationService {
       reservation.status = ReservationStatus.EXPIRED;
       await reservation.save();
 
-      // Trả lại slot → Available
       if (reservation.slotId) {
         await ParkingSlot.findByIdAndUpdate(reservation.slotId, {
           status: SlotStatus.AVAILABLE,
@@ -314,10 +286,6 @@ export class ReservationService {
     return count;
   }
 
-  /**
-   * BR-6.6: Chuyển reservation → session
-   * Gọi khi Staff check-in xe có reservation
-   */
   static async convertToUsed(reservationId: string): Promise<IReservation> {
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) throw new AppError('Đặt chỗ không tồn tại', 404);
@@ -333,9 +301,6 @@ export class ReservationService {
     return reservation;
   }
 
-  /**
-   * Lấy chi tiết reservation theo ID
-   */
   static async getReservationById(reservationId: string): Promise<IReservation> {
     const reservation = await Reservation.findById(reservationId)
       .populate('facilityId', 'name address')
@@ -344,14 +309,10 @@ export class ReservationService {
       .populate('userId', 'fullName email phone')
       .lean() as any;
 
-    if (!reservation) throw new AppError('\u0110\u1eb7t ch\u1ed7 kh\u00f4ng t\u1ed3n t\u1ea1i', 404);
+    if (!reservation) throw new AppError('Đặt chỗ không tồn tại', 404);
     return reservation;
   }
 
-  /**
-   * Tra c\u1ee9u reservation theo m\u00e3 \u0111\u1eb7t ch\u1ed7 (code)
-   * D\u00f9ng b\u1edfi Staff t\u1ea1i c\u1ed5ng khi qu\u00e9t QR ho\u1eb7c nh\u1eadp tay
-   */
   static async getByCode(code: string): Promise<IReservation> {
     const reservation = await Reservation.findOne({ code: code.trim().toUpperCase() })
       .populate('facilityId', 'name address openTime closeTime')
@@ -377,14 +338,9 @@ export class ReservationService {
     return reservation;
   }
 
-  /**
-   * Tra cứu reservation theo biển số xe + facilityId
-   * Dùng bởi Staff tại cổng — auto-detect reservation khi ALPR quét biển số
-   * Chỉ trả về reservation CONFIRMED trong cửa sổ ±30 phút so với startTime
-   */
   static async getByPlate(licensePlate: string, facilityId: string): Promise<IReservation | null> {
     const normalizedPlate = licensePlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const earlyWindow = 30 * 60 * 1000; // 30 phút
+    const earlyWindow = 30 * 60 * 1000;
 
     const reservation = await Reservation.findOne({
       facilityId,
@@ -403,7 +359,6 @@ export class ReservationService {
 
     if (!reservation) return null;
 
-    // So sánh biển số (loại bỏ ký tự đặc biệt)
     const normalizedResPlate = reservation.licensePlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (normalizedPlate !== normalizedResPlate) return null;
 

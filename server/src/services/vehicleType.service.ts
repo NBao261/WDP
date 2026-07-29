@@ -7,15 +7,9 @@ import { AppError } from '../middlewares/error.middleware';
 import { delPattern } from '../config/redis';
 
 import { normalizeVehicleTypeName } from '../utils/string.util';
-// (Note: To implement getSimilar, we might need fastest-levenshtein, but let's see if we can just use natural or fastest-levenshtein)
 import { distance } from 'fastest-levenshtein';
 
 export class VehicleTypeService {
-  /**
-   * Kiểm tra tên loại xe trùng lặp theo normalized_name
-   * @param name Tên cần kiểm tra
-   * @param excludeId ID loại xe cần loại trừ (khi cập nhật)
-   */
   private static async checkDuplicateName(name: string, excludeId?: string): Promise<void> {
     const normalized = normalizeVehicleTypeName(name);
     const query: any = { normalized_name: normalized, isDeleted: false };
@@ -38,7 +32,6 @@ export class VehicleTypeService {
       throw new AppError('Mã loại xe đã tồn tại', 400);
     }
 
-    // Kiểm tra tên trùng (bỏ dấu)
     if (data.name) {
       await this.checkDuplicateName(data.name);
     }
@@ -53,7 +46,6 @@ export class VehicleTypeService {
       );
     }
 
-    // Invalidate OperationsConfig Cache
     await delPattern('cache:operationsConfig:*');
     await delPattern('cache:public:available-slots:*');
 
@@ -86,19 +78,16 @@ export class VehicleTypeService {
       }
     }
 
-    // Kiểm tra tên trùng (bỏ dấu), loại trừ chính nó
     if (data.name && data.name !== oldVehicleType.name) {
       await this.checkDuplicateName(data.name, id);
     }
 
-    // Validation for floors removal
     if (data.floors) {
       const oldFloorIds = oldVehicleType.floors.map((f: any) => f.toString());
       const newFloorIds = data.floors.map((f: any) => f.toString());
       const removedFloors = oldFloorIds.filter(f => !newFloorIds.includes(f));
 
       if (removedFloors.length > 0) {
-        // Check if there are any slots for this vehicle type on the removed floors
         const existingSlots = await ParkingSlot.countDocuments({
           floorId: { $in: removedFloors },
           vehicleTypeId: id,
@@ -135,7 +124,6 @@ export class VehicleTypeService {
       }
     }
 
-    // Invalidate OperationsConfig Cache
     await delPattern('cache:operationsConfig:*');
     await delPattern('cache:public:available-slots:*');
 
@@ -152,7 +140,6 @@ export class VehicleTypeService {
       throw new AppError('Không thể xoá các loại xe mặc định của hệ thống', 400);
     }
 
-    // Check if this vehicle type is assigned to any floor
     const floorsWithThisType = await Floor.countDocuments({
       allowedVehicleTypes: id,
       isDeleted: false,
@@ -162,7 +149,6 @@ export class VehicleTypeService {
       throw new AppError('Không thể xoá loại xe này do đang được gán cho các tầng', 400);
     }
 
-    // Check if there are active sessions
     const activeSessions = await ParkingSession.countDocuments({
       vehicleTypeId: id,
       status: SessionStatus.ACTIVE,
@@ -171,7 +157,6 @@ export class VehicleTypeService {
       throw new AppError('Không thể xoá loại xe này do đang có lượt gửi xe hoạt động', 400);
     }
 
-    // Check if there are active reservations
     const activeReservations = await Reservation.countDocuments({
       vehicleTypeId: id,
       status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
@@ -193,7 +178,6 @@ export class VehicleTypeService {
     vehicleType.floors = [];
     await vehicleType.save();
 
-    // Invalidate OperationsConfig Cache
     await delPattern('cache:operationsConfig:*');
     await delPattern('cache:public:available-slots:*');
 
@@ -235,12 +219,10 @@ export class VehicleTypeService {
     if (name) {
       const normalizedTarget = normalizeVehicleTypeName(name);
       if (normalizedTarget.length < 3) {
-        // Quá ngắn (VD: "xe") → không tìm tương tự theo tên
         byName = [];
       } else {
         byName = allTypes.filter(vt => {
           const vtNormalized = normalizeVehicleTypeName(vt.name);
-          // Chỉ match "chứa" khi tên tìm kiếm đủ cụ thể (>= 50% độ dài tên đích)
           if (normalizedTarget.length >= vtNormalized.length * 0.5) {
             if (vtNormalized.includes(normalizedTarget) || normalizedTarget.includes(vtNormalized)) return true;
           }

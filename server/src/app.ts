@@ -41,7 +41,6 @@ const app = express();
 // Trust proxy is required for rate limit to work behind Google Cloud Run
 app.set('trust proxy', 1);
 
-// ─── Security ─────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
@@ -49,7 +48,7 @@ app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 500, // 500 req/15min — enough for dashboard navigation while providing meaningful DDoS protection
+    max: 500,
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
@@ -58,36 +57,25 @@ app.use(
         if (client) {
           return (client.call as any)(...args);
         }
-        // Fallback or throw if Redis is disconnected. rate-limit-redis handles errors gracefully by default.
         throw new Error('Redis not connected');
       },
     }),
   })
 );
 
-// ─── Body Parsing ─────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
-
-// ─── Input Sanitization (XSS / Null-byte) ─────────────
 app.use(sanitize);
 
-// ─── Logging ──────────────────────────────────────────
-// app.use(morgan('combined'));
-
-// ─── API Docs ─────────────────────────────────────────
 setupSwagger(app);
 
-// ─── Health Check ─────────────────────────────────────
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ─── Static Files ─────────────────────────────────────
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// ─── API Routes ───────────────────────────────────────
 const API_PREFIX = '/api/v1';
 
 app.use(`${API_PREFIX}/public`, publicRoutes);
@@ -111,8 +99,6 @@ app.use(`${API_PREFIX}/ai`, aiRoutes);
 app.use(`${API_PREFIX}/upload`, uploadRoutes);
 app.use(`${API_PREFIX}/vehicles`, vehicleRoutes);
 
-
-// ─── Error Handling ───────────────────────────────────
 app.use(notFoundHandler);
 app.use(errorHandler);
 

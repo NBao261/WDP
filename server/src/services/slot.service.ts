@@ -5,7 +5,6 @@ import { AppError } from '../middlewares/error.middleware';
 
 export class SlotService {
   static async createSlot(data: Partial<IParkingSlot>): Promise<IParkingSlot> {
-    // Validate slot count against floor maxSlots
     const floor = await Floor.findById(data.floorId);
     if (!floor) {
       throw new AppError('Floor not found', 404);
@@ -36,7 +35,6 @@ export class SlotService {
   }
 
   static async createBulkSlots(facilityId: string, floorId: string, vehicleType: string, prefix: string, startNumber: number, count: number): Promise<any[]> {
-    // Validate slot count against floor maxSlots
     const floor = await Floor.findById(floorId);
     if (!floor) {
       throw new AppError('Floor not found', 404);
@@ -71,7 +69,6 @@ export class SlotService {
       });
     }
 
-    // Check for existing codes in the batch
     const existingSlots = await ParkingSlot.find({
       facilityId,
       code: { $in: slotsToCreate.map(s => s.code) }
@@ -94,7 +91,6 @@ export class SlotService {
     }
 
     if (data.code) {
-      // Check for duplicate code in same facility
       const existing = await ParkingSlot.findOne({
         code: data.code,
         facilityId: slot.facilityId,
@@ -130,15 +126,11 @@ export class SlotService {
       }
     }
 
-    // Business Logic: Prevent transition if slot is occupied (unless transitioning to available via checkout)
-    // Note: Checkout logic will handle transitioning from occupied to available.
-    // Manual updates should be restricted for occupied slots.
     if (slot.status === 'occupied' && ['maintenance', 'locked'].includes(status)) {
       throw new AppError('Cannot set an occupied slot to maintenance or locked', 400);
     }
 
     slot.status = status as any;
-    // We could store the reason in a separate audit/history log in the future
     await slot.save();
     return slot;
   }
@@ -153,7 +145,6 @@ export class SlotService {
       throw new AppError('Cannot delete a slot that is currently occupied or reserved', 400);
     }
 
-    // Soft delete (giữ totalSlots cố định vì đó là max capacity)
     slot.isDeleted = true;
     slot.status = 'maintenance' as any;
     await slot.save();
@@ -171,7 +162,6 @@ export class SlotService {
       throw new AppError('Slot not found', 404);
     }
 
-    // Gắn reservationInfo nếu slot đang reserved
     if (slot.status === 'reserved') {
       const reservation = await Reservation.findOne({
         slotId: slot._id,
@@ -205,7 +195,6 @@ export class SlotService {
       .sort({ code: 1 })
       .lean();
 
-    // Tìm reservation active cho các slot reserved
     const reservedSlotIds = slots
       .filter(s => s.status === 'reserved' && s._id)
       .map(s => s._id);
@@ -218,7 +207,6 @@ export class SlotService {
         .populate('userId', 'name email phone')
         .lean();
 
-      // Map reservation theo slotId
       const reservationMap = new Map<string, any>();
       for (const r of reservations) {
         if (r.slotId) {
@@ -226,7 +214,6 @@ export class SlotService {
         }
       }
 
-      // Gắn reservationInfo vào slot
       for (const slot of slots) {
         const reservation = reservationMap.get(slot._id.toString());
         if (reservation) {

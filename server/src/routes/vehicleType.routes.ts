@@ -10,12 +10,10 @@ const router = Router();
 
 router.use(verifyToken);
 
-// Xem loại phương tiện (Tất cả các role đều cần xem)
 router.get('/similar', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_READ), VehicleTypeController.getSimilar);
 router.get('/', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF, UserRole.DRIVER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_READ), VehicleTypeController.getAllVehicleTypes);
 router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF, UserRole.DRIVER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_READ), VehicleTypeController.getVehicleTypeById);
 
-// Quản lý loại phương tiện (SRS 3.1: Admin + Manager)
 router.post('/', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(createVehicleTypeSchema), checkPermission(PERMISSIONS.VEHICLE_TYPE_MANAGE), VehicleTypeController.createVehicleType);
 router.patch('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), validate(updateVehicleTypeSchema), checkPermission(PERMISSIONS.VEHICLE_TYPE_MANAGE), VehicleTypeController.updateVehicleType);
 router.delete('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER]), checkPermission(PERMISSIONS.VEHICLE_TYPE_MANAGE), VehicleTypeController.softDeleteVehicleType);

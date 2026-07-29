@@ -3,7 +3,6 @@ import { UserRole } from '../models/user.model';
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
-// FR-19: Tạo vai trò
 export const createRoleSchema = z.object({
   body: z.object({
     code: z.nativeEnum(UserRole, { required_error: 'Role code is required' }),
@@ -13,7 +12,6 @@ export const createRoleSchema = z.object({
   }),
 });
 
-// FR-19: Cập nhật quyền cho vai trò
 export const updatePermissionsSchema = z.object({
   params: z.object({
     id: z.string().regex(objectIdRegex, 'Invalid role ID format'),
@@ -28,7 +26,6 @@ export const updatePermissionsSchema = z.object({
   }),
 });
 
-// FR-19: Gán vai trò cho user (PQ-05: Phân quyền động)
 export const assignRoleSchema = z.object({
   body: z.object({
     userId: z

@@ -30,7 +30,6 @@ export class PublicService {
     const total = await ParkingFacility.countDocuments(query);
     const result = { facilities, total };
 
-    // Cache for 10 minutes
     await setCache(cacheKey, result, 600);
     return result;
   }
@@ -51,7 +50,6 @@ export class PublicService {
       throw new AppError('Bãi xe không tồn tại hoặc đã bị xóa', 404);
     }
 
-    // Cache for 10 minutes
     await setCache(cacheKey, facility, 600);
     return facility;
   }
@@ -63,7 +61,6 @@ export class PublicService {
 
     const pricingPlans = await PricingPlan.find({ facilityId, status: 'active' }).populate('vehicleTypeId', 'name code icon').lean();
     
-    // Cache for 2 hours
     await setCache(cacheKey, pricingPlans, 7200);
     return pricingPlans;
   }
@@ -73,7 +70,6 @@ export class PublicService {
     const cached = await getCache(cacheKey);
     if (cached) return cached;
 
-    // Aggregation to count available slots by vehicle type
     const availableSlots = await ParkingSlot.aggregate([
       { $match: { facilityId: new mongoose.Types.ObjectId(facilityId), status: 'available' } },
       {
@@ -84,7 +80,7 @@ export class PublicService {
       },
       {
         $lookup: {
-          from: 'vehicletypes', // check MongoDB collection name, typically lowercased + 's'
+          from: 'vehicletypes',
           localField: '_id',
           foreignField: '_id',
           as: 'vehicleTypeInfo'
@@ -102,7 +98,6 @@ export class PublicService {
       }
     ]);
     
-    // Cache indefinitely (until invalidated by check-in/out)
     await setCache(cacheKey, availableSlots);
     return availableSlots;
   }

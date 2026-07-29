@@ -23,14 +23,8 @@ const upload = multer({
   },
 });
 
-// Tất cả route upload yêu cầu đăng nhập
 router.use(verifyToken);
 
-/**
- * POST /upload/image
- * Upload ảnh đơn giản (không OCR) — dùng cho xe không có biển số.
- * Trả về: { success: true, data: { imageUrl: '/uploads/vehicles/<filename>' } }
- */
 router.post('/image', upload.single('image'), (req: Request, res: Response) => {
   try {
     const file = req.file;

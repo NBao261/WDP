@@ -2,10 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { ReservationService } from '../services/reservation.service';
 
 export class ReservationController {
-  /**
-   * POST /reservations
-   * FR-14.1: Tạo đặt chỗ trước (Driver only)
-   */
   static async createReservation(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;
@@ -16,10 +12,6 @@ export class ReservationController {
     }
   }
 
-  /**
-   * POST /reservations/:id/cancel
-   * FR-14.2: Hủy đặt chỗ (Driver only)
-   */
   static async cancelReservation(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;
@@ -30,11 +22,6 @@ export class ReservationController {
     }
   }
 
-  /**
-   * GET /reservations
-   * FR-14.2: Xem danh sách đặt chỗ
-   * Driver: chỉ thấy của mình | Manager/Admin: thấy tất cả
-   */
   static async getReservations(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.userId;
@@ -54,10 +41,6 @@ export class ReservationController {
     }
   }
 
-  /**
-   * GET /reservations/:id
-   * Xem chi tiết reservation
-   */
   static async getReservationById(req: Request, res: Response, next: NextFunction) {
     try {
       const reservation = await ReservationService.getReservationById(req.params.id as string);
@@ -67,10 +50,6 @@ export class ReservationController {
     }
   }
 
-  /**
-   * GET /reservations/by-code/:code
-   * Tra cứu reservation theo mã đặt chỗ — Staff quét QR hoặc nhập tay tại cổng
-   */
   static async getByCode(req: Request, res: Response, next: NextFunction) {
     try {
       const reservation = await ReservationService.getByCode(req.params.code as string);
@@ -80,10 +59,6 @@ export class ReservationController {
     }
   }
 
-  /**
-   * GET /reservations/by-plate/:plate
-   * Tra cứu reservation theo biển số — Staff dùng tự động khi ALPR quét biển số
-   */
   static async getByPlate(req: Request, res: Response, next: NextFunction) {
     try {
       const plate = req.params.plate as string;
@@ -98,10 +73,6 @@ export class ReservationController {
     }
   }
 
-  /**
-   * POST /reservations/auto-expire
-   * BR-6.4: Trigger tự động hủy reservation quá hạn (Admin/Cron)
-   */
   static async autoExpire(req: Request, res: Response, next: NextFunction) {
     try {
       const count = await ReservationService.autoExpireReservations();

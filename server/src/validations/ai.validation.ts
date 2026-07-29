@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
-// POST /ai/chat-query — Gửi câu hỏi cho AI Chatbot
 export const chatQuerySchema = z.object({
   body: z.object({
     message: z
@@ -14,7 +13,6 @@ export const chatQuerySchema = z.object({
   }),
 });
 
-// Params validation cho :conversationId
 export const conversationIdParamSchema = z.object({
   params: z.object({
     conversationId: z
@@ -24,7 +22,6 @@ export const conversationIdParamSchema = z.object({
   }),
 });
 
-// PATCH /ai/conversations/:conversationId/title — Đổi tên conversation
 export const renameConversationSchema = z.object({
   params: z.object({
     conversationId: z
@@ -41,7 +38,6 @@ export const renameConversationSchema = z.object({
   }),
 });
 
-// GET pagination cho chat-history, conversations
 export const aiPaginationQuerySchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/, 'Page must be a number').optional(),

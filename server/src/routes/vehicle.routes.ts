@@ -6,7 +6,6 @@ import { addVehicleSchema, updateVehicleSchema, vehicleIdParamSchema } from '../
 
 const router = Router();
 
-// Tất cả route đều yêu cầu đăng nhập
 router.use(verifyToken);
 
 router.post('/', validate(addVehicleSchema), VehicleController.addVehicle);

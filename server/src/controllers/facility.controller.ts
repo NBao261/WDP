@@ -5,11 +5,7 @@ export class FacilityController {
   static async createFacility(req: Request, res: Response, next: NextFunction) {
     try {
       const { latitude, longitude, ...rest } = req.body;
-      console.log('[FACILITY_CREATE] req.body keys:', Object.keys(req.body));
-      console.log('[FACILITY_CREATE] latitude:', latitude, 'longitude:', longitude, 'types:', typeof latitude, typeof longitude);
 
-      // Map lat/lng từ request → GeoJSON Point
-      // Nếu thiếu lat/lng → dùng [0, 0] mặc định (admin sẽ update sau)
       const hasValidCoords =
         typeof latitude === 'number' && typeof longitude === 'number' &&
         !isNaN(latitude) && !isNaN(longitude);
@@ -24,12 +20,6 @@ export class FacilityController {
         },
       };
 
-      if (!hasValidCoords) {
-        console.warn('[FACILITY_CREATE] ⚠️  No valid coordinates — using default [0, 0]');
-      } else {
-        console.log('[FACILITY_CREATE] ✅ location:', JSON.stringify(data.location));
-      }
-
       const facility = await FacilityService.createFacility(data);
       res.status(201).json({ success: true, data: facility });
     } catch (error) {
@@ -41,7 +31,6 @@ export class FacilityController {
     try {
       const id = req.params.id as string;
       const { latitude, longitude, ...rest } = req.body;
-      // Nếu có lat/lng trong request → cập nhật GeoJSON location
       const data: any = { ...rest };
       if (latitude !== undefined && longitude !== undefined) {
         data.location = {
@@ -109,10 +98,6 @@ export class FacilityController {
     }
   }
 
-  /**
-   * GET /:id/operations-config
-   * Dành cho Staff: trả về cấu hình vận hành của Toà nhà (danh sách loại xe được phép)
-   */
   static async getOperationsConfig(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;

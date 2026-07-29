@@ -5,34 +5,26 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '5000', 10),
 
-  // MongoDB
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/smart_parking',
 
-  // Redis
   REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
 
-  // JWT
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || 'dev_access_secret',
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret',
   JWT_ACCESS_EXPIRY: process.env.JWT_ACCESS_EXPIRY || '15m',
   JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY || '7d',
 
-  // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
 
-  // Cloudinary
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
 
-  // Logging
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
 
-  // Gemini AI (Chatbot)
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
 
-  // Momo Payment
   MOMO_PARTNER_CODE: process.env.MOMO_PARTNER_CODE || '',
   MOMO_ACCESS_KEY: process.env.MOMO_ACCESS_KEY || '',
   MOMO_SECRET_KEY: process.env.MOMO_SECRET_KEY || '',

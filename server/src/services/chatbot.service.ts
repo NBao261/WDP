@@ -19,7 +19,6 @@ import crypto from 'crypto';
 import { getCache, setCache } from '../config/redis';
 
 // ─── Types ────────────────────────────────────────────────
-
 interface ChatResponse {
   answer: string;
   data: Record<string, any>;
@@ -33,16 +32,12 @@ interface TimeRange {
   endDate: string;
 }
 
-// ─── Gemini Client ────────────────────────────────────────
-
 function getGenAI(): GoogleGenerativeAI {
   if (!env.GEMINI_API_KEY) {
     throw new AppError('GEMINI_API_KEY chưa được cấu hình. Vui lòng thêm vào file .env', 500);
   }
   return new GoogleGenerativeAI(env.GEMINI_API_KEY);
 }
-
-// ─── Dynamic System Prompt ────────────────────────────────
 
 const BASE_SYSTEM_PROMPT = `Bạn là Trợ lý AI thông minh cho hệ thống Quản lý Bãi Đỗ Xe Thông Minh.
 
@@ -95,10 +90,6 @@ KNOWLEDGE BASE (Kiến thức về hệ thống):
 - Thuật toán MFD (Macroscopic Fundamental Diagram) cho occupancy heatmap
 `;
 
-/**
- * Xây dựng system prompt động theo scope Manager.
- * Inject danh sách tòa nhà để AI biết phạm vi truy cập.
- */
 async function buildSystemPrompt(facilityScope?: string[]): Promise<string> {
   if (!facilityScope || facilityScope.length === 0) {
     return BASE_SYSTEM_PROMPT;
@@ -133,23 +124,15 @@ QUY TẮC BẢO MẬT & PHẠM VI:
 `;
 }
 
-// ─── Time Range Resolver ──────────────────────────────────
-
-/**
- * Resolve khoảng thời gian từ preset string hoặc custom dates.
- * Hỗ trợ: preset cố định, last_N_days (dynamic), all_time, và custom start/end dates.
- */
 function resolveTimeRange(
   timeRangeStr: string | null | undefined,
   customStartDate?: string,
   customEndDate?: string
 ): TimeRange {
-  // Ưu tiên custom dates nếu có
   if (customStartDate || customEndDate) {
     const now = new Date();
-    const start = customStartDate ? new Date(customStartDate) : new Date(0); // epoch nếu không có start
+    const start = customStartDate ? new Date(customStartDate) : new Date(0); 
     const end = customEndDate ? new Date(customEndDate) : new Date(now);
-    // Đảm bảo end date bao gồm hết ngày
     if (customEndDate && !customEndDate.includes('T')) {
       end.setHours(23, 59, 59, 999);
     }
@@ -162,7 +145,6 @@ function resolveTimeRange(
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Dynamic last_N_days pattern (ví dụ: last_2_days, last_5_days, last_14_days)
   const lastNDaysMatch = timeRangeStr?.match(/^last_(\d+)_days$/);
   if (lastNDaysMatch) {
     const n = parseInt(lastNDaysMatch[1], 10);
@@ -226,7 +208,6 @@ function resolveTimeRange(
       return { startDate: startOfLastYear.toISOString(), endDate: endOfLastYear.toISOString() };
     }
     case 'all_time': {
-      // Lấy từ đầu hệ thống (epoch) đến hiện tại
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
       return { startDate: new Date(0).toISOString(), endDate: endOfDay.toISOString() };
@@ -239,18 +220,9 @@ function resolveTimeRange(
   }
 }
 
-// ─── Regex Escape Helper ──────────────────────────────────
-
-/**
- * Escape ký tự đặc biệt trong regex để tránh lỗi khi tên toà nhà
- * chứa ký tự như [ ] ( ) . * + ? ^ $ { } | \
- * Ví dụ: "Vinhome - 1 [Test]" → "Vinhome \- 1 \[Test\]"
- */
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-
-// ─── Facility Name Resolver ───────────────────────────────
 
 async function resolveFacilityId(
   facilityName: string | null | undefined,
@@ -258,7 +230,6 @@ async function resolveFacilityId(
 ): Promise<string | null | undefined> {
   if (!facilityName) return undefined;
 
-  // Escape ký tự đặc biệt regex trong tên toà nhà
   const escapedName = escapeRegex(facilityName);
   const query: any = { name: { $regex: escapedName, $options: 'i' } };
   if (facilityScope && facilityScope.length > 0) {
@@ -355,8 +326,6 @@ function mergeMultiFacilityData(results: any[], facilityIds: string[], nameMap: 
   return merged;
 }
 
-// ─── Data Handlers ─────────────────────────────────────────
-
 async function handleRevenueReport(args: any, facilityId?: string) {
   const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
   return ReportService.getRevenueReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
@@ -424,7 +393,6 @@ async function handleActiveSessions(args: any, facilityId?: string) {
   const filter: any = { status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] } };
   if (facilityId) filter.facilityId = new mongoose.Types.ObjectId(facilityId);
 
-  // Summary counts
   const [total, byVehicleType, byFloor] = await Promise.all([
     ParkingSession.countDocuments(filter),
     ParkingSession.aggregate([
@@ -442,7 +410,6 @@ async function handleActiveSessions(args: any, facilityId?: string) {
     ]),
   ]);
 
-  // Detailed list with lookups
   const detailedSessions = await ParkingSession.aggregate([
     { $match: filter },
     { $lookup: { from: 'vehicletypes', localField: 'vehicleTypeId', foreignField: '_id', as: 'vt' } },
@@ -451,7 +418,6 @@ async function handleActiveSessions(args: any, facilityId?: string) {
     { $unwind: '$fl' },
     { $lookup: { from: 'parkingslots', localField: 'slotId', foreignField: '_id', as: 'sl' } },
     { $unwind: { path: '$sl', preserveNullAndEmptyArrays: true } },
-    // Lookup driver via licensePlate → vehicles → users
     { $lookup: { from: 'vehicles', localField: 'licensePlate', foreignField: 'licensePlate', as: 'vehicle' } },
     { $unwind: { path: '$vehicle', preserveNullAndEmptyArrays: true } },
     { $lookup: { from: 'users', localField: 'vehicle.userId', foreignField: '_id', as: 'driver' } },
@@ -470,7 +436,6 @@ async function handleActiveSessions(args: any, facilityId?: string) {
     { $limit: 30 },
   ]);
 
-  // Calculate parking duration for each session
   const now = new Date();
   const details = detailedSessions.map((s: any) => {
     const diffMs = now.getTime() - new Date(s.checkInTime).getTime();
@@ -541,7 +506,6 @@ async function handlePaymentDetails(args: any, facilityId?: string) {
   if (args.paymentMethod) payFilter.method = args.paymentMethod;
   if (args.paymentStatus) payFilter.status = args.paymentStatus;
 
-  // Build pipeline with facility filter
   const basePipeline: any[] = [
     { $match: payFilter },
     { $lookup: { from: 'parkingsessions', localField: 'sessionId', foreignField: '_id', as: 'session' } },
@@ -633,7 +597,6 @@ async function handleStaffPerformance(args: any, facilityId?: string) {
   if (facilityId) sessionFilter.facilityId = new mongoose.Types.ObjectId(facilityId);
 
   const [byCheckIn, byCheckOut, byExceptionResolved] = await Promise.all([
-    // Top staff by check-in count
     ParkingSession.aggregate([
       { $match: sessionFilter },
       { $lookup: { from: 'users', localField: 'staffInId', foreignField: '_id', as: 'staff' } },
@@ -642,7 +605,6 @@ async function handleStaffPerformance(args: any, facilityId?: string) {
       { $sort: { checkInCount: -1 } },
       { $limit: 10 },
     ]),
-    // Top staff by check-out count
     ParkingSession.aggregate([
       { $match: { ...sessionFilter, checkOutTime: { $ne: null }, staffOutId: { $ne: null } } },
       { $lookup: { from: 'users', localField: 'staffOutId', foreignField: '_id', as: 'staff' } },
@@ -651,7 +613,6 @@ async function handleStaffPerformance(args: any, facilityId?: string) {
       { $sort: { checkOutCount: -1 } },
       { $limit: 10 },
     ]),
-    // Top staff by exception resolved
     Exception.aggregate([
       { $match: { status: ExceptionStatus.RESOLVED, resolvedByStaffId: { $ne: null }, updatedAt: { $gte: new Date(timeRange.startDate), $lte: new Date(timeRange.endDate) } } },
       { $lookup: { from: 'users', localField: 'resolvedByStaffId', foreignField: '_id', as: 'staff' } },
@@ -681,7 +642,6 @@ async function handleFeedbackReport(args: any, facilityId?: string) {
     byType: feedbacks.reduce((acc: any, f: any) => { acc[f.type] = (acc[f.type] || 0) + 1; return acc; }, {}),
   };
 
-  // Detailed recent feedbacks with driver name and facility name
   const recentFeedbacks = await Feedback.aggregate([
     { $match: filter },
     { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
@@ -704,8 +664,6 @@ async function handleFeedbackReport(args: any, facilityId?: string) {
 
   return { summary, recentFeedbacks };
 }
-
-// ─── Gemini Tools (Function Declarations) ─────────────────
 
 const timeRangeDesc = "Khoảng thời gian. Giá trị preset: today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days, last_N_days (thay N bằng số ngày, ví dụ: last_2_days, last_3_days, last_14_days), all_time (tất cả). Nếu user yêu cầu khoảng thời gian cụ thể (ví dụ: từ ngày 1/6 đến 15/6) thì KHÔNG dùng timeRange, hãy dùng customStartDate và customEndDate thay thế.";
 const customDateDesc = "Ngày bắt đầu/kết thúc tùy chỉnh theo format YYYY-MM-DD (ví dụ: 2026-06-01). Chỉ dùng khi user yêu cầu khoảng thời gian cụ thể không nằm trong các preset.";
@@ -876,8 +834,6 @@ const FUNCTION_HANDLERS: Record<string, (args: any, facilityId?: string) => Prom
   get_staff_performance: handleStaffPerformance,
 };
 
-// ─── Quick Reply Suggestions ──────────────────────────────
-
 const QUICK_REPLIES = {
   overview: ['Tình hình hôm nay thế nào?', 'Tóm tắt tuần này cho tôi'],
   revenue: ['Doanh thu hôm nay bao nhiêu?', 'So sánh doanh thu tuần này với tuần trước', 'Tòa nhà nào doanh thu cao nhất tháng này?'],
@@ -890,12 +846,6 @@ const QUICK_REPLIES = {
   insights: ['Có vấn đề gì cần chú ý không?', 'Phân tích xu hướng doanh thu 30 ngày qua', 'Khách hàng phàn nàn gì gần đây?'],
 };
 
-// ─── Conversation Title Generator ─────────────────────────
-
-/**
- * Tạo tiêu đề ngắn gọn cho conversation dựa trên tin nhắn đầu tiên.
- * Dùng Gemini để tóm tắt thành ≤8 từ.
- */
 async function generateConversationTitle(firstMessage: string): Promise<string> {
   try {
     const ai = getGenAI();
@@ -907,17 +857,10 @@ async function generateConversationTitle(firstMessage: string): Promise<string> 
     return title.length > 100 ? title.substring(0, 100) : title;
   } catch (err: any) {
     logger.warn('[Chatbot] Failed to generate conversation title', { error: err.message });
-    // Fallback: cắt tin nhắn đầu tiên làm title
     return firstMessage.length > 50 ? firstMessage.substring(0, 50) + '...' : firstMessage;
   }
 }
 
-// ─── Retry Helper ─────────────────────────────────────────
-
-/**
- * Retry một async function với exponential backoff.
- * Chỉ retry khi gặp transient errors (429, 503, network).
- */
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
@@ -948,8 +891,6 @@ async function withRetry<T>(
   throw lastError;
 }
 
-// ─── Main Service ─────────────────────────────────────────
-
 export class ChatbotService {
   static async processQuery(
     userId: string,
@@ -962,7 +903,6 @@ export class ChatbotService {
     const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 
     try {
-      // --- AI Caching (FR-19) ---
       let cacheKey = '';
       if (isNewConversation) {
         const normalizedMsg = message.toLowerCase().replace(/[^\w\s\u00C0-\u1EF9]/gi, '').trim();
@@ -980,7 +920,6 @@ export class ChatbotService {
         }
       }
       
-      // Xây dựng system prompt động theo scope Manager
       const systemPrompt = await buildSystemPrompt(facilityScope);
 
       const ai = getGenAI();
@@ -990,7 +929,6 @@ export class ChatbotService {
         systemInstruction: systemPrompt,
       });
 
-      // Load up to 10 recent messages for this conversation context
       const historyDocs = await ChatHistory.find({ userId, conversationId: convId })
         .sort({ createdAt: -1 })
         .limit(10)
@@ -1003,12 +941,10 @@ export class ChatbotService {
 
       const chat = model.startChat({ history });
 
-      // Send the user message with retry
       let result = await withRetry(() => chat.sendMessage([{ text: message }]));
       let functionCalls = result.response.functionCalls();
       let accumulatedData: any = {};
 
-      // Handle multi-turn function calls (AI có thể gọi nhiều lượt)
       const MAX_FUNCTION_CALL_ROUNDS = 3;
       let round = 0;
       while (functionCalls && functionCalls.length > 0 && round < MAX_FUNCTION_CALL_ROUNDS) {
@@ -1041,7 +977,6 @@ export class ChatbotService {
           }
         }
         
-        // Send function responses back to the model
         if (functionResponses.length > 0) {
           result = await withRetry(() => chat.sendMessage(functionResponses));
           functionCalls = result.response.functionCalls();
@@ -1054,7 +989,6 @@ export class ChatbotService {
       let answer = responseText;
       let chartType = null;
 
-      // Try to parse JSON from the response text
       try {
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -1063,22 +997,18 @@ export class ChatbotService {
           if (parsed.chartType) chartType = parsed.chartType;
         }
       } catch (e) {
-        // Fallback to raw text if it didn't return valid JSON
       }
 
       const processingTimeMs = Date.now() - startTime;
 
-      // Check if this is the first message in the conversation
       const existingCount = await ChatHistory.countDocuments({ userId, conversationId: convId });
       const isFirstMessage = existingCount === 0;
 
-      // Generate title for new conversations
       let title = '';
       if (isFirstMessage) {
         title = await generateConversationTitle(message);
       }
 
-      // Save history
       try {
         const validScope = facilityScope?.filter((id) => id && mongoose.Types.ObjectId.isValid(id));
         await ChatHistory.create({
@@ -1099,7 +1029,6 @@ export class ChatbotService {
         logger.error('[Chatbot] Failed to save chat history', { error: saveErr.message, userId });
       }
 
-      // Save to cache (TTL 5 mins) if new conversation to save Gemini quota
       if (isNewConversation && cacheKey) {
         await setCache(cacheKey, {
           answer,
@@ -1151,7 +1080,6 @@ export class ChatbotService {
   static async getConversations(userId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
     
-    // Lấy danh sách conversationId duy nhất, kèm title từ tin nhắn đầu tiên
     const pipeline = [
       { $match: { userId: new mongoose.Types.ObjectId(userId) } },
       { $sort: { createdAt: -1 } },
@@ -1160,7 +1088,6 @@ export class ChatbotService {
           lastMessage: { $first: '$message' },
           lastResponse: { $first: '$response' },
           updatedAt: { $first: '$createdAt' },
-          // Lấy title từ record có isFirstMessage = true (hoặc fallback record đầu tiên theo createdAt ASC)
           titles: { $push: { title: '$title', isFirst: '$isFirstMessage' } },
         }
       },
@@ -1214,12 +1141,7 @@ export class ChatbotService {
     return { deletedCount: result.deletedCount };
   }
 
-  /**
-   * Đổi tên (title) của conversation.
-   * Cập nhật title trên record đầu tiên (isFirstMessage = true).
-   */
   static async renameConversation(userId: string, conversationId: string, newTitle: string) {
-    // Tìm record đầu tiên của conversation
     const firstRecord = await ChatHistory.findOne({
       userId: new mongoose.Types.ObjectId(userId),
       conversationId,
@@ -1227,7 +1149,6 @@ export class ChatbotService {
     });
 
     if (!firstRecord) {
-      // Fallback: cập nhật record cũ nhất nếu không có isFirstMessage
       const oldestRecord = await ChatHistory.findOne({
         userId: new mongoose.Types.ObjectId(userId),
         conversationId,

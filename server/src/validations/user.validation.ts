@@ -3,7 +3,6 @@ import { UserRole, UserStatus } from '../models/user.model';
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
-// FR-18.1: Tạo tài khoản mới
 export const createUserSchema = z.object({
   body: z.object({
     name: z
@@ -25,7 +24,6 @@ export const createUserSchema = z.object({
   }),
 });
 
-// FR-18.2: Sửa thông tin tài khoản
 export const updateUserSchema = z.object({
   body: z.object({
     name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be at most 100 characters').trim().optional(),
@@ -41,7 +39,6 @@ export const updateUserSchema = z.object({
   }),
 });
 
-// FR-18.5: Reset mật khẩu
 export const resetPasswordSchema = z.object({
   body: z.object({
     newPassword: z
@@ -50,14 +47,12 @@ export const resetPasswordSchema = z.object({
   }),
 });
 
-// Params validation cho các route cần :id
 export const userIdParamSchema = z.object({
   params: z.object({
     id: z.string().regex(objectIdRegex, 'Invalid user ID format'),
   }),
 });
 
-// FR-18.6: Manager phân công tòa nhà cho Staff
 export const assignFacilitiesSchema = z.object({
   params: z.object({
     id: z.string().regex(objectIdRegex, 'Invalid user ID format'),

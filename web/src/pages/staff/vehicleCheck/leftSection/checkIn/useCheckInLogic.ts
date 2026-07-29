@@ -35,7 +35,27 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
           state.setPlate(recognized);
           if (response.data.imageUrl) state.setCheckInImage(response.data.imageUrl);
           state.setOcrSuccess(true);
-          if (state.reservationInfo?.licensePlate) {
+
+          // ── Auto-detect reservation bằng biển số (không cần quét QR) ──
+          if (!state.reservationInfo && state.facilityId) {
+            try {
+              const resLookup: any = await apiClient.get(
+                `/reservations/by-plate/${encodeURIComponent(recognized)}`,
+                { params: { facilityId: state.facilityId } }
+              );
+              if (resLookup.success && resLookup.data) {
+                state.setReservationInfo(resLookup.data);
+                state.setReservationCode(resLookup.data.code);
+                if (resLookup.data.vehicleTypeId?._id) {
+                  state.setSelectedVehicleTypeId(resLookup.data.vehicleTypeId._id);
+                }
+                state.setPlateMatchStatus('match');
+                toast.success(`🎫 Tự động nhận diện đặt chỗ — ${resLookup.data.code}`);
+              }
+            } catch {
+              // Không tìm thấy reservation — bỏ qua, check-in bình thường (walk-in)
+            }
+          } else if (state.reservationInfo?.licensePlate) {
             const clean = (s: string) => s.replace(/[^A-Z0-9]/g, '').toUpperCase();
             const matched = clean(recognized) === clean(state.reservationInfo.licensePlate);
             state.setPlateMatchStatus(matched ? 'match' : 'mismatch');

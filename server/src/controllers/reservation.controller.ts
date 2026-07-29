@@ -81,6 +81,24 @@ export class ReservationController {
   }
 
   /**
+   * GET /reservations/by-plate/:plate
+   * Tra cứu reservation theo biển số — Staff dùng tự động khi ALPR quét biển số
+   */
+  static async getByPlate(req: Request, res: Response, next: NextFunction) {
+    try {
+      const plate = req.params.plate as string;
+      const facilityId = req.query.facilityId as string;
+      if (!facilityId) {
+        return res.status(400).json({ success: false, message: 'facilityId is required' });
+      }
+      const reservation = await ReservationService.getByPlate(plate, facilityId);
+      res.status(200).json({ success: true, data: reservation });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * POST /reservations/auto-expire
    * BR-6.4: Trigger tự động hủy reservation quá hạn (Admin/Cron)
    */

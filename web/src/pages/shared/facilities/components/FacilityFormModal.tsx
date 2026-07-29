@@ -281,6 +281,17 @@ export function FacilityFormModal({
           setIsSubmitting(false);
           return;
         }
+
+        if (form.latitude !== 0 && form.longitude !== 0) {
+          const duplicateLocation = existing.find(
+            (f) => f.location?.coordinates?.[0] === form.longitude && f.location?.coordinates?.[1] === form.latitude
+          );
+          if (duplicateLocation) {
+            setErrors({ location: 'Vị trí bản đồ này đã được sử dụng cho một cơ sở khác' });
+            setIsSubmitting(false);
+            return;
+          }
+        }
       }
 
       const payload = {

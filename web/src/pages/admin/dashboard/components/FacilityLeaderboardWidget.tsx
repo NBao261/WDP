@@ -71,12 +71,12 @@ export function FacilityLeaderboardWidget({ occupancyData }: Props) {
         </div>
         <div>
           <h2 className="text-[15px] font-semibold text-[#1a1a1a]">Hiện trạng khu vực</h2>
-          <p className="text-[12px] text-[#6b7280]">Bấm vào toà nhà để xem chi tiết từng tầng</p>
+          <p className="text-[12px] text-[#6b7280]">Tỷ lệ lấp đầy theo từng toà nhà — bấm để xem chi tiết tầng</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto pr-1">
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {facilities.length > 0 ? (
             facilities.map((fac) => {
               const safeTotal = fac.total > 0 ? fac.total : 1;

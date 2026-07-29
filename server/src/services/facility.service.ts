@@ -64,6 +64,20 @@ export class FacilityService {
       }
     }
 
+    if (data.totalFloors !== undefined) {
+      const currentFloorsCount = await Floor.countDocuments({
+        facilityId: id,
+        isDeleted: false,
+      });
+
+      if (data.totalFloors < currentFloorsCount) {
+        throw new AppError(
+          `Không thể giảm số tầng xuống ${data.totalFloors} vì toà nhà đang có ${currentFloorsCount} tầng. Vui lòng xoá bớt tầng trước khi giảm.`,
+          400
+        );
+      }
+    }
+
     if (data.status === 'inactive') {
       const activeSlots = await ParkingSlot.countDocuments({
         facilityId: id,

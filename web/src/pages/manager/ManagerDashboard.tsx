@@ -5,7 +5,9 @@ import {
   FileSpreadsheet,
   ArrowUpRight,
   ArrowDownRight,
+  TrendingUp,
 } from 'lucide-react';
+import { Skeleton } from '../../components/ui/skeleton';
 import { Loading } from '../../components/ui/Loading';
 import { userService } from '../../services/user.service';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -78,7 +80,10 @@ function getRevenueFontSize(value: number): string {
 
 export default function ManagerDashboard() {
   const { user } = useAuthStore();
-  const managerFacilities = useMemo(() => (user?.assignedFacilities ?? []) as AssignedFacility[], [user?.assignedFacilities]);
+  const managerFacilities = useMemo(
+    () => (user?.assignedFacilities ?? []) as AssignedFacility[],
+    [user?.assignedFacilities]
+  );
 
   const [timeFilter, setTimeFilter] = useState('today');
   const [facilityFilter, setFacilityFilter] = useState('all');
@@ -124,14 +129,15 @@ export default function ManagerDashboard() {
       setPeakHoursData(peakRes.status === 'fulfilled' ? peakRes.value.data : null);
       setVehicleTypes(vehicleTypesRes.status === 'fulfilled' ? vehicleTypesRes.value.data : []);
 
-      const revPromises = managerFacilities.map((f: AssignedFacility) => 
-        reportService.getRevenueReport({ startDate, endDate, groupBy, facilityId: f._id })
-          .then(res => ({ id: f._id, total: res.data.summary.grandTotal }))
+      const revPromises = managerFacilities.map((f: AssignedFacility) =>
+        reportService
+          .getRevenueReport({ startDate, endDate, groupBy, facilityId: f._id })
+          .then((res) => ({ id: f._id, total: res.data.summary.grandTotal }))
           .catch(() => ({ id: f._id, total: 0 }))
       );
       const revResults = await Promise.all(revPromises);
       const revRecord: Record<string, number> = {};
-      revResults.forEach((r: { id: string; total: number }) => revRecord[r.id] = r.total);
+      revResults.forEach((r: { id: string; total: number }) => (revRecord[r.id] = r.total));
       setFacilityRevenues(revRecord);
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
@@ -183,8 +189,18 @@ export default function ManagerDashboard() {
   const totalCheckIn = trafficData?.summary.totalCheckIn ?? 0;
   const totalCheckOut = trafficData?.summary.totalCheckOut ?? 0;
   const grandTotal = revenueData?.summary.grandTotal ?? 0;
-  const occupancyRate = occupancyData?.summary.overallOccupancyRate ?? 0;
-  const currentlyParked = occupancyData?.summary.totalOccupied ?? 0;
+  const avgRevenue =
+    revenueData?.summary.avgRevenuePeriod ?? revenueData?.summary.avgRevenuePerDay ?? 0;
+  const periodLabel = revenueData?.summary.periodLabel ?? 'ngày';
+  const totalTransactions = revenueData?.summary.totalTransactions ?? 0;
+  const occupancyRate =
+    occupancyData?.summary.overallEffectiveOccupancy ??
+    occupancyData?.summary.overallOccupancyRate ??
+    0;
+  const totalOccupied = occupancyData?.summary.totalOccupied ?? 0;
+  const totalSlots = occupancyData?.summary.totalSlots ?? 0;
+  // Clamp to 0 — currentlyParked can go negative when the filter window only covers check-outs
+  const currentlyParked = Math.max(0, trafficData?.summary.currentlyParked ?? totalOccupied);
 
   let occupancyStatus = 'Trống';
   if (occupancyRate > 90) occupancyStatus = 'Quá tải';
@@ -253,45 +269,67 @@ export default function ManagerDashboard() {
       <div className="space-y-6 pb-8">
         {/* ROW 1: KPI Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
-          {/* Card 1: Tổng doanh thu */}
-          <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[160px] shadow-sm">
+          {/* Card 1: Tổng doanh thu — match admin hero card */}
+          <div className="col-span-2 xl:col-span-1 relative overflow-hidden bg-gradient-to-br from-[#9ee671] to-[#72d645] rounded-xl p-5 text-black flex flex-col justify-between h-[168px] shadow-sm">
+            {/* Decorative SVG waves */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="w-full h-full">
+              <svg viewBox="0 0 400 170" preserveAspectRatio="none" className="w-full h-full">
                 <path
-                  d="M 120 160 Q 280 -20 440 160 Q 280 40 120 160 Z"
+                  d="M 120 170 Q 280 -20 440 170 Q 280 40 120 170 Z"
                   fill="rgba(255,255,255,0.2)"
                 />
                 <path
-                  d="M 150 160 Q 280 -40 410 160 Q 280 20 150 160 Z"
+                  d="M 150 170 Q 280 -40 410 170 Q 280 20 150 170 Z"
                   fill="rgba(255,255,255,0.1)"
                 />
                 <path
-                  d="M -20 160 Q 80 40 180 160 Q 80 90 -20 160 Z"
+                  d="M -20 170 Q 80 40 180 170 Q 80 90 -20 170 Z"
                   fill="rgba(255,255,255,0.15)"
-                />
-                <path
-                  d="M -40 160 Q 60 20 160 160 Q 60 70 -40 160 Z"
-                  fill="rgba(255,255,255,0.05)"
                 />
               </svg>
             </div>
-            <div className="relative z-10">
-              <div className="text-[16px] font-medium text-[#1a2e22]/80">Tổng doanh thu</div>
+
+            <div className="relative z-10 flex items-center gap-2">
+              <TrendingUp size={15} className="text-[#0a1a12]/60" />
+              <span className="text-[13px] font-semibold text-[#0a1a12]/70 uppercase tracking-wide">
+                Tổng doanh thu
+              </span>
             </div>
+
             <div className="relative z-10">
-              <div className="flex items-baseline gap-1.5 text-[#0a1a12]">
+              {loading ? (
+                <Skeleton className="h-10 w-32 mb-2" />
+              ) : (
                 <div
-                  className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}
+                  className={`font-bold leading-none tracking-tight tabular-nums text-[#0a1a12] ${getRevenueFontSize(grandTotal)}`}
                 >
-                  {loading ? (
-                    <Loading variant="inline" size="sm" text="" />
-                  ) : (
-                    grandTotal.toLocaleString('vi-VN')
+                  {grandTotal.toLocaleString('vi-VN')}
+                  {grandTotal > 0 && (
+                    <span className="text-[18px] font-medium opacity-60 ml-1">đ</span>
                   )}
                 </div>
-                {!loading && grandTotal > 0 && (
-                  <div className="text-[16px] font-medium opacity-70">đ</div>
-                )}
+              )}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-[10px] text-[#0a1a12]/50 font-medium">TB/{periodLabel}</p>
+                  {loading ? (
+                    <Skeleton className="h-4 w-12 mt-0.5" />
+                  ) : (
+                    <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">
+                      {avgRevenue.toLocaleString('vi-VN')}đ
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#0a1a12]/50 font-medium">Giao dịch</p>
+                  {loading ? (
+                    <Skeleton className="h-4 w-8 mt-0.5" />
+                  ) : (
+                    <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">
+                      {totalTransactions.toLocaleString('vi-VN')}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -348,25 +386,40 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          {/* Card 3: Tỷ lệ lấp đầy */}
-          <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[160px] overflow-hidden">
-            <div className="text-[16px] font-bold text-gray-900">Tỷ lệ lấp đầy</div>
+          {/* Card 3: Tỷ lệ lấp đầy — match admin style */}
+          <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[168px] overflow-hidden">
             <div>
-              <div className="text-[14px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
-              <div className="flex justify-between items-end mb-3">
-                <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
-                  {loading ? <Loading variant="inline" size="sm" text="" /> : occupancyStatus}
-                </div>
-                <div className="text-[28px] font-semibold text-gray-700 tabular-nums">
-                  {loading ? '' : `${occupancyRate}%`}
-                </div>
+              <p className="text-[12px] text-[#6b7280] font-medium">Tỷ lệ lấp đầy</p>
+              <p className="text-[11px] text-[#9ca3af] mt-0.5">Trạng thái bãi đỗ</p>
+            </div>
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <span className="text-[26px] font-bold text-[#0a2012] tracking-tight">
+                    {occupancyStatus}
+                  </span>
+                )}
+                {loading ? (
+                  <Skeleton className="h-6 w-14" />
+                ) : (
+                  <span className="text-[20px] font-bold text-gray-700 tabular-nums">
+                    {occupancyRate.toFixed(2)}%
+                  </span>
+                )}
               </div>
-              <div className="flex h-4 rounded-md overflow-hidden bg-[#a6e676] opacity-90">
+              <div className="h-2 rounded-full overflow-hidden bg-[#e9fad9]">
                 <div
-                  className="bg-[#132c20] h-full transition-all duration-500"
-                  style={{ width: loading ? '0%' : `${occupancyRate}%` }}
+                  className="h-full bg-[#132c20] rounded-full transition-all duration-700"
+                  style={{ width: loading ? '0%' : `${Math.min(occupancyRate, 100)}%` }}
                 />
               </div>
+              {!loading && (
+                <p className="text-[11px] text-[#9ca3af] mt-1.5 text-right">
+                  {totalOccupied} xe / {totalSlots} chỗ
+                </p>
+              )}
             </div>
           </div>
         </div>

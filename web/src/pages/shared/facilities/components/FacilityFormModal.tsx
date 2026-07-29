@@ -10,7 +10,7 @@ import {
   FileText,
   Loader2,
   Navigation,
-  Search,
+
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
@@ -153,16 +153,7 @@ export function FacilityFormModal({
     reverseGeocode,
   } = useAddressSearch();
 
-  // ── Map Search hook ────────────────────────────────────────────────────
-  const {
-    query: mapSearchQuery,
-    setQuery: setMapSearchQuery,
-    suggestions: mapSuggestions,
-    isLoading: isMapSearching,
-    showDropdown: showMapDropdown,
-    hideDropdown: hideMapDropdown,
-    clearSearch: clearMapSearch,
-  } = useAddressSearch();
+
 
   // ── Track map center for flyTo ─────────────────────────────────────────
   const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
@@ -219,8 +210,8 @@ export function FacilityFormModal({
         longitude: lng,
       }));
 
-      // Update address input & hide dropdown
-      setAddressQuery(result.display_name);
+      // Update address input & hide dropdown (skipSearch=true to prevent re-search)
+      setAddressQuery(result.display_name, true);
       hideDropdown();
 
       // Fly map to the selected location
@@ -253,19 +244,7 @@ export function FacilityFormModal({
     [errors, reverseGeocode]
   );
 
-  const handleMapSearchSelect = (result: any) => {
-    const lat = parseFloat(result.lat);
-    const lng = parseFloat(result.lon);
 
-    // Set coordinates and center map
-    setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
-    setMapTarget({ lat, lng });
-    if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
-
-    // Update map search input text & close dropdown
-    setMapSearchQuery(result.display_name, true);
-    hideMapDropdown();
-  };
 
   // ── Handle address input change (linked to autocomplete) ───────────────
   const handleAddressChange = (value: string) => {
@@ -296,42 +275,6 @@ export function FacilityFormModal({
 
     setIsSubmitting(true);
     try {
-      // Check for duplicates
-      const allRes = await facilityService.getAll({ limit: 1000 });
-      if (allRes.success) {
-        const existing = allRes.data.filter((f) => !isEdit || f._id !== facility?._id);
-        const duplicateName = existing.find(
-          (f) => f.name.toLowerCase() === form.name.trim().toLowerCase()
-        );
-        if (duplicateName) {
-          setErrors({ name: 'Tên tòa nhà / bãi đỗ này đã tồn tại' });
-          setIsSubmitting(false);
-          return;
-        }
-
-        const duplicateAddress = existing.find(
-          (f) => f.address.toLowerCase() === form.address.trim().toLowerCase()
-        );
-        if (duplicateAddress) {
-          setErrors({ address: 'Địa chỉ này đã được đăng ký cho một cơ sở khác' });
-          setIsSubmitting(false);
-          return;
-        }
-
-        if (form.latitude !== 0 && form.longitude !== 0) {
-          const duplicateLocation = existing.find(
-            (f) =>
-              f.location?.coordinates?.[0] === form.longitude &&
-              f.location?.coordinates?.[1] === form.latitude
-          );
-          if (duplicateLocation) {
-            setErrors({ location: 'Vị trí bản đồ này đã được sử dụng cho một cơ sở khác' });
-            setIsSubmitting(false);
-            return;
-          }
-        }
-      }
-
       const payload = {
         name: form.name,
         address: form.address,
@@ -353,7 +296,17 @@ export function FacilityFormModal({
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Đã xảy ra lỗi');
+      const msg = err.message || 'Đã xảy ra lỗi';
+      // Map backend duplicate validation errors to form fields
+      if (msg.includes('Tên') && msg.includes('tồn tại')) {
+        setErrors({ name: msg });
+      } else if (msg.includes('Địa chỉ') && msg.includes('tồn tại')) {
+        setErrors({ address: msg });
+      } else if (msg.includes('Vị trí') && msg.includes('sử dụng')) {
+        setErrors({ location: msg });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -645,59 +598,6 @@ export function FacilityFormModal({
                   errors.location ? 'border-red-400' : 'border-gray-200'
                 }`}
               >
-                {/* ── MAP SEARCH BAR ── */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md z-[1000]">
-                  <div className="relative shadow-md rounded-xl bg-white/90 backdrop-blur-sm">
-                    <Search
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"
-                    />
-                    <input
-                      type="text"
-                      value={mapSearchQuery}
-                      onChange={(e) => setMapSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-10 py-2.5 bg-transparent border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all"
-                      placeholder="Tìm kiếm vị trí trên bản đồ..."
-                    />
-                    {isMapSearching && (
-                      <Loader2
-                        size={16}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin"
-                      />
-                    )}
-                    {!isMapSearching && mapSearchQuery.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          clearMapSearch();
-                        }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* MAP SEARCH DROPDOWN */}
-                  {showMapDropdown && mapSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 max-h-52 overflow-y-auto z-[1000]">
-                      {mapSuggestions.map((result) => (
-                        <button
-                          key={result.place_id}
-                          type="button"
-                          onClick={() => handleMapSearchSelect(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-[#9FE870]/10 transition-colors flex items-start gap-3 border-b border-gray-50 last:border-0"
-                        >
-                          <MapPin size={14} className="text-[#5E8F25] mt-0.5 shrink-0" />
-                          <span className="text-sm text-gray-700 leading-snug line-clamp-2">
-                            {result.display_name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
                 <MapContainer
                   center={DEFAULT_CENTER}

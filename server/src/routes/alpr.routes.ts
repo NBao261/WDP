@@ -12,7 +12,7 @@ const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/bmp']
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB limit (ảnh chụp từ điện thoại thường 5-15MB)
+    fileSize: 10 * 1024 * 1024, // 10MB limit — đồng bộ với ALPR Python service
   },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIMETYPES.includes(file.mimetype)) {

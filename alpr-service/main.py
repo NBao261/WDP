@@ -551,6 +551,14 @@ async def predict(file: UploadFile = File(...)):
 
     try:
         contents = await file.read()
+
+        # ── File size validation (max 10MB) ──────────────────────────────
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+        if len(contents) == 0:
+            raise HTTPException(400, "Empty file")
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(413, f"File too large ({len(contents) // (1024*1024)}MB). Max: 10MB")
+
         nparr    = np.frombuffer(contents, np.uint8)
         img      = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is None:

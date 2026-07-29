@@ -49,7 +49,7 @@ app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 2000, // Increased from 100 to 2000 to prevent 429 in development/dashboard navigation
+    max: 500, // 500 req/15min — enough for dashboard navigation while providing meaningful DDoS protection
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({

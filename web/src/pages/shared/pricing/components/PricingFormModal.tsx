@@ -886,40 +886,97 @@ export function PricingFormModal({
                       )}
 
                       {currentUiFeeType === 'time_window' && (
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="flex-1">
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
-                              Từ giờ <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="time"
-                              {...register(`rates.${idx}.startTime`)}
-                              readOnly={hasActiveSessions}
-                              className={`${getInputCls(!!errors.rates?.[idx]?.startTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
-                            />
-                            {errors.rates?.[idx]?.startTime && (
-                              <p className={errCls}>
-                                <span>⚠</span> {errors.rates[idx]!.startTime!.message}
-                              </p>
-                            )}
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1">
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                Từ giờ <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="time"
+                                {...register(`rates.${idx}.startTime`)}
+                                readOnly={hasActiveSessions}
+                                className={`${getInputCls(!!errors.rates?.[idx]?.startTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                              />
+                              {errors.rates?.[idx]?.startTime && (
+                                <p className={errCls}>
+                                  <span>⚠</span> {errors.rates[idx]!.startTime!.message}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-gray-300 mt-4">–</span>
+                            <div className="flex-1">
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                Đến giờ <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="time"
+                                {...register(`rates.${idx}.endTime`)}
+                                readOnly={hasActiveSessions}
+                                className={`${getInputCls(!!errors.rates?.[idx]?.endTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                              />
+                              {errors.rates?.[idx]?.endTime && (
+                                <p className={errCls}>
+                                  <span>⚠</span> {errors.rates[idx]!.endTime!.message}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <span className="text-gray-300 mt-4">–</span>
-                          <div className="flex-1">
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
-                              Đến giờ <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="time"
-                              {...register(`rates.${idx}.endTime`)}
-                              readOnly={hasActiveSessions}
-                              className={`${getInputCls(!!errors.rates?.[idx]?.endTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
-                            />
-                            {errors.rates?.[idx]?.endTime && (
-                              <p className={errCls}>
-                                <span>⚠</span> {errors.rates[idx]!.endTime!.message}
-                              </p>
-                            )}
-                          </div>
+                          
+                          {!hasActiveSessions && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {currentFacility && currentFacility.openTime && currentFacility.closeTime && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setValue(`rates.${idx}.startTime`, currentFacility.openTime);
+                                    setValue(`rates.${idx}.endTime`, currentFacility.closeTime);
+                                    trigger(`rates.${idx}.startTime`);
+                                    trigger(`rates.${idx}.endTime`);
+                                  }}
+                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-[#9FE870]/20 text-[#062F28] hover:bg-[#9FE870]/40 transition-colors border border-[#9FE870]/30"
+                                >
+                                  Giờ HĐ toà nhà
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setValue(`rates.${idx}.startTime`, '00:00');
+                                  setValue(`rates.${idx}.endTime`, '23:59');
+                                  trigger(`rates.${idx}.startTime`);
+                                  trigger(`rates.${idx}.endTime`);
+                                }}
+                                className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                              >
+                                Cả ngày (24h)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setValue(`rates.${idx}.startTime`, '06:00');
+                                  setValue(`rates.${idx}.endTime`, '18:00');
+                                  trigger(`rates.${idx}.startTime`);
+                                  trigger(`rates.${idx}.endTime`);
+                                }}
+                                className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                              >
+                                Ngày (06:00-18:00)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setValue(`rates.${idx}.startTime`, '18:00');
+                                  setValue(`rates.${idx}.endTime`, '06:00');
+                                  trigger(`rates.${idx}.startTime`);
+                                  trigger(`rates.${idx}.endTime`);
+                                }}
+                                className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
+                              >
+                                Đêm (18:00-06:00)
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
 

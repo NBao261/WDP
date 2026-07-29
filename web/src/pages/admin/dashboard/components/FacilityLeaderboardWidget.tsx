@@ -71,7 +71,9 @@ export function FacilityLeaderboardWidget({ occupancyData }: Props) {
         </div>
         <div>
           <h2 className="text-[15px] font-semibold text-[#1a1a1a]">Hiện trạng khu vực</h2>
-          <p className="text-[12px] text-[#6b7280]">Tỷ lệ lấp đầy theo từng toà nhà — bấm để xem chi tiết tầng</p>
+          <p className="text-[12px] text-[#6b7280]">
+            Tỷ lệ lấp đầy theo từng toà nhà - bấm để xem chi tiết tầng
+          </p>
         </div>
       </div>
 

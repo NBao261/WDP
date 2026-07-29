@@ -14,7 +14,6 @@ import { DashboardCharts } from './components/DashboardCharts';
 import { SystemStatsWidget } from './components/SystemStatsWidget';
 import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
 import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
-import { SystemAlertsWidget } from './components/SystemAlertsWidget';
 import { ExportConfirmModal } from './components/ExportConfirmModal';
 import { CustomDropdown } from '../../../components/ui/CustomDropdown';
 import { reportService } from '../../../services/report.service';
@@ -209,11 +208,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Additional Admin Data Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <FacilityLeaderboardWidget occupancyData={occupancyData} />
-          <SystemAlertsWidget />
-        </div>
+        {/* ── Facility Area (full width) ── */}
+        <FacilityLeaderboardWidget occupancyData={occupancyData} />
       </motion.div>
 
       {/* Export Confirmation Modal */}

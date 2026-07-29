@@ -32,7 +32,7 @@ interface DashboardChartsProps {
 
 /* ── Custom Tooltip (dark theme) ── */
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length || !label || !String(label).trim()) return null;
   const totalSlots = payload[0]?.payload?._total;
   return (
     <div className="bg-[#060606] rounded-xl px-4 py-3 shadow-xl border border-white/10 min-w-[140px]">
@@ -106,9 +106,27 @@ function formatMethodLabel(method: string): string {
     momo: 'MoMo',
     vnpay: 'VNPay',
     zalopay: 'ZaloPay',
+    e_wallet: 'Ví điện tử',
+    ewallet: 'Ví điện tử',
+    wallet: 'Ví điện tử',
+    credit_card: 'Thẻ tín dụng',
+    debit_card: 'Thẻ ghi nợ',
+    bank_transfer: 'Chuyển khoản',
+    paypal: 'PayPal',
   };
-  return map[method?.toLowerCase()] ?? method;
+  const key = (method ?? '').toLowerCase().replace(/[-\s]/g, '_');
+  return map[key] ?? method;
 }
+
+// ── Smart % formatter ──
+const formatPct = (value: number, total: number): string => {
+  if (total <= 0) return '0%';
+  const pct = (value / total) * 100;
+  if (pct <= 0) return '0%';
+  if (pct < 0.1) return '<0.1%';
+  if (pct < 1) return `${pct.toFixed(2)}%`;
+  return `${pct.toFixed(1)}%`;
+};
 
 /* ── Vehicle type colors — lime green palette ── */
 const VEHICLE_COLORS = ['#72d645', '#132c20', '#4ade80', '#166534', '#9ee671', '#a6e676'];
@@ -179,9 +197,9 @@ export function DashboardCharts({
       })) || [];
     if (chartTraffic.length === 1) {
       chartTraffic = [
-        { name: '', 'Xe vào': undefined, 'Xe ra': undefined },
+        { name: '', 'Xe vào': 0, 'Xe ra': 0 },
         chartTraffic[0],
-        { name: ' ', 'Xe vào': undefined, 'Xe ra': undefined },
+        { name: ' ', 'Xe vào': 0, 'Xe ra': 0 },
       ] as any[];
     }
   }
@@ -194,9 +212,9 @@ export function DashboardCharts({
     })) || [];
   if (chartRevenue.length === 1) {
     chartRevenue = [
-      { name: '', 'Doanh thu': undefined },
+      { name: '', 'Doanh thu': 0 },
       chartRevenue[0],
-      { name: ' ', 'Doanh thu': undefined },
+      { name: ' ', 'Doanh thu': 0 },
     ] as any[];
   }
 
@@ -218,11 +236,7 @@ export function DashboardCharts({
       Tổng: item.totalActivity,
     })) || [];
   if (chartPeak.length === 1) {
-    chartPeak = [
-      { name: '', Tổng: undefined },
-      chartPeak[0],
-      { name: ' ', Tổng: undefined },
-    ] as any[];
+    chartPeak = [{ name: '', Tổng: 0 }, chartPeak[0], { name: ' ', Tổng: 0 }] as any[];
   }
 
   const formatYAxis = (v: number) =>
@@ -491,7 +505,9 @@ export function DashboardCharts({
                 {(() => {
                   const total = chartPayment.reduce((s, d) => s + d.value, 0);
                   return chartPayment.map((item, i) => {
-                    const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
+                    const rawPct = total > 0 ? (item.value / total) * 100 : 0;
+                    const barWidth = rawPct < 0.5 && item.value > 0 ? 2 : rawPct;
+                    const pctLabel = formatPct(item.value, total);
                     return (
                       <div key={item.name} className="flex items-center gap-2.5">
                         <span
@@ -504,14 +520,14 @@ export function DashboardCharts({
                               {item.name}
                             </span>
                             <span className="text-[12px] font-bold text-[#1a1a1a] tabular-nums shrink-0">
-                              {pct}%
+                              {pctLabel}
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
                             <div
                               className="h-full rounded-full"
                               style={{
-                                width: `${pct}%`,
+                                width: `${barWidth}%`,
                                 backgroundColor: PAYMENT_COLORS[i % PAYMENT_COLORS.length],
                               }}
                             />

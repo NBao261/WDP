@@ -36,6 +36,12 @@ export function SlotFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [originalPrefix, setOriginalPrefix] = useState<string>('');
 
+  const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   useEffect(() => {
     if (!vehicleType || mode !== 'bulk') {
       setOriginalPrefix('');
@@ -336,6 +342,7 @@ export function SlotFormModal({
                         min={1}
                         placeholder="1"
                         value={startNumber}
+                        onKeyDown={handleNumberKeyDown}
                         onChange={(e) => {
                           const val = e.target.value;
                           setStartNumber(val === '' ? '' : Number(val));
@@ -357,6 +364,7 @@ export function SlotFormModal({
                         max={999}
                         placeholder="10"
                         value={count}
+                        onKeyDown={handleNumberKeyDown}
                         onChange={(e) => {
                           const val = e.target.value;
                             setCount(val === '' ? '' : Number(val));

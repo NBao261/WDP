@@ -124,6 +124,12 @@ export function FacilityFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   // ── Address search hook (Nominatim autocomplete + reverse geocoding) ──
   const {
     query: addressQuery,
@@ -412,6 +418,7 @@ export function FacilityFormModal({
                     max={50}
                     placeholder="5"
                     value={form.totalFloors}
+                    onKeyDown={handleNumberKeyDown}
                     onChange={(e) => {
                       setForm({
                         ...form,

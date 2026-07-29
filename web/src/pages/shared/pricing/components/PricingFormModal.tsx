@@ -1018,30 +1018,6 @@ export function PricingFormModal({
                                   >
                                     Nửa sau ({mid}-{close})
                                   </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setValue(`rates.${idx}.startTime`, close);
-                                      setValue(`rates.${idx}.endTime`, open);
-                                      trigger(`rates.${idx}.startTime`);
-                                      trigger(`rates.${idx}.endTime`);
-                                    }}
-                                    className={getBtnCls(close, open)}
-                                  >
-                                    Ngoài HĐ ({close}-{open})
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setValue(`rates.${idx}.startTime`, '00:00');
-                                      setValue(`rates.${idx}.endTime`, '23:59');
-                                      trigger(`rates.${idx}.startTime`);
-                                      trigger(`rates.${idx}.endTime`);
-                                    }}
-                                    className={getBtnCls('00:00', '23:59')}
-                                  >
-                                    Cả ngày (24h)
-                                  </button>
                                 </div>
                               );
                             })()}

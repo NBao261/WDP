@@ -64,6 +64,7 @@ export function FloorFormModal({
   const [existingSlotsMap, setExistingSlotsMap] = useState<Record<string, { codes: string[]; count: number; slots: any[] }>>({}); 
   // Number of existing slots (edit mode) — used for display in step 2
   const [existingSlotCount, setExistingSlotCount] = useState(0);
+  const [activeSlotCount, setActiveSlotCount] = useState(0);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Slot groups — auto-generated from selected vehicle types
@@ -96,6 +97,7 @@ export function FloorFormModal({
       setStep(1);
       setLockedVehicleTypeIds(new Set());
       setExistingSlotCount(0);
+      setActiveSlotCount(0);
       if (floor) {
         setName(floor.name);
         setTotalSlotsInput(floor.totalSlots || '');
@@ -109,6 +111,13 @@ export function FloorFormModal({
         slotService.getByFloor(floor._id).then((res) => {
           const slots = res.data || [];
           setExistingSlotCount(slots.length);
+          
+          let active = 0;
+          slots.forEach((s: any) => {
+            if (s.status === 'occupied' || s.status === 'reserved') active++;
+          });
+          setActiveSlotCount(active);
+
           const vtIdsWithSlots = new Set<string>();
           const slotsMap: Record<string, { codes: string[]; count: number; slots: any[] }> = {};
           slots.forEach((slot) => {
@@ -175,8 +184,14 @@ export function FloorFormModal({
   const goToStep2 = () => {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Vui lòng nhập tên tầng';
-    if (!totalSlotsInput || Number(totalSlotsInput) < 1)
+    if (!totalSlotsInput || Number(totalSlotsInput) < 1) {
       newErrors.totalSlots = 'Vui lòng nhập giới hạn slot (≥ 1)';
+    } else if (isEdit && Number(totalSlotsInput) < existingSlotCount) {
+      // The user wants: "nếu có ít nhất 1 xe đang gửi thì không cho hạ xuống quá 1 xe đó"
+      // But logically, they cannot lower below existingSlotCount without deleting slots first.
+      newErrors.totalSlots = `Không thể giảm giới hạn xuống ${totalSlotsInput}. Tầng đang có ${existingSlotCount} slot được phân bổ (trong đó ${activeSlotCount} slot đang dùng). Vui lòng xoá bớt slot trước.`;
+    }
+
     if (selectedVehicleTypes.length === 0)
       newErrors.vehicleTypes = 'Vui lòng chọn ít nhất một loại xe';
 
@@ -248,6 +263,14 @@ export function FloorFormModal({
       });
     }
 
+    // Validate step 2 limit
+    const currentTotalSlots = Number(totalSlotsInput) || 0;
+    const totalAllocated = isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots;
+    if (totalAllocated > currentTotalSlots) {
+      toast.error(`Tổng số slot phân bổ (${totalAllocated}) không được vượt quá giới hạn tầng (${currentTotalSlots}).`);
+      return;
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -263,8 +286,7 @@ export function FloorFormModal({
     try {
       if (isEdit) {
         // Edit mode: update floor + assign vehicle types + create new slots
-        const newTotal = Math.max(Number(totalSlotsInput) || 0, existingSlotCount + computedTotalSlots);
-        await floorService.update(floor!._id, { name, totalSlots: newTotal });
+        await floorService.update(floor!._id, { name, totalSlots: currentTotalSlots });
         await floorService.assignVehicleTypes(floor!._id, selectedVehicleTypes);
 
         // Update existing slots if prefix changed, and create new slots for filled groups
@@ -591,7 +613,7 @@ export function FloorFormModal({
                           {isEdit ? 'Thêm slot mới' : 'Phân bổ slot cho từng loại xe'}
                         </label>
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
-                          computedTotalSlots > Number(totalSlotsInput)
+                          (isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots) > Number(totalSlotsInput)
                             ? 'text-red-600 bg-red-50'
                             : 'text-[#062F28] bg-[#9FE870]/30'
                         }`}>

@@ -6,6 +6,7 @@ import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 
 import { getCache, setCache, delPattern, delCache } from '../config/redis';
+import { getIO } from '../config/socket';
 
 export class FacilityService {
   static async createFacility(data: Partial<IParkingFacility>): Promise<IParkingFacility> {
@@ -53,6 +54,10 @@ export class FacilityService {
     // Invalidate caches
     await delPattern('cache:public:facilities:*');
     await delCache(`cache:public:available-slots:${id}`);
+    
+    try {
+      getIO().to(`facility:${id}`).emit('facility:updated', { facilityId: id });
+    } catch (e) {}
 
     return facility;
   }
@@ -89,6 +94,10 @@ export class FacilityService {
     // Invalidate caches
     await delPattern('cache:public:facilities:*');
     await delCache(`cache:public:available-slots:${id}`);
+    
+    try {
+      getIO().to(`facility:${id}`).emit('facility:updated', { facilityId: id });
+    } catch (e) {}
 
     return facility;
   }
@@ -137,6 +146,10 @@ export class FacilityService {
     await delCache(`cache:public:available-slots:${id}`);
     await delCache(`cache:public:pricing:${id}`);
     await delCache(`cache:operationsConfig:${id}`);
+
+    try {
+      getIO().to(`facility:${id}`).emit('facility:updated', { facilityId: id });
+    } catch (e) {}
 
     return facility;
   }

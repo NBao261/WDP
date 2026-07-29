@@ -6,6 +6,8 @@ import { PricingPlan } from '../models/pricingPlan.model';
 import { AppError } from '../middlewares/error.middleware';
 import { logger } from '../config/logger';
 import { generateReservationCode } from '../utils/codeGenerator';
+import { getIO } from '../config/socket';
+import { getCache, setCache, delPattern } from '../config/redis';
 
 export class ReservationService {
   /**
@@ -127,6 +129,20 @@ export class ReservationService {
     await ParkingSlot.findByIdAndUpdate(availableSlot._id, {
       status: SlotStatus.RESERVED,
     });
+    
+    try {
+      getIO().to(`facility:${facilityId}`).emit('slot:statusChanged', {
+        slotId: availableSlot._id,
+        status: SlotStatus.RESERVED,
+        facilityId: facilityId,
+      });
+    } catch (e) {}
+
+    // Invalidate reservation cache
+    delPattern(`cache:reservations:user:${userId}:*`).catch(() => {});
+    if (facilityId) {
+      delPattern(`cache:reservations:facility:${facilityId}:*`).catch(() => {});
+    }
 
     logger.info(`Reservation created: ${reservation._id} (${reservationCode}) by user ${userId}, slot ${availableSlot.code}, plate ${normalizedPlate}`);
 
@@ -175,6 +191,20 @@ export class ReservationService {
       await ParkingSlot.findByIdAndUpdate(reservation.slotId, {
         status: SlotStatus.AVAILABLE,
       });
+      
+      try {
+        getIO().to(`facility:${reservation.facilityId}`).emit('slot:statusChanged', {
+          slotId: reservation.slotId,
+          status: SlotStatus.AVAILABLE,
+          facilityId: reservation.facilityId,
+        });
+      } catch (e) {}
+    }
+    
+    // Invalidate reservation cache
+    delPattern(`cache:reservations:user:${userId}:*`).catch(() => {});
+    if (reservation.facilityId) {
+      delPattern(`cache:reservations:facility:${reservation.facilityId}:*`).catch(() => {});
     }
 
     logger.info(`Reservation cancelled: ${reservationId} by user ${userId}, fee: ${cancellationFee}`);
@@ -209,6 +239,18 @@ export class ReservationService {
     const sortBy = query?.sortBy || 'createdAt';
     const sortOrder = query?.sortOrder === 'asc' ? 1 : -1;
 
+    let cacheKey = '';
+    if (role === 'driver') {
+      cacheKey = `cache:reservations:user:${userId}:${Buffer.from(JSON.stringify(query)).toString('base64')}`;
+    } else if (query?.facilityId) {
+      cacheKey = `cache:reservations:facility:${query.facilityId}:${Buffer.from(JSON.stringify(query)).toString('base64')}`;
+    }
+    
+    if (cacheKey) {
+      const cached = await getCache(cacheKey);
+      if (cached) return cached;
+    }
+
     const [data, total] = await Promise.all([
       Reservation.find(filter)
         .populate('facilityId', 'name address')
@@ -222,12 +264,18 @@ export class ReservationService {
       Reservation.countDocuments(filter),
     ]);
 
-    return {
+    const result = {
       data: data as any[],
       total,
       page,
       totalPages: Math.ceil(total / limit),
     };
+    
+    if (cacheKey) {
+      await setCache(cacheKey, result, 300); // 5 mins
+    }
+    
+    return result;
   }
 
   /**

@@ -68,9 +68,11 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
+      <div className="flex justify-between items-center min-h-[32px] mb-1.5">
+        <label className="block text-sm font-semibold text-gray-700">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      </div>
       <div className="relative">
         <Icon
           size={16}
@@ -390,9 +392,11 @@ export function FacilityFormModal({
 
                 {/* ── ADDRESS WITH AUTOCOMPLETE ── */}
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Địa chỉ <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center min-h-[32px] mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Địa chỉ <span className="text-red-500">*</span>
+                    </label>
+                  </div>
                   <div className="relative">
                     <MapPin size={16} className="absolute left-3 top-3 text-gray-400 z-10" />
                     <textarea
@@ -473,7 +477,7 @@ export function FacilityFormModal({
               <div className="space-y-4 flex flex-col h-full">
                 {/* Operating Hours */}
                 <div>
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="flex justify-between items-center min-h-[32px] mb-1.5">
                     <label className="block text-sm font-semibold text-gray-700">
                       Giờ hoạt động <span className="text-red-500">*</span>
                     </label>
@@ -575,7 +579,9 @@ export function FacilityFormModal({
 
                 {/* Description */}
                 <div className="flex-1 flex flex-col min-h-[120px]">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả</label>
+                  <div className="flex items-center min-h-[32px] mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">Mô tả</label>
+                  </div>
                   <div className="relative flex-1 flex">
                     <FileText size={16} className="absolute left-3 top-3 text-gray-400 z-10" />
                     <textarea

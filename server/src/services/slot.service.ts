@@ -244,4 +244,26 @@ export class SlotService {
 
     return slots;
   }
+
+  static async getSlotStats(): Promise<Record<string, { occupied: number; reserved: number }>> {
+    const stats = await ParkingSlot.aggregate([
+      { $match: { isDeleted: false } },
+      {
+        $group: {
+          _id: '$floorId',
+          occupied: { $sum: { $cond: [{ $eq: ['$status', 'occupied'] }, 1, 0] } },
+          reserved: { $sum: { $cond: [{ $eq: ['$status', 'reserved'] }, 1, 0] } },
+        },
+      },
+    ]);
+
+    const result: Record<string, { occupied: number; reserved: number }> = {};
+    for (const stat of stats) {
+      result[stat._id.toString()] = {
+        occupied: stat.occupied,
+        reserved: stat.reserved,
+      };
+    }
+    return result;
+  }
 }

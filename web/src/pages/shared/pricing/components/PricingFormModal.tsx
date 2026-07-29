@@ -46,6 +46,27 @@ interface FormModalProps {
   selectedVehicleTypeId?: string;
 }
 
+const getMidTime = (open: string, close: string) => {
+  if (!open || !close) return '12:00';
+  const parse = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  const format = (m: number) => {
+    const h = Math.floor(m / 60) % 24;
+    const mins = Math.floor(m % 60);
+    return `${h.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  const o = parse(open);
+  let c = parse(close);
+  if (c <= o) {
+    c += 24 * 60;
+  }
+  const mid = o + (c - o) / 2;
+  return format(mid);
+};
+
 export function PricingFormModal({
   plan,
   facilities,
@@ -121,10 +142,27 @@ export function PricingFormModal({
         },
   });
 
+  const registerNumber = (name: any) => {
+    const { onChange, ...rest } = register(name);
+    return {
+      ...rest,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        let v = e.target.value;
+        if (v.length > 1 && v.startsWith('0')) {
+          v = v.replace(/^0+/, '');
+          if (v === '') v = '0';
+          e.target.value = v;
+        }
+        onChange(e);
+      },
+    };
+  };
+
   const { fields, append, remove } = useFieldArray({ control, name: 'rates' });
 
   const currentUiFeeType = useWatch({ control, name: 'uiFeeType' });
   const currentFacilityId = useWatch({ control, name: 'facilityId' });
+  const currentRates = useWatch({ control, name: 'rates' });
   const currentFacility = facilities.find((f) => f._id === currentFacilityId);
 
   const allowedVehicleTypes = vehicleTypes;
@@ -675,7 +713,7 @@ export function PricingFormModal({
                       )}
                     </div>
                     <input
-                      {...register('gracePeriodMinutes')}
+                      {...registerNumber('gracePeriodMinutes')}
                       type="number"
                       min="0"
                       max="60"
@@ -700,7 +738,7 @@ export function PricingFormModal({
                       )}
                     </div>
                     <input
-                      {...register('lostCardFee')}
+                      {...registerNumber('lostCardFee')}
                       type="number"
                       min="0"
                       onKeyDown={handleNumberKeyDown}
@@ -724,7 +762,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('firstBlockHours')}
+                        {...registerNumber('firstBlockHours')}
                         type="number"
                         min="1"
                         onKeyDown={handleNumberKeyDown}
@@ -752,7 +790,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('maxDailyFee')}
+                        {...registerNumber('maxDailyFee')}
                         type="number"
                         min="0"
                         onKeyDown={handleNumberKeyDown}
@@ -778,7 +816,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('overnightFee')}
+                        {...registerNumber('overnightFee')}
                         type="number"
                         min="0"
                         onKeyDown={handleNumberKeyDown}
@@ -803,7 +841,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('overtimeFeePerHour')}
+                        {...registerNumber('overtimeFeePerHour')}
                         type="number"
                         min="0"
                         onKeyDown={handleNumberKeyDown}
@@ -886,40 +924,103 @@ export function PricingFormModal({
                       )}
 
                       {currentUiFeeType === 'time_window' && (
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="flex-1">
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
-                              Từ giờ <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="time"
-                              {...register(`rates.${idx}.startTime`)}
-                              readOnly={hasActiveSessions}
-                              className={`${getInputCls(!!errors.rates?.[idx]?.startTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
-                            />
-                            {errors.rates?.[idx]?.startTime && (
-                              <p className={errCls}>
-                                <span>⚠</span> {errors.rates[idx]!.startTime!.message}
-                              </p>
-                            )}
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1">
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                Từ giờ <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="time"
+                                {...register(`rates.${idx}.startTime`)}
+                                readOnly={hasActiveSessions}
+                                className={`${getInputCls(!!errors.rates?.[idx]?.startTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                              />
+                              {errors.rates?.[idx]?.startTime && (
+                                <p className={errCls}>
+                                  <span>⚠</span> {errors.rates[idx]!.startTime!.message}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-gray-300 mt-4">–</span>
+                            <div className="flex-1">
+                              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                Đến giờ <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="time"
+                                {...register(`rates.${idx}.endTime`)}
+                                readOnly={hasActiveSessions}
+                                className={`${getInputCls(!!errors.rates?.[idx]?.endTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                              />
+                              {errors.rates?.[idx]?.endTime && (
+                                <p className={errCls}>
+                                  <span>⚠</span> {errors.rates[idx]!.endTime!.message}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <span className="text-gray-300 mt-4">–</span>
-                          <div className="flex-1">
-                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
-                              Đến giờ <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="time"
-                              {...register(`rates.${idx}.endTime`)}
-                              readOnly={hasActiveSessions}
-                              className={`${getInputCls(!!errors.rates?.[idx]?.endTime, 'py-2 text-[15px] font-semibold text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
-                            />
-                            {errors.rates?.[idx]?.endTime && (
-                              <p className={errCls}>
-                                <span>⚠</span> {errors.rates[idx]!.endTime!.message}
-                              </p>
-                            )}
-                          </div>
+
+                          {!hasActiveSessions &&
+                            currentFacility &&
+                            currentFacility.openTime &&
+                            currentFacility.closeTime &&
+                            (() => {
+                              const open = currentFacility.openTime;
+                              const close = currentFacility.closeTime;
+                              const mid = getMidTime(open, close);
+
+                              const currStart = currentRates?.[idx]?.startTime;
+                              const currEnd = currentRates?.[idx]?.endTime;
+
+                              const getBtnCls = (s: string, e: string) => {
+                                const isActive = currStart === s && currEnd === e;
+                                return isActive
+                                  ? 'text-[10px] font-bold px-2 py-1.5 rounded-md bg-[#9FE870] text-[#062F28] transition-colors border border-[#8AD65A] shadow-sm'
+                                  : 'text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200';
+                              };
+
+                              return (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, open);
+                                      setValue(`rates.${idx}.endTime`, close);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(open, close)}
+                                  >
+                                    Giờ HĐ ({open}-{close})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, open);
+                                      setValue(`rates.${idx}.endTime`, mid);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(open, mid)}
+                                  >
+                                    Nửa đầu ({open}-{mid})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, mid);
+                                      setValue(`rates.${idx}.endTime`, close);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(mid, close)}
+                                  >
+                                    Nửa sau ({mid}-{close})
+                                  </button>
+                                </div>
+                              );
+                            })()}
                         </div>
                       )}
 
@@ -954,7 +1055,7 @@ export function PricingFormModal({
                             Đơn giá (VNĐ) <span className="text-red-500">*</span>
                           </label>
                           <input
-                            {...register(`rates.${idx}.amount`)}
+                            {...registerNumber(`rates.${idx}.amount`)}
                             type="number"
                             min="0"
                             placeholder="0"

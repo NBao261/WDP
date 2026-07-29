@@ -114,4 +114,8 @@ export const slotService = {
   delete: async (id: string): Promise<{ success: boolean }> => {
     return apiClient.delete(`/slots/${id}`);
   },
+
+  getStats: async (): Promise<{ success: boolean; data: Record<string, { occupied: number; reserved: number }> }> => {
+    return apiClient.get('/slots/stats');
+  },
 };

@@ -1,11 +1,26 @@
 import { Floor, IFloor } from '../models/floor.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
 import { VehicleType } from '../models/vehicleType.model';
+import { ParkingFacility } from '../models/parkingFacility.model';
 import { AppError } from '../middlewares/error.middleware';
 import { delCache } from '../config/redis';
 
 export class FloorService {
   static async createFloor(data: Partial<IFloor>): Promise<IFloor> {
+    const facility = await ParkingFacility.findById(data.facilityId);
+    if (!facility) {
+      throw new AppError('Toà nhà không tồn tại', 404);
+    }
+
+    const currentFloorsCount = await Floor.countDocuments({
+      facilityId: data.facilityId,
+      isDeleted: false,
+    });
+
+    if (currentFloorsCount >= facility.totalFloors) {
+      throw new AppError(`Không thể thêm khu vực. Toà nhà này chỉ cho phép tối đa ${facility.totalFloors} khu vực/tầng.`, 400);
+    }
+
     // Check if floor with same name exists in the same facility
     const existingFloor = await Floor.findOne({ 
       name: data.name, 

@@ -11,6 +11,7 @@ import { Exception, ExceptionStatus, ExceptionType } from '../models/exception.m
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { generateSessionCode, generateCardCode } from '../utils/codeGenerator';
 import { getIO } from '../config/socket';
+import { delPattern } from '../config/redis';
 import { UploadService } from './upload.service';
 import { addUploadJob } from '../queues/uploadQueue';
 import { getCache, setCache, delCache, sIsMember, sAdd, sRem, getRedlock } from '../config/redis';
@@ -454,12 +455,19 @@ export class SessionService {
 
       // Emit socket event
       try {
-        getIO().to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
+        const io = getIO();
+        io.to(`facility:${data.facilityId}`).emit('slot:statusChanged', {
           slotId: slot._id,
           status: SlotStatus.OCCUPIED,
           facilityId: data.facilityId,
         });
+        if (session.driverId) {
+          io.to(`user:${session.driverId}`).emit('session:created', { sessionId: session._id });
+        }
       } catch (err) { }
+      
+      // Invalidate report cache since new check-in occurred
+      delPattern('report:*').catch(() => {});
 
       // 8. Tạo populated session object mà không cần query lại DB (Tránh DB read latency)
       const floorInfo = floorsServingVehicle.find((f: any) => f._id.toString() === slot.floorId.toString());
@@ -1153,14 +1161,21 @@ export class SessionService {
 
       // Emit socket event
       try {
-        getIO().to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
+        const io = getIO();
+        io.to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
           slotId: session.slotId,
           status: SlotStatus.AVAILABLE,
           facilityId: session.facilityId,
         });
+        if (session.driverId) {
+          io.to(`user:${session.driverId}`).emit('session:completed', { sessionId: session._id });
+        }
       } catch (err) {
         // Ignore if socket is not initialized
       }
+      
+      // Invalidate report cache since new checkout/payment occurred
+      delPattern('report:*').catch(() => {});
 
       // Invalidate search caches & remove from active set
       if (session.licensePlate) {

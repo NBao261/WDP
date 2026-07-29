@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import {
   Clock,
   Download,
@@ -98,6 +99,7 @@ export default function ManagerDashboard() {
 
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
 
   /* ── Fetch Staff ── */
   const fetchStaff = useCallback(async () => {
@@ -153,6 +155,37 @@ export default function ManagerDashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
+
+  useEffect(() => {
+    const socketUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      auth: { token: useAuthStore.getState().token }
+    });
+    socketRef.current = socket;
+
+    socket.on('slot:statusChanged', () => {
+      fetchDashboardData();
+    });
+    
+    socket.on('payment:completed', () => {
+      fetchDashboardData();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    if (socketRef.current && socketRef.current.connected && managerFacilities.length > 0) {
+      managerFacilities.forEach((f: AssignedFacility) => {
+        socketRef.current?.emit('join:facility', f._id);
+      });
+    }
+  }, [managerFacilities]);
 
   /* ── Export ── */
   const handleExport = async (format: 'excel' | 'pdf') => {

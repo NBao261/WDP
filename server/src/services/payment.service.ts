@@ -8,6 +8,7 @@ import { ParkingSlot, SlotStatus } from '../models/parkingSlot.model';
 import { SessionService } from './session.service';
 import { AppError } from '../middlewares/error.middleware';
 import { getIO } from '../config/socket';
+import { delPattern } from '../config/redis';
 import { UploadService } from './upload.service';
 import { addUploadJob } from '../queues/uploadQueue';
 
@@ -172,18 +173,24 @@ export class PaymentService {
 
       // Xử lý Async / Side-effects sau khi commit thành công
       try {
-        getIO().to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
+        const io = getIO();
+        io.to(`facility:${session.facilityId}`).emit('slot:statusChanged', {
           slotId: session.slotId,
           status: SlotStatus.AVAILABLE,
           facilityId: session.facilityId,
         });
-        getIO().to(`facility:${session.facilityId}`).emit('payment:completed', {
+        io.to(`facility:${session.facilityId}`).emit('payment:completed', {
           transactionCode: payment.transactionCode,
           sessionId: session._id,
         });
+        if (session.driverId) {
+          io.to(`user:${session.driverId}`).emit('session:completed', { sessionId: session._id });
+        }
       } catch (e) {
         // Bỏ qua lỗi socket
       }
+      
+      delPattern('report:*').catch(() => {});
       addUploadJob(session._id.toString()).catch(console.error);
 
     } catch (error) {

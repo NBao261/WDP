@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { io, Socket } from 'socket.io-client';
+import { useAuthStore } from '../../../../store';
 import {
   reportService,
   TrafficReportData,
@@ -58,6 +60,8 @@ export function useDashboard() {
   const [occupancyData, setOccupancyData] = useState<OccupancyReportData | null>(null);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursReportData | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [facilityIds, setFacilityIds] = useState<string[]>([]);
+  const socketRef = useRef<Socket | null>(null);
 
   // Fetch user & facility stats once (not time-filtered)
   const fetchSystemStats = useCallback(async () => {
@@ -67,7 +71,7 @@ export function useDashboard() {
         userService.getAllUsers({ role: UserRole.MANAGER, limit: 1 }),
         userService.getAllUsers({ role: UserRole.STAFF, limit: 1 }),
         userService.getAllUsers({ role: UserRole.DRIVER, limit: 1 }),
-        facilityService.getAll({ limit: 1 }),
+        facilityService.getAll({ limit: 100 }),
       ]);
       setUserStats({
         totalAdmin: adminRes.status === 'fulfilled' ? (adminRes.value.pagination?.total ?? 0) : 0,
@@ -76,6 +80,9 @@ export function useDashboard() {
         totalDriver: driverRes.status === 'fulfilled' ? (driverRes.value.pagination?.total ?? 0) : 0,
         totalFacilities: facilityRes.status === 'fulfilled' ? (facilityRes.value.pagination?.total ?? 0) : 0,
       });
+      if (facilityRes.status === 'fulfilled' && facilityRes.value.data) {
+        setFacilityIds(facilityRes.value.data.map((f: any) => f._id));
+      }
     } catch (err) {
       console.error('Error fetching system stats:', err);
     }
@@ -114,6 +121,39 @@ export function useDashboard() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const socketUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      auth: {
+        token: useAuthStore.getState().token
+      }
+    });
+    socketRef.current = socket;
+
+    socket.on('slot:statusChanged', () => {
+      fetchData();
+    });
+    
+    socket.on('payment:completed', () => {
+      fetchData();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (socketRef.current && socketRef.current.connected && facilityIds.length > 0) {
+      facilityIds.forEach(id => {
+        socketRef.current?.emit('join:facility', id);
+      });
+    }
+  }, [facilityIds]);
 
   useEffect(() => {
     fetchSystemStats();

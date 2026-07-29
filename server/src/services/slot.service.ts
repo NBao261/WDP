@@ -10,7 +10,7 @@ export class SlotService {
       throw new AppError('Floor not found', 404);
     }
 
-    if (!floor.allowedVehicleTypes.includes(data.vehicleTypeId as any)) {
+    if (!floor.allowedVehicleTypes.some(vt => vt.toString() === data.vehicleTypeId?.toString())) {
       throw new AppError('Loại phương tiện này không được hỗ trợ tại tầng này', 400);
     }
 
@@ -40,7 +40,7 @@ export class SlotService {
       throw new AppError('Floor not found', 404);
     }
 
-    if (!floor.allowedVehicleTypes.includes(vehicleType as any)) {
+    if (!floor.allowedVehicleTypes.some(vt => vt.toString() === vehicleType.toString())) {
       throw new AppError('Loại phương tiện này không được hỗ trợ tại tầng này', 400);
     }
 

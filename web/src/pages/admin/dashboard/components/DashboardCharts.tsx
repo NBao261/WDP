@@ -32,7 +32,7 @@ interface DashboardChartsProps {
 
 /* ── Custom Tooltip (dark theme) ── */
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length || !label || !String(label).trim()) return null;
   const totalSlots = payload[0]?.payload?._total;
   return (
     <div className="bg-[#060606] rounded-xl px-4 py-3 shadow-xl border border-white/10 min-w-[140px]">
@@ -197,9 +197,9 @@ export function DashboardCharts({
       })) || [];
     if (chartTraffic.length === 1) {
       chartTraffic = [
-        { name: '', 'Xe vào': undefined, 'Xe ra': undefined },
+        { name: '', 'Xe vào': 0, 'Xe ra': 0 },
         chartTraffic[0],
-        { name: ' ', 'Xe vào': undefined, 'Xe ra': undefined },
+        { name: ' ', 'Xe vào': 0, 'Xe ra': 0 },
       ] as any[];
     }
   }
@@ -212,9 +212,9 @@ export function DashboardCharts({
     })) || [];
   if (chartRevenue.length === 1) {
     chartRevenue = [
-      { name: '', 'Doanh thu': undefined },
+      { name: '', 'Doanh thu': 0 },
       chartRevenue[0],
-      { name: ' ', 'Doanh thu': undefined },
+      { name: ' ', 'Doanh thu': 0 },
     ] as any[];
   }
 
@@ -236,11 +236,7 @@ export function DashboardCharts({
       Tổng: item.totalActivity,
     })) || [];
   if (chartPeak.length === 1) {
-    chartPeak = [
-      { name: '', Tổng: undefined },
-      chartPeak[0],
-      { name: ' ', Tổng: undefined },
-    ] as any[];
+    chartPeak = [{ name: '', Tổng: 0 }, chartPeak[0], { name: ' ', Tổng: 0 }] as any[];
   }
 
   const formatYAxis = (v: number) =>

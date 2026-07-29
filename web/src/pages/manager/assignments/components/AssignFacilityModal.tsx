@@ -1,8 +1,9 @@
-import { X, MapPin, Square, CheckSquare, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
+import { X, MapPin, Square, CheckSquare, AlertCircle, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { userService } from '../../../../services/user.service';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { toast } from 'sonner';
+import { Loading } from '../../../../components/ui/Loading';
 
 interface AssignModalProps {
   staff: User;
@@ -116,9 +117,7 @@ export function AssignFacilityModal({
             className="flex-1 py-2.5 text-sm font-bold bg-[#d7ee46] text-[#060606] rounded-xl hover:bg-[#c4dc32] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {saving ? (
-              <>
-                <RefreshCw size={14} className="animate-spin" /> Đang lưu...
-              </>
+              <Loading variant="inline" size="sm" text="Đang lưu..." />
             ) : (
               <>
                 <CheckCircle size={14} /> Lưu phân công

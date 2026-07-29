@@ -14,7 +14,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { Loading } from '../../../../components/ui/Loading';
 import {
   TrafficReportData,
   RevenueReportData,
@@ -272,7 +272,7 @@ export function DashboardCharts({
       <div className="flex-1 min-h-[300px] relative">
         {loading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-lg">
-            <Loader2 size={24} className="animate-spin" style={{ color: currentTab.activeColor }} />
+            <Loading size="md" />
           </div>
         )}
 

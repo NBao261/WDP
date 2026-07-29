@@ -1,4 +1,5 @@
-import { Loader2, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { Loading } from '../../../components/ui/Loading';
 
 export type RequestStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -21,10 +22,7 @@ export function SubmitButton({ status, text }: SubmitButtonProps) {
       }`}
     >
       {status === 'loading' ? (
-        <>
-          <Loader2 size={18} className="animate-spin" />
-          <span className="text-[14px] font-bold">Đang xử lí...</span>
-        </>
+        <Loading variant="inline" size="sm" text="Đang xử lí..." />
       ) : status === 'success' ? (
         <>
           <Check size={20} className="text-[#062F28]" />

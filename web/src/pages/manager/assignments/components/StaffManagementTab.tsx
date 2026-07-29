@@ -17,6 +17,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Loading } from '../../../../components/ui/Loading';
 import { User, AssignedFacility } from '../../../../types/user.types';
 import { StaffDetailModal } from './StaffDetailModal';
 
@@ -491,10 +492,7 @@ export function StaffManagementTab({
             </button>
           </div>
         ) : staffLoading ? (
-          <div className="p-16 flex flex-col items-center justify-center gap-3 text-gray-400">
-            <RefreshCw className="w-8 h-8 animate-spin text-gray-300" />
-            <p className="text-sm font-medium">Đang tải danh sách nhân viên...</p>
-          </div>
+          <Loading text="Đang tải danh sách nhân viên..." />
         ) : filteredStaff.length === 0 ? (
           <div className="p-16 text-center text-gray-400">
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">

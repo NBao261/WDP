@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loading } from '../../../components/ui/Loading';
 import { PaymentModal } from './components/PaymentModal';
 import { useDashboard } from './hooks/useDashboard';
 import { EmptyActiveState } from './components/EmptyActiveState';
@@ -12,11 +12,7 @@ const DriverDashboard: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   if (loading) {
-    return (
-      <div className="w-full h-[60vh] flex items-center justify-center">
-        <Loader2 size={32} className="text-accent-dark animate-spin" />
-      </div>
-    );
+    return <Loading text="Đang tải bảng điều khiển..." />;
   }
 
   return (

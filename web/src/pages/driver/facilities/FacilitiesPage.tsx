@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { PricingModal } from './components/PricingModal';
 import { DynamicFacilityCard } from './components/DynamicFacilityCard';
 
+import { Loading } from '../../../components/ui/Loading';
+
 const FacilitiesPage: React.FC = () => {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,11 +32,7 @@ const FacilitiesPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="w-full h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-accent-dark border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <Loading text="Đang tải danh sách bãi xe..." />;
   }
 
   return (

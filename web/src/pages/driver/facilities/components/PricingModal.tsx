@@ -4,6 +4,8 @@ import { publicService } from '../../../../services/public.service';
 import { PricingPlan } from '../../../../services/pricing.service';
 import { X, Check } from 'lucide-react';
 
+import { Loading } from '../../../../components/ui/Loading';
+
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -69,9 +71,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           {/* Body */}
           <div className="p-8 overflow-y-auto custom-scrollbar bg-slate-50/50">
             {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-10 h-10 border-4 border-accent-dark border-t-transparent rounded-full animate-spin" />
-              </div>
+              <Loading text="Đang tải bảng giá..." />
             ) : plans.length === 0 ? (
               <div className="text-center py-12 text-slate-500 bg-white rounded-2xl border border-dashed border-slate-200">
                 Chưa có bảng giá nào được thiết lập cho bãi xe này.

@@ -44,14 +44,10 @@ const DriverDashboard = lazy(() => import('../pages/driver/dashboard/DriverDashb
 const DriverFacilitiesPage = lazy(() => import('../pages/driver/facilities/FacilitiesPage'));
 const ReservationPage = lazy(() => import('../pages/driver/book/ReservationPage'));
 const HistoryPage = lazy(() => import('../pages/driver/history/HistoryPage'));
-const Loading = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="w-8 h-8 border-2 border-[#d7ee46] border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+import { Loading } from '../components/ui/Loading';
 
 const S = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<Loading />}>{children}</Suspense>
+  <Suspense fallback={<Loading variant="fullscreen" text="Đang tải hệ thống..." />}>{children}</Suspense>
 );
 
 export const router = createBrowserRouter([

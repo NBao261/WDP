@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Clock,
   Download,
-  Loader2,
   FileSpreadsheet,
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
+import { Loading } from '../../components/ui/Loading';
 import { userService } from '../../services/user.service';
 import { useAuthStore } from '../../store/useAuthStore';
 import { User, AssignedFacility } from '../../types/user.types';
@@ -231,7 +231,7 @@ export default function ManagerDashboard() {
               className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-white border-[1.5px] border-gray-200 text-[#1a1a1a] text-[16px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exporting ? (
-                <Loader2 size={17} className="animate-spin" />
+                <Loading variant="inline" size="sm" text="" />
               ) : (
                 <FileSpreadsheet size={17} />
               )}
@@ -242,7 +242,7 @@ export default function ManagerDashboard() {
               disabled={exporting || loading}
               className="flex items-center gap-[8px] px-[20px] py-[10px] rounded-[10px] bg-[#a6e676] text-[#132c20] border-none text-[16px] font-medium hover:opacity-[0.88] active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? <Loader2 size={17} className="animate-spin" /> : <Download size={17} />}
+              {exporting ? <Loading variant="inline" size="sm" text="" /> : <Download size={17} />}
               PDF
             </button>
           </div>
@@ -284,7 +284,7 @@ export default function ManagerDashboard() {
                   className={`font-bold leading-none tracking-tight tabular-nums ${loading ? '' : getRevenueFontSize(grandTotal)}`}
                 >
                   {loading ? (
-                    <Loader2 size={28} className="animate-spin" />
+                    <Loading variant="inline" size="sm" text="" />
                   ) : (
                     grandTotal.toLocaleString('vi-VN')
                   )}
@@ -309,7 +309,7 @@ export default function ManagerDashboard() {
                 </div>
                 <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
                   {loading ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <Loading variant="inline" size="sm" text="" />
                   ) : (
                     totalCheckIn.toLocaleString('vi-VN')
                   )}
@@ -324,7 +324,7 @@ export default function ManagerDashboard() {
                 </div>
                 <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
                   {loading ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <Loading variant="inline" size="sm" text="" />
                   ) : (
                     totalCheckOut.toLocaleString('vi-VN')
                   )}
@@ -339,7 +339,7 @@ export default function ManagerDashboard() {
                 </div>
                 <div className="text-[28px] font-bold text-gray-900 leading-none tabular-nums truncate">
                   {loading ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <Loading variant="inline" size="sm" text="" />
                   ) : (
                     currentlyParked.toLocaleString('vi-VN')
                   )}
@@ -355,7 +355,7 @@ export default function ManagerDashboard() {
               <div className="text-[14px] text-gray-400 font-medium mb-1">Trạng thái bãi đỗ</div>
               <div className="flex justify-between items-end mb-3">
                 <div className="text-[26px] font-bold text-[#0a2012] tracking-tight truncate">
-                  {loading ? <Loader2 size={20} className="animate-spin" /> : occupancyStatus}
+                  {loading ? <Loading variant="inline" size="sm" text="" /> : occupancyStatus}
                 </div>
                 <div className="text-[28px] font-semibold text-gray-700 tabular-nums">
                   {loading ? '' : `${occupancyRate}%`}

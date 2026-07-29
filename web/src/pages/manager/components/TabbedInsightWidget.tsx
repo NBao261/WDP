@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { Loading } from '../../../components/ui/Loading';
 import { RevenueReportData, OccupancyReportData } from '../../../services/report.service';
 import { VehicleType } from '../../../services/vehicleType.service';
 
@@ -99,7 +99,7 @@ export function TabbedInsightWidget({
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm h-[420px] flex flex-col overflow-hidden relative">
       {loading && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-          <Loader2 size={24} className="animate-spin text-[#86cd3d]" />
+          <Loading size="md" />
         </div>
       )}
 

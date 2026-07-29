@@ -266,6 +266,31 @@ export function FloorFormModal({
       if (Number(g.count) < 0) newErrors[`slotGroup_${i}_count`] = 'Số lượng không hợp lệ';
     });
 
+    // Check for duplicates across groups
+    const generatedCodes = new Set<string>();
+    let hasDuplicate = false;
+    filledGroups.forEach((g) => {
+      const i = slotGroups.indexOf(g);
+      const start = Number(g.startNumber) || 1;
+      const count = Number(g.count) || 0;
+      const prefix = g.prefix.trim().toUpperCase();
+
+      if (prefix && count > 0) {
+        for (let j = 0; j < count; j++) {
+          const code = `${prefix}${start + j}`;
+          if (generatedCodes.has(code)) {
+            hasDuplicate = true;
+            newErrors[`slotGroup_${i}_prefix`] = `Trùng lặp mã: ${code}`;
+          }
+          generatedCodes.add(code);
+        }
+      }
+    });
+
+    if (hasDuplicate) {
+      toast.error('Có sự trùng lặp mã vị trí giữa các loại xe. Vui lòng kiểm tra lại.');
+    }
+
     // In create mode, must have at least some slots
     if (!isEdit && filledGroups.length === 0) {
       slotGroups.forEach((_, i) => {
@@ -506,7 +531,9 @@ export function FloorFormModal({
                           value={totalSlotsInput}
                           onChange={(e) => {
                             setTotalSlotsInput(
-                              e.target.value === '' ? '' : Math.max(1, Math.floor(Number(e.target.value)))
+                              e.target.value === ''
+                                ? ''
+                                : Math.max(1, Math.floor(Number(e.target.value)))
                             );
                             if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
                           }}
@@ -756,7 +783,9 @@ export function FloorFormModal({
                                     onChange={(e) =>
                                       updateSlotGroup(index, {
                                         startNumber:
-                                          e.target.value === '' ? '' : Math.max(1, Math.floor(Number(e.target.value))),
+                                          e.target.value === ''
+                                            ? ''
+                                            : Math.max(1, Math.floor(Number(e.target.value))),
                                       })
                                     }
                                     onKeyDown={(e) => {

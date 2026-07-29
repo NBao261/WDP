@@ -125,11 +125,32 @@ export function SlotFormModal({
     if (!vehicleType) newErrors.vehicleType = 'Vui lòng chọn loại xe';
 
     if (mode === 'single') {
-      if (!code.trim()) newErrors.code = 'Vui lòng nhập mã slot';
+      if (!code.trim()) {
+        newErrors.code = 'Vui lòng nhập mã slot';
+      } else if (existingSlots.some(s => s.code === code.trim().toUpperCase())) {
+        newErrors.code = 'Mã vị trí này đã tồn tại';
+      }
     } else {
       if (!prefix.trim()) newErrors.prefix = 'Vui lòng nhập tiền tố';
       if (!startNumber) newErrors.startNumber = 'Vui lòng nhập số bắt đầu';
       if (!count) newErrors.count = 'Vui lòng nhập số lượng';
+
+      if (prefix && startNumber && count) {
+        const numStart = Number(startNumber);
+        const numCount = Number(count);
+        const pfx = prefix.toUpperCase();
+        const duplicates: string[] = [];
+        for (let i = 0; i < numCount; i++) {
+          const generatedCode = `${pfx}${numStart + i}`;
+          if (existingSlots.some(s => s.code === generatedCode)) {
+            duplicates.push(generatedCode);
+          }
+        }
+        if (duplicates.length > 0) {
+          const dupesStr = duplicates.slice(0, 3).join(', ') + (duplicates.length > 3 ? '...' : '');
+          newErrors.prefix = `Các mã sau đã tồn tại: ${dupesStr}`;
+        }
+      }
     }
 
     setErrors(newErrors);

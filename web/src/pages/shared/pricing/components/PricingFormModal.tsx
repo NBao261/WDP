@@ -146,6 +146,7 @@ export function PricingFormModal({
 
   const currentUiFeeType = useWatch({ control, name: 'uiFeeType' });
   const currentFacilityId = useWatch({ control, name: 'facilityId' });
+  const currentRates = useWatch({ control, name: 'rates' });
   const currentFacility = facilities.find((f) => f._id === currentFacilityId);
 
   const allowedVehicleTypes = vehicleTypes;
@@ -943,76 +944,91 @@ export function PricingFormModal({
                               )}
                             </div>
                           </div>
-                          
-                          {!hasActiveSessions && currentFacility && currentFacility.openTime && currentFacility.closeTime && (() => {
-                            const open = currentFacility.openTime;
-                            const close = currentFacility.closeTime;
-                            const mid = getMidTime(open, close);
-                            return (
-                              <div className="flex flex-wrap gap-1.5 mt-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setValue(`rates.${idx}.startTime`, open);
-                                    setValue(`rates.${idx}.endTime`, close);
-                                    trigger(`rates.${idx}.startTime`);
-                                    trigger(`rates.${idx}.endTime`);
-                                  }}
-                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-[#9FE870]/20 text-[#062F28] hover:bg-[#9FE870]/40 transition-colors border border-[#9FE870]/30"
-                                >
-                                  Giờ HĐ ({open}-{close})
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setValue(`rates.${idx}.startTime`, open);
-                                    setValue(`rates.${idx}.endTime`, mid);
-                                    trigger(`rates.${idx}.startTime`);
-                                    trigger(`rates.${idx}.endTime`);
-                                  }}
-                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                                >
-                                  Nửa đầu ({open}-{mid})
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setValue(`rates.${idx}.startTime`, mid);
-                                    setValue(`rates.${idx}.endTime`, close);
-                                    trigger(`rates.${idx}.startTime`);
-                                    trigger(`rates.${idx}.endTime`);
-                                  }}
-                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                                >
-                                  Nửa sau ({mid}-{close})
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setValue(`rates.${idx}.startTime`, close);
-                                    setValue(`rates.${idx}.endTime`, open);
-                                    trigger(`rates.${idx}.startTime`);
-                                    trigger(`rates.${idx}.endTime`);
-                                  }}
-                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                                >
-                                  Ngoài HĐ ({close}-{open})
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setValue(`rates.${idx}.startTime`, '00:00');
-                                    setValue(`rates.${idx}.endTime`, '23:59');
-                                    trigger(`rates.${idx}.startTime`);
-                                    trigger(`rates.${idx}.endTime`);
-                                  }}
-                                  className="text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200"
-                                >
-                                  Cả ngày (24h)
-                                </button>
-                              </div>
-                            );
-                          })()}
+
+                          {!hasActiveSessions &&
+                            currentFacility &&
+                            currentFacility.openTime &&
+                            currentFacility.closeTime &&
+                            (() => {
+                              const open = currentFacility.openTime;
+                              const close = currentFacility.closeTime;
+                              const mid = getMidTime(open, close);
+
+                              const currStart = currentRates?.[idx]?.startTime;
+                              const currEnd = currentRates?.[idx]?.endTime;
+
+                              const getBtnCls = (s: string, e: string) => {
+                                const isActive = currStart === s && currEnd === e;
+                                return isActive
+                                  ? 'text-[10px] font-bold px-2 py-1.5 rounded-md bg-[#9FE870] text-[#062F28] transition-colors border border-[#8AD65A] shadow-sm'
+                                  : 'text-[10px] font-semibold px-2 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors border border-gray-200';
+                              };
+
+                              return (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, open);
+                                      setValue(`rates.${idx}.endTime`, close);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(open, close)}
+                                  >
+                                    Giờ HĐ ({open}-{close})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, open);
+                                      setValue(`rates.${idx}.endTime`, mid);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(open, mid)}
+                                  >
+                                    Nửa đầu ({open}-{mid})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, mid);
+                                      setValue(`rates.${idx}.endTime`, close);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(mid, close)}
+                                  >
+                                    Nửa sau ({mid}-{close})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, close);
+                                      setValue(`rates.${idx}.endTime`, open);
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls(close, open)}
+                                  >
+                                    Ngoài HĐ ({close}-{open})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setValue(`rates.${idx}.startTime`, '00:00');
+                                      setValue(`rates.${idx}.endTime`, '23:59');
+                                      trigger(`rates.${idx}.startTime`);
+                                      trigger(`rates.${idx}.endTime`);
+                                    }}
+                                    className={getBtnCls('00:00', '23:59')}
+                                  >
+                                    Cả ngày (24h)
+                                  </button>
+                                </div>
+                              );
+                            })()}
                         </div>
                       )}
 

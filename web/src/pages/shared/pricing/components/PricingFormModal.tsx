@@ -142,6 +142,22 @@ export function PricingFormModal({
         },
   });
 
+  const registerNumber = (name: any) => {
+    const { onChange, ...rest } = register(name);
+    return {
+      ...rest,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        let v = e.target.value;
+        if (v.length > 1 && v.startsWith('0')) {
+          v = v.replace(/^0+/, '');
+          if (v === '') v = '0';
+          e.target.value = v;
+        }
+        onChange(e);
+      },
+    };
+  };
+
   const { fields, append, remove } = useFieldArray({ control, name: 'rates' });
 
   const currentUiFeeType = useWatch({ control, name: 'uiFeeType' });
@@ -697,7 +713,7 @@ export function PricingFormModal({
                       )}
                     </div>
                     <input
-                      {...register('gracePeriodMinutes')}
+                      {...registerNumber('gracePeriodMinutes')}
                       type="number"
                       min="0"
                       max="60"
@@ -722,7 +738,7 @@ export function PricingFormModal({
                       )}
                     </div>
                     <input
-                      {...register('lostCardFee')}
+                      {...registerNumber('lostCardFee')}
                       type="number"
                       min="0"
                       onKeyDown={handleNumberKeyDown}
@@ -746,7 +762,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('firstBlockHours')}
+                        {...registerNumber('firstBlockHours')}
                         type="number"
                         min="1"
                         onKeyDown={handleNumberKeyDown}
@@ -774,7 +790,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('maxDailyFee')}
+                        {...registerNumber('maxDailyFee')}
                         type="number"
                         min="0"
                         onKeyDown={handleNumberKeyDown}
@@ -800,7 +816,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('overnightFee')}
+                        {...registerNumber('overnightFee')}
                         type="number"
                         min="0"
                         onKeyDown={handleNumberKeyDown}
@@ -825,7 +841,7 @@ export function PricingFormModal({
                         )}
                       </div>
                       <input
-                        {...register('overtimeFeePerHour')}
+                        {...registerNumber('overtimeFeePerHour')}
                         type="number"
                         min="0"
                         onKeyDown={handleNumberKeyDown}
@@ -1063,7 +1079,7 @@ export function PricingFormModal({
                             Đơn giá (VNĐ) <span className="text-red-500">*</span>
                           </label>
                           <input
-                            {...register(`rates.${idx}.amount`)}
+                            {...registerNumber(`rates.${idx}.amount`)}
                             type="number"
                             min="0"
                             placeholder="0"

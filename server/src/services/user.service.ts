@@ -8,7 +8,9 @@ export class UserService {
   static async createUser(data: Partial<IUser>): Promise<IUser> {
     const existingUser = await User.findOne({ $or: [{ email: data.email }, { phone: data.phone }] });
     if (existingUser) {
-      throw new AppError('Email or phone already in use', 400);
+      if (existingUser.email === data.email) throw new AppError('Email đã được sử dụng', 400);
+      if (existingUser.phone === data.phone) throw new AppError('Số điện thoại đã được sử dụng', 400);
+      throw new AppError('Email hoặc số điện thoại đã được sử dụng', 400);
     }
 
     let password = data.password;
@@ -44,6 +46,28 @@ export class UserService {
     delete data.role;
     delete data.status;
     delete data.assignedFacilities; // Force using assignFacilities endpoint for two-way sync
+
+    if (data.email || data.phone) {
+      const orConditions: any[] = [];
+      if (data.email) orConditions.push({ email: data.email });
+      if (data.phone) orConditions.push({ phone: data.phone });
+      
+      if (orConditions.length > 0) {
+        const existingUser = await User.findOne({
+          _id: { $ne: userId },
+          $or: orConditions
+        });
+        
+        if (existingUser) {
+          if (data.email && existingUser.email === data.email) {
+            throw new AppError('Email đã được sử dụng', 400);
+          }
+          if (data.phone && existingUser.phone === data.phone) {
+            throw new AppError('Số điện thoại đã được sử dụng', 400);
+          }
+        }
+      }
+    }
 
     const updatedUser = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
     if (!updatedUser) {

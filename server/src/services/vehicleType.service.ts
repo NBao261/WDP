@@ -35,7 +35,7 @@ export class VehicleTypeService {
   static async createVehicleType(data: Partial<IVehicleType>): Promise<IVehicleType> {
     const existingType = await VehicleType.findOne({ code: data.code });
     if (existingType) {
-      throw new AppError('Vehicle type code already exists', 400);
+      throw new AppError('Mã loại xe đã tồn tại', 400);
     }
 
     // Kiểm tra tên trùng (bỏ dấu)
@@ -82,7 +82,7 @@ export class VehicleTypeService {
     if (data.code && data.code.toUpperCase() !== oldVehicleType.code.toUpperCase()) {
       const existingType = await VehicleType.findOne({ code: data.code.toUpperCase() });
       if (existingType) {
-        throw new AppError('Vehicle type code already exists', 400);
+        throw new AppError('Mã loại xe đã tồn tại', 400);
       }
     }
 

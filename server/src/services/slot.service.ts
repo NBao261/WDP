@@ -26,7 +26,7 @@ export class SlotService {
 
     const existingSlot = await ParkingSlot.findOne({ code: data.code, facilityId: data.facilityId });
     if (existingSlot) {
-      throw new AppError('Slot code already exists in this facility', 400);
+      throw new AppError('Mã slot đã tồn tại trong cơ sở này', 400);
     }
 
     const newSlot = new ParkingSlot(data);
@@ -78,7 +78,7 @@ export class SlotService {
     });
 
     if (existingSlots.length > 0) {
-      throw new AppError(`Some slot codes already exist: ${existingSlots.map(s => s.code).join(', ')}`, 400);
+      throw new AppError(`Một số mã slot đã tồn tại: ${existingSlots.map(s => s.code).join(', ')}`, 400);
     }
 
     const createdSlots = await ParkingSlot.insertMany(slotsToCreate);

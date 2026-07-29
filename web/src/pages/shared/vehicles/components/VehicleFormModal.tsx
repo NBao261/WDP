@@ -13,6 +13,7 @@ import { facilityService, Facility } from '../../../../services/facility.service
 import { floorService, Floor } from '../../../../services/floor.service';
 import { ICON_OPTIONS } from './constants';
 import * as Dialog from '@radix-ui/react-dialog';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface ModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ interface FormErrors {
 }
 
 export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalProps) {
+  const { user } = useAuthStore();
   const isEdit = !!vehicle;
   const [form, setForm] = useState<CreateVehicleTypePayload>({
     name: '',
@@ -80,7 +82,17 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         facilityService.getAll({ limit: 1000 }),
         floorService.getAll({ limit: 1000 }),
       ]);
-      setFacilities(facRes.data);
+      
+      let filteredFacilities = facRes.data;
+      if (user?.role === 'manager') {
+        const assignedFacIds = (user.assignedFacilities || []).map((f: any) => 
+          typeof f === 'string' ? f : f._id
+        );
+        filteredFacilities = filteredFacilities.filter((fac: Facility) => 
+          assignedFacIds.includes(fac._id)
+        );
+      }
+      setFacilities(filteredFacilities);
       setFloorsList(floorRes.data);
 
       if (vehicle) {

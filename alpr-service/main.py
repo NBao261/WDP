@@ -254,7 +254,7 @@ def avg_conf(items: list) -> float:
 
 _D2L = {'8': 'B', '0': 'D', '6': 'G', '1': 'I', '5': 'S'}   # digit→letter
 _L2D = {'O': '0', 'I': '1', 'B': '8', 'S': '5', 'Z': '2',    # letter→digit
-        'G': '6', 'D': '0'}
+        'G': '6', 'D': '0', 'R': '0', 'C': '0', 'U': '0', 'Q': '0', 'T': '1', 'A': '4'}
 
 _VN_PLATE_RE = re.compile(
     r'^(?:'

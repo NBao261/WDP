@@ -62,6 +62,12 @@ export function PricingFormModal({
   const [step, setStep] = useState(1);
   const STEPS = ['Thông tin chung', 'Cài đặt nâng cao', 'Cấu hình mức giá'];
 
+  const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const getVtId = (vt: any) => (vt && typeof vt === 'object' ? vt._id : vt);
   const getFacId = (f: any) => (f && typeof f === 'object' ? f._id : f);
 
@@ -673,6 +679,7 @@ export function PricingFormModal({
                       type="number"
                       min="0"
                       max="60"
+                      onKeyDown={handleNumberKeyDown}
                       className={`${getInputCls(!!errors.gracePeriodMinutes)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                       placeholder="0"
                       readOnly={hasActiveSessions}
@@ -696,6 +703,7 @@ export function PricingFormModal({
                       {...register('lostCardFee')}
                       type="number"
                       min="0"
+                      onKeyDown={handleNumberKeyDown}
                       className={`${getInputCls(!!errors.lostCardFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                       placeholder="50000"
                       readOnly={hasActiveSessions}
@@ -719,11 +727,14 @@ export function PricingFormModal({
                         {...register('firstBlockHours')}
                         type="number"
                         min="1"
+                        onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.firstBlockHours)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="1"
                         readOnly={hasActiveSessions}
                       />
-                      <p className="text-[10px] text-gray-400 mt-1">Số giờ đầu tiên áp dụng mức giá 'Giờ đầu'</p>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        Số giờ đầu tiên áp dụng mức giá 'Giờ đầu'
+                      </p>
                     </div>
                   )}
 
@@ -744,6 +755,7 @@ export function PricingFormModal({
                         {...register('maxDailyFee')}
                         type="number"
                         min="0"
+                        onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.maxDailyFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
                         readOnly={hasActiveSessions}
@@ -769,6 +781,7 @@ export function PricingFormModal({
                         {...register('overnightFee')}
                         type="number"
                         min="0"
+                        onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.overnightFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
                         readOnly={hasActiveSessions}
@@ -793,6 +806,7 @@ export function PricingFormModal({
                         {...register('overtimeFeePerHour')}
                         type="number"
                         min="0"
+                        onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.overtimeFeePerHour)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
                         readOnly={hasActiveSessions}
@@ -944,6 +958,7 @@ export function PricingFormModal({
                             type="number"
                             min="0"
                             placeholder="0"
+                            onKeyDown={handleNumberKeyDown}
                             readOnly={hasActiveSessions}
                             className={`${getInputCls(!!errors.rates?.[idx]?.amount, 'text-[16px] text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                           />

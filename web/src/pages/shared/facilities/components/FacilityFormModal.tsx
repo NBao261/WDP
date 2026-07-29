@@ -184,46 +184,52 @@ export function FacilityFormModal({
   }, [isOpen, facility]);
 
   // ── Select a suggestion from the dropdown (Forward Geocoding) ──────────
-  const handleSelectSuggestion = useCallback((result: NominatimResult) => {
-    const lat = parseFloat(result.lat);
-    const lng = parseFloat(result.lon);
+  const handleSelectSuggestion = useCallback(
+    (result: NominatimResult) => {
+      const lat = parseFloat(result.lat);
+      const lng = parseFloat(result.lon);
 
-    // Update form with address and coordinates
-    setForm((prev) => ({
-      ...prev,
-      address: result.display_name,
-      latitude: lat,
-      longitude: lng,
-    }));
+      // Update form with address and coordinates
+      setForm((prev) => ({
+        ...prev,
+        address: result.display_name,
+        latitude: lat,
+        longitude: lng,
+      }));
 
-    // Update address input & hide dropdown
-    setAddressQuery(result.display_name);
-    hideDropdown();
+      // Update address input & hide dropdown
+      setAddressQuery(result.display_name);
+      hideDropdown();
 
-    // Fly map to the selected location
-    setMapTarget({ lat, lng });
+      // Fly map to the selected location
+      setMapTarget({ lat, lng });
 
-    // Clear location error
-    if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
-    if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
-  }, [errors, hideDropdown, setAddressQuery]);
+      // Clear location error
+      if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
+      if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
+    },
+    [errors, hideDropdown, setAddressQuery]
+  );
 
   // ── Handle map click — Reverse Geocoding ───────────────────────────────
-  const handleMapClick = useCallback(async (lat: number, lng: number) => {
-    // Update coordinates immediately
-    setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
-    setMapTarget({ lat, lng });
+  const handleMapClick = useCallback(
+    async (lat: number, lng: number) => {
+      // Update coordinates immediately
+      setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+      setMapTarget({ lat, lng });
 
-    // Clear errors
-    if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
+      // Clear errors
+      if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
 
-    // Reverse geocode: get address from coordinates
-    const address = await reverseGeocode(lat, lng);
-    if (address) {
-      setForm((prev) => ({ ...prev, address }));
-      if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
-    }
-  }, [errors, reverseGeocode]);
+      // Reverse geocode: get address from coordinates
+      const address = await reverseGeocode(lat, lng);
+      if (address) {
+        setForm((prev) => ({ ...prev, address }));
+        if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
+      }
+    },
+    [errors, reverseGeocode]
+  );
 
   // ── Handle address input change (linked to autocomplete) ───────────────
   const handleAddressChange = (value: string) => {
@@ -263,6 +269,15 @@ export function FacilityFormModal({
         );
         if (duplicateName) {
           setErrors({ name: 'Tên tòa nhà / bãi đỗ này đã tồn tại' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const duplicateAddress = existing.find(
+          (f) => f.address.toLowerCase() === form.address.trim().toLowerCase()
+        );
+        if (duplicateAddress) {
+          setErrors({ address: 'Địa chỉ này đã được đăng ký cho một cơ sở khác' });
           setIsSubmitting(false);
           return;
         }
@@ -333,12 +348,21 @@ export function FacilityFormModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="p-6 overflow-y-auto flex-1 flex flex-col justify-between"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* ═══════════════ LEFT COLUMN ═══════════════ */}
               <div className="space-y-4">
                 {/* Facility Name */}
-                <FormField label="Tên tòa nhà / bãi đỗ" required icon={Building2} error={errors.name}>
+                <FormField
+                  label="Tên tòa nhà / bãi đỗ"
+                  required
+                  icon={Building2}
+                  error={errors.name}
+                >
                   <input
                     type="text"
                     value={form.name}
@@ -422,7 +446,8 @@ export function FacilityFormModal({
                     onChange={(e) => {
                       setForm({
                         ...form,
-                        totalFloors: e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
+                        totalFloors:
+                          e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10),
                       });
                       if (errors.totalFloors) setErrors({ ...errors, totalFloors: '' });
                     }}
@@ -441,7 +466,10 @@ export function FacilityFormModal({
                   <div className="flex gap-3 items-start">
                     <div className="flex-1">
                       <div className="relative">
-                        <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Clock
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
                         <input
                           type="time"
                           value={form.openTime}
@@ -452,12 +480,17 @@ export function FacilityFormModal({
                           className={getInputClass('openTime')}
                         />
                       </div>
-                      {errors.openTime && <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>}
+                      {errors.openTime && (
+                        <p className="text-xs text-red-500 mt-1">{errors.openTime}</p>
+                      )}
                     </div>
                     <span className="text-gray-400 font-medium text-sm mt-2.5">đến</span>
                     <div className="flex-1">
                       <div className="relative">
-                        <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Clock
+                          size={16}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        />
                         <input
                           type="time"
                           value={form.closeTime}
@@ -468,7 +501,9 @@ export function FacilityFormModal({
                           className={getInputClass('closeTime')}
                         />
                       </div>
-                      {errors.closeTime && <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>}
+                      {errors.closeTime && (
+                        <p className="text-xs text-red-500 mt-1">{errors.closeTime}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -497,7 +532,8 @@ export function FacilityFormModal({
                 Vị trí trên bản đồ <span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-gray-500 mb-2">
-                Chọn một địa chỉ gợi ý phía trên để tự động cắm ghim, hoặc click trực tiếp vào bản đồ.
+                Chọn một địa chỉ gợi ý phía trên để tự động cắm ghim, hoặc click trực tiếp vào bản
+                đồ.
               </p>
 
               <div

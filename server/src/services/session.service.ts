@@ -209,7 +209,7 @@ export class SessionService {
     const pricingCacheKey = `pricing:active:${data.facilityId}:${data.vehicleTypeId}`;
 
     // Thực hiện truy vấn DB song song để giảm latency (Parallelize)
-    const earlyWindow = 15 * 60 * 1000;
+    const earlyWindow = 15 * 60 * 1000; // 30 phút — đủ rộng để auto-detect reservation từ ALPR
     const [
       staffUser,
       vehicleType,
@@ -241,10 +241,10 @@ export class SessionService {
         status: { $in: [SessionStatus.ACTIVE, SessionStatus.EXCEPTION] },
       }).lean() : Promise.resolve(null),
       getCache(pricingCacheKey),
+      // Auto-match reservation bằng biển số + facility (không cần vehicleTypeId — reservation đã có sẵn)
       (!matchedReservation && data.licensePlate) ? Reservation.findOne({
         licensePlate: data.licensePlate.toUpperCase(),
         facilityId: data.facilityId,
-        vehicleTypeId: data.vehicleTypeId,
         status: ReservationStatus.CONFIRMED,
         startTime: {
           $gte: new Date(Date.now() - earlyWindow),
@@ -336,6 +336,8 @@ export class SessionService {
 
     if (autoMatchReservation) {
       matchedReservation = autoMatchReservation;
+      // Ghi đè vehicleTypeId bằng loại xe từ reservation (đúng hơn ALPR guess)
+      data.vehicleTypeId = matchedReservation.vehicleTypeId.toString();
     }
 
     // 5. Atomic Slot Assignment (Không cần Redlock vì findOneAndUpdate là atomic)

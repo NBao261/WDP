@@ -50,6 +50,15 @@ router.get(
   ReservationController.getByCode
 );
 
+// Tra cứu reservation theo biển số — Staff tự động detect khi ALPR quét
+// ⚠️ PHẢI đặt trước /:id routes để tránh bị match nhầm
+router.get(
+  '/by-plate/:plate',
+  checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]),
+  checkPermission(PERMISSIONS.SLOT_READ),
+  ReservationController.getByPlate
+);
+
 // Xem chi tiết reservation
 router.get(
   '/:id',

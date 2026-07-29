@@ -328,4 +328,37 @@ export class ReservationService {
 
     return reservation;
   }
+
+  /**
+   * Tra cứu reservation theo biển số xe + facilityId
+   * Dùng bởi Staff tại cổng — auto-detect reservation khi ALPR quét biển số
+   * Chỉ trả về reservation CONFIRMED trong cửa sổ ±30 phút so với startTime
+   */
+  static async getByPlate(licensePlate: string, facilityId: string): Promise<IReservation | null> {
+    const normalizedPlate = licensePlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const earlyWindow = 30 * 60 * 1000; // 30 phút
+
+    const reservation = await Reservation.findOne({
+      facilityId,
+      status: ReservationStatus.CONFIRMED,
+      startTime: {
+        $gte: new Date(Date.now() - earlyWindow),
+        $lte: new Date(Date.now() + earlyWindow),
+      },
+    })
+      .populate('facilityId', 'name address openTime closeTime')
+      .populate('vehicleTypeId', 'name requiresPlate')
+      .populate('slotId', 'code floorId')
+      .populate({ path: 'slotId', populate: { path: 'floorId', select: 'name' } })
+      .populate('userId', 'fullName name email phone')
+      .lean() as any;
+
+    if (!reservation) return null;
+
+    // So sánh biển số (loại bỏ ký tự đặc biệt)
+    const normalizedResPlate = reservation.licensePlate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (normalizedPlate !== normalizedResPlate) return null;
+
+    return reservation;
+  }
 }

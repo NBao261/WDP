@@ -25,6 +25,7 @@ import {
 } from '../../../services/exception.service';
 import { ExceptionFilterBar } from './components/ExceptionFilterBar';
 import { ExceptionReviewModal } from './components/ExceptionReviewModal';
+import { Loading } from '../../../components/ui/Loading';
 
 export default function ExceptionsManagerPage() {
   const [allExceptions, setAllExceptions] = useState<IException[]>([]);
@@ -326,9 +327,8 @@ export default function ExceptionsManagerPage() {
             <tbody className="divide-y divide-gray-50 relative">
               {loading && exceptions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-14 text-center text-gray-400">
-                    <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    Đang tải danh sách sự cố...
+                  <td colSpan={8} className="px-6 py-14 text-center">
+                    <Loading text="Đang tải danh sách sự cố..." />
                   </td>
                 </tr>
               ) : error ? (

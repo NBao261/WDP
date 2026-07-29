@@ -390,14 +390,42 @@ export class ReportService {
     // ── Tính tổng kết ──
     const grandTotal = data.reduce((sum, d) => sum + d.totalRevenue, 0);
     const totalTransactions = data.reduce((sum, d) => sum + d.transactionCount, 0);
-    const totalDays = data.length || 1; // Tránh chia cho 0
+
+    // Tính số "kỳ" thực sự dựa vào groupBy và khoảng thời gian lọc
+    // Tránh trường hợp chỉ 1 kỳ có dữ liệu → TB = tổng doanh thu
+    let totalPeriods = 1;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end   = new Date(endDate);
+      if (groupBy === 'month') {
+        // Đếm số tháng thực sự (VD: Jan→Jul 2026 = 7 tháng)
+        totalPeriods = Math.max(
+          1,
+          (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
+        );
+      } else if (groupBy === 'week') {
+        const diffMs = end.getTime() - start.getTime();
+        totalPeriods = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 7)));
+      } else {
+        // groupBy === 'day': đếm số ngày thực sự
+        const diffMs = end.getTime() - start.getTime();
+        totalPeriods = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
+      }
+    }
+
+    // avgRevenuePerDay: vẫn là TB mỗi ngày cho backward compat
+    // avgRevenuePeriod: TB mỗi "kỳ" (ngày / tháng / tuần) kèm nhãn cho frontend
+    const avgRevenuePeriod = Math.round(grandTotal / totalPeriods);
+    const periodLabel = groupBy === 'month' ? 'tháng' : groupBy === 'week' ? 'tuần' : 'ngày';
 
     const result = {
       groupBy,
       summary: {
-        grandTotal,                                         // Tổng doanh thu
-        totalTransactions,                                  // Tổng số giao dịch
-        avgRevenuePerDay: Math.round(grandTotal / totalDays), // Doanh thu trung bình mỗi ngày
+        grandTotal,                    // Tổng doanh thu
+        totalTransactions,             // Tổng số giao dịch
+        avgRevenuePerDay: avgRevenuePeriod, // Giá trị TB (backward-compat field name)
+        avgRevenuePeriod,              // TB mỗi kỳ (ngày / tháng / tuần)
+        periodLabel,                   // Nhãn kỳ: 'ngày' | 'tháng' | 'tuần'
       },
       byTimePeriod: data, // Doanh thu theo mốc thời gian
       byMethod: byMethod.map((m) => ({

@@ -47,7 +47,9 @@ export function DashboardCards({
 
   // ── Data ──
   const totalRevenue = revenueData?.summary.grandTotal ?? 0;
-  const avgRevenue = revenueData?.summary.avgRevenuePerDay ?? 0;
+  const avgRevenue =
+    revenueData?.summary.avgRevenuePeriod ?? revenueData?.summary.avgRevenuePerDay ?? 0;
+  const periodLabel = revenueData?.summary.periodLabel ?? 'ngày';
   const totalTransactions = revenueData?.summary.totalTransactions ?? 0;
 
   const totalSlots = occupancyData?.summary.totalSlots ?? 0;
@@ -56,7 +58,9 @@ export function DashboardCards({
 
   const checkIn = trafficData?.summary.totalCheckIn ?? 0;
   const checkOut = trafficData?.summary.totalCheckOut ?? 0;
-  const currentlyParked = trafficData?.summary.currentlyParked ?? totalOccupied;
+  // Clamp to 0 — currentlyParked can go negative when the time filter only covers
+  // check-outs of vehicles that checked in before the filter window.
+  const currentlyParked = Math.max(0, trafficData?.summary.currentlyParked ?? totalOccupied);
 
   let occupancyStatus = 'Trống';
   if (occupancyRate > 90) occupancyStatus = 'Quá tải';
@@ -98,12 +102,12 @@ export function DashboardCards({
           )}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[10px] text-[#0a1a12]/50 font-medium">TB/ngày</p>
+              <p className="text-[10px] text-[#0a1a12]/50 font-medium">TB/{periodLabel}</p>
               {loading ? (
                 <Skeleton className="h-4 w-12 mt-0.5" />
               ) : (
                 <p className="text-[13px] font-bold text-[#0a1a12]/80 tabular-nums">
-                  {formatCompactVND(avgRevenue)}
+                  {avgRevenue.toLocaleString('vi-VN')}đ
                 </p>
               )}
             </div>

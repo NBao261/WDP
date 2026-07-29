@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import axios from "axios";
 import { io, Socket } from 'socket.io-client';
+import { apiClient } from "../../../../../services/api";
 import { sessionService } from "../../../../../services/session.service";
 import { paymentService } from "../../../../../services/payment.service";
 import { useCheckOutState } from "./useCheckOutState";
@@ -181,28 +181,32 @@ export function useCheckOutLogic(
     state.setOcrPreviewUrl(localUrl); state.setOcrSuccess(false); state.setIsUploading(true);
     const formData = new FormData(); formData.append('image', file);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
       if (state.isNoPlateVehicle) {
-        const response = await axios.post(`${API_BASE_URL}/upload/image`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        if (response.data.success && response.data.data?.imageUrl) state.setCheckoutImageUrl(response.data.data.imageUrl);
+        const response: any = await apiClient.post('/upload/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        if (response.success && response.data?.imageUrl) state.setCheckoutImageUrl(response.data.imageUrl);
         else state.setCheckoutImageUrl(localUrl);
       } else {
-        const response = await axios.post(`${API_BASE_URL}/alpr/scan`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        if (response.data.success && response.data.data.normalizedPlate) {
-          const fp = formatPlate(response.data.data.normalizedPlate);
+        const response: any = await apiClient.post('/alpr/scan', formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 35000 } as any);
+        if (response.success && response.data?.normalizedPlate) {
+          const fp = formatPlate(response.data.normalizedPlate);
           if (state.step === 'SEARCH') {
             if (state.searchMode === 'plate') { state.setSearchInput(fp); onChangePlate(fp); handleSearch(fp, 'plate'); }
             else { onChangePlate(fp); }
           } else if (state.step === 'CONFIRM') {
             onChangePlate(fp);
-            if (fp.toUpperCase() !== state.plateIn.toUpperCase()) state.showMsg(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với lúc vào (${state.plateIn})!`);
+            if (fp.toUpperCase() !== state.plateIn.toUpperCase()) state.showMsg(`CẢNH BÁO: Biển số xe ra (${fp}) KHÔNG KHỚP với biển số vào (${state.plateIn})!`);
           }
           state.setOcrSuccess(true);
-          if (response.data.data.imageUrl) state.setCheckoutImageUrl(response.data.data.imageUrl);
+          if (response.data.imageUrl) state.setCheckoutImageUrl(response.data.imageUrl);
+        } else {
+          // ALPR không nhận diện được biển số — vẫn lưu ảnh để hiển thị
+          if (response.data?.imageUrl) state.setCheckoutImageUrl(response.data.imageUrl);
+          else state.setCheckoutImageUrl(localUrl);
         }
       }
     } catch (error: any) {
-      if (state.isNoPlateVehicle) state.setCheckoutImageUrl(localUrl);
+      // Lỗi ALPR — vẫn lưu ảnh preview
+      state.setCheckoutImageUrl(localUrl);
     } finally {
       state.setIsUploading(false);
       if (state.fileInputRef.current) state.fileInputRef.current.value = '';

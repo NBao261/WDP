@@ -14,7 +14,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { Loading } from '../../../../components/ui/Loading';
 import {
   TrafficReportData,
   RevenueReportData,
@@ -48,8 +48,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           </span>
           <span className="text-[13px] font-semibold text-white tabular-nums">
             {typeof entry.value === 'number' &&
-            (entry.name === 'Doanh thu' || entry.name === 'Doanh thu (₫)')
-              ? entry.value.toLocaleString('vi-VN') + '₫'
+            (entry.name === 'Doanh thu' || entry.name === 'Doanh thu (đ)')
+              ? entry.value.toLocaleString('vi-VN') + 'đ'
               : typeof entry.value === 'number'
                 ? entry.value.toLocaleString('vi-VN')
                 : entry.value}
@@ -204,7 +204,7 @@ export function DashboardCharts({
   const chartVehicleType = (revenueData?.byVehicleType ?? [])
     .filter((v) => v.totalRevenue > 0)
     .sort((a, b) => b.totalRevenue - a.totalRevenue)
-    .map((v) => ({ name: v.vehicleTypeName, 'Doanh thu (₫)': v.totalRevenue, count: v.count }));
+    .map((v) => ({ name: v.vehicleTypeName, 'Doanh thu (đ)': v.totalRevenue, count: v.count }));
 
   /* Payment method chart — ADMIN ONLY */
   const chartPayment = (revenueData?.byMethod ?? [])
@@ -272,7 +272,7 @@ export function DashboardCharts({
       <div className="flex-1 min-h-[300px] relative">
         {loading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-lg">
-            <Loader2 size={24} className="animate-spin" style={{ color: currentTab.activeColor }} />
+            <Loading size="md" />
           </div>
         )}
 
@@ -434,7 +434,7 @@ export function DashboardCharts({
                   content={<CustomTooltip />}
                   cursor={{ fill: '#f5f5f3', opacity: 0.6 }}
                 />
-                <Bar dataKey="Doanh thu (₫)" radius={[0, 6, 6, 0]} maxBarSize={32}>
+                <Bar dataKey="Doanh thu (đ)" radius={[0, 6, 6, 0]} maxBarSize={32}>
                   {chartVehicleType.map((_entry, index) => (
                     <Cell
                       key={`cell-vt-${index}`}
@@ -517,7 +517,7 @@ export function DashboardCharts({
                             />
                           </div>
                           <span className="text-[11px] text-[#9ca3af]">
-                            {item.value.toLocaleString('vi-VN')}₫ · {item.count} GD
+                            {item.value.toLocaleString('vi-VN')}đ · {item.count} GD
                           </span>
                         </div>
                       </div>

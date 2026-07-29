@@ -8,13 +8,11 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { Loading } from '../../../components/ui/Loading';
 import {
   TrafficReportData,
   PeakHoursReportData,
 } from '../../../services/report.service';
-
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -47,8 +45,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     </div>
   );
 };
-
-// ─── Traffic Chart (Lưu lượng xe - Multi-line Area) ───────────────────────────
 
 export function TrafficChartWidget({
   trafficData,
@@ -167,7 +163,7 @@ export function TrafficChartWidget({
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm h-[420px] flex flex-col overflow-hidden relative">
       {loading && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-          <Loader2 size={24} className="animate-spin text-[#86cd3d]" />
+          <Loading size="md" />
         </div>
       )}
 

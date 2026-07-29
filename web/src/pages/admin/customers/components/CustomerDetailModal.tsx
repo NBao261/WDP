@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -83,38 +83,40 @@ export function CustomerDetailModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <Dialog.Root open={true} onOpenChange={(open) => !open && onClose()}>
-          <Dialog.Portal forceMount>
-            <Dialog.Overlay asChild>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
-              />
-            </Dialog.Overlay>
-            <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none pointer-events-none">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden outline-none flex flex-col pointer-events-auto"
-              >
-                {/* Header Graphic */}
-                <div className="h-32 bg-gradient-to-br from-[#062F28] to-[#124D43] relative overflow-hidden">
-                  <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none"></div>
-                  <CarFront
-                    size={120}
-                    className="absolute -right-6 -bottom-6 text-white/10 pointer-events-none transform -rotate-12"
-                  />
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 outline-none">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden outline-none flex flex-col"
+            >
+              {/* Header Graphic */}
+              <div className="h-32 bg-gradient-to-br from-[#062F28] to-[#124D43] relative overflow-hidden">
+                <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none"></div>
+                <CarFront
+                  size={120}
+                  className="absolute -right-6 -bottom-6 text-white/10 pointer-events-none transform -rotate-12"
+                />
 
-                  <Dialog.Close asChild>
-                    <button className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors outline-none">
-                      <X size={20} />
-                    </button>
-                  </Dialog.Close>
-                </div>
+                <button 
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors outline-none"
+                >
+                  <X size={20} />
+                </button>
+              </div>
 
                 {/* Body */}
                 <div className="px-8 pb-8 pt-0 relative">
@@ -150,11 +152,12 @@ export function CustomerDetailModal({
 
                   {/* Actions */}
                   <div className="flex gap-3">
-                    <Dialog.Close asChild>
-                      <button className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm transition-colors outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2">
-                        Đóng
-                      </button>
-                    </Dialog.Close>
+                    <button 
+                      onClick={onClose}
+                      className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm transition-colors outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
+                    >
+                      Đóng
+                    </button>
                     {user.status === 'locked' ? (
                       <button
                         onClick={handleToggleLock}
@@ -174,10 +177,10 @@ export function CustomerDetailModal({
                     )}
                   </div>
                 </div>
-              </motion.div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+            </motion.div>
+          </div>,
+          document.body
+        )
       )}
     </AnimatePresence>
   );

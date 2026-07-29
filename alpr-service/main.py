@@ -267,6 +267,7 @@ _VN_PLATE_RE = re.compile(
 
 def fix_vn_plate(raw: str) -> str:
     s = raw.strip().upper()
+    s = s.replace('Đ', 'D')
 
     s = re.sub(r'[*#@\\\\/|]', '-', s)
     s = re.sub(r'[^A-Z0-9\s.\-]', '', s)

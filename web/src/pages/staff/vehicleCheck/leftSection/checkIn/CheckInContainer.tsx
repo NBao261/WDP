@@ -120,9 +120,9 @@ export function CheckInContainer({ onCheckIn }: { onCheckIn: (data: any) => void
       
       if (series === 'C' || series === 'H' || series === 'D') return 'Truck';
       if (series.length === 1) return 'Car';
-      const carSpecialSeries = ['LD', 'KT', 'NN', 'NG', 'CV', 'DA', 'HC', 'MK', 'TĐ'];
+      const carSpecialSeries = ['LD', 'KT', 'NN', 'NG', 'CV', 'DA', 'HC', 'MK', 'TĐ', 'TD'];
       if (carSpecialSeries.includes(series)) return 'Car';
-      if (series === 'MĐ') return 'ElectricMotorbike';
+      if (series.startsWith('MĐ') || series.startsWith('MD')) return 'ElectricMotorbike';
       return 'Motorbike';
     };
     const category = guessVehicleCategory(logic.plate);

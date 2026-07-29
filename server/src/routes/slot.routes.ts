@@ -12,6 +12,7 @@ const router = Router();
 router.use(verifyToken);
 
 // Xem slot (SRS 3.2: Admin, Manager, Staff xem trạng thái)
+router.get('/stats', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotStats);
 router.get('/floor/:floorId', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(floorIdParamSchema), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotsByFloor);
 router.get('/:id', checkRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF]), validate(objectIdParamSchema), checkPermission(PERMISSIONS.SLOT_READ), SlotController.getSlotById);
 

@@ -21,7 +21,8 @@ export function useFacilitiesData() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [allSlots, setAllSlots] = useState<ParkingSlot[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [slotStatsByFloor, setSlotStatsByFloor] = useState<Record<string, FloorSlotStats>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [viewFacility, setViewFacility] = useState<Facility | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -43,12 +44,14 @@ export function useFacilitiesData() {
   const fetchAll = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const [fRes, flRes, vtRes] = await Promise.all([
+      const [fRes, flRes, vtRes, statsRes] = await Promise.all([
         facilityService.getAll({ limit: 100 }),
         floorService.getAll({ limit: 100 }),
         vehicleTypeService.getAll({ limit: 100 }),
+        slotService.getStats(),
       ]);
       const fetchedFloors = flRes.data;
+      const statsData = statsRes.data || {};
 
       // Manager: chỉ hiển thị tòa nhà được phân công
       const scopedFacilities = assignedFacilityIds
@@ -63,45 +66,40 @@ export function useFacilitiesData() {
       setFloors(scopedFloors);
       setVehicleTypes(vtRes.data);
 
-        if (fetchedFloors.length > 0) {
-          try {
-            const slotResults = await Promise.all(
-              fetchedFloors.map((fl: Floor) =>
-                slotService.getByFloor(fl._id).catch(() => ({ data: [] as ParkingSlot[] }))
-              )
-            );
-            const slots = slotResults.flatMap((r: { data: ParkingSlot[] }) => r.data);
-            setAllSlots(slots);
-
-            // Keep mapFloor and mapSlots in sync if currently viewing map
-            setMapFloor((prevFloor) => {
-              if (prevFloor) {
-                setMapSlots(
-                  slots
-                    .filter((s) => s.floorId === prevFloor._id)
-                    .sort((a, b) =>
-                      a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
-                    )
-                );
-                return fetchedFloors.find((f: Floor) => f._id === prevFloor._id) || prevFloor;
-              }
-              return null;
-            });
-          } catch {
-            setAllSlots([]);
-          }
-        } else {
-          setAllSlots([]);
-        }
-
-        if (!silent) setIsLoading(false);
-      } catch (err: any) {
-        toast.error(err.message || 'Lỗi tải dữ liệu');
-        if (!silent) setIsLoading(false);
+      const newSlotStats: Record<string, FloorSlotStats> = {};
+      for (const floor of scopedFloors) {
+        const total = floor.totalSlots || 0;
+        const occupied = statsData[floor._id]?.occupied || 0;
+        const reserved = statsData[floor._id]?.reserved || 0;
+        const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+        newSlotStats[floor._id] = { total, occupied, reserved, fillRate };
       }
-    },
-    [assignedFacilityIds]
-  );
+      setSlotStatsByFloor(newSlotStats);
+
+      // Refresh map slots if map is currently open
+      setMapFloor((prevFloor) => {
+        if (prevFloor) {
+          // Fire-and-forget update mapSlots for the viewed floor
+          slotService.getByFloor(prevFloor._id).then(res => {
+            const sorted = res.data.sort((a: ParkingSlot, b: ParkingSlot) =>
+              a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            setMapSlots(sorted);
+          }).catch(() => setMapSlots([]));
+          
+          return fetchedFloors.find((f: Floor) => f._id === prevFloor._id) || prevFloor;
+        }
+        return null;
+      });
+
+      if (!silent) setIsLoading(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi tải dữ liệu');
+      if (!silent) setIsLoading(false);
+    }
+  },
+  [assignedFacilityIds]
+);
 
   useEffect(() => {
     fetchAll();
@@ -180,24 +178,6 @@ export function useFacilitiesData() {
   }, []);
 
   // ── Derived Stats ───────────────────────────────────────────────────────────
-  const slotStatsByFloor = useMemo<Record<string, FloorSlotStats>>(() => {
-    const map: Record<string, FloorSlotStats> = {};
-    const byFloor: Record<string, ParkingSlot[]> = {};
-    for (const slot of allSlots) {
-      if (!byFloor[slot.floorId]) byFloor[slot.floorId] = [];
-      byFloor[slot.floorId].push(slot);
-    }
-    for (const floor of floors) {
-      const floorSlots = byFloor[floor._id] ?? [];
-      const total = floor.totalSlots || floorSlots.length;
-      const occupied = floorSlots.filter((s) => s.status === 'occupied').length;
-      const reserved = floorSlots.filter((s) => s.status === 'reserved').length;
-      const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
-      map[floor._id] = { total, occupied, reserved, fillRate };
-    }
-    return map;
-  }, [allSlots, floors]);
-
   const facilityStats = useMemo<
     Record<string, { totalSlots: number; occupied: number; reserved: number; fillRate: number }>
   >(() => {
@@ -307,7 +287,6 @@ export function useFacilitiesData() {
 
   const removeFloorLocal = useCallback((id: string) => {
     setFloors((prev: Floor[]) => prev.filter((f) => f._id !== id));
-    setAllSlots((prev: ParkingSlot[]) => prev.filter((s) => s.floorId !== id));
     setMapFloor((prev: Floor | null) => (prev && prev._id === id ? null : prev));
   }, []);
 
@@ -337,8 +316,6 @@ export function useFacilitiesData() {
     setFloors,
     vehicleTypes,
     setVehicleTypes,
-    allSlots,
-    setAllSlots,
     isLoading,
     isManager,
 

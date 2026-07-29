@@ -72,4 +72,13 @@ export class SlotController {
       next(error);
     }
   }
+
+  static async getSlotStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await SlotService.getSlotStats();
+      res.status(200).json({ success: true, data: stats });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

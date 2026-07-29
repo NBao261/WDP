@@ -263,8 +263,7 @@ export function FloorFormModal({
     filledGroups.forEach((g) => {
       const i = slotGroups.indexOf(g);
       if (!g.prefix.trim()) newErrors[`slotGroup_${i}_prefix`] = 'Nhập tiền tố';
-      if (Number(g.count) < 0)
-        newErrors[`slotGroup_${i}_count`] = 'Số lượng không hợp lệ';
+      if (Number(g.count) < 0) newErrors[`slotGroup_${i}_count`] = 'Số lượng không hợp lệ';
     });
 
     // In create mode, must have at least some slots
@@ -506,8 +505,15 @@ export function FloorFormModal({
                           min={1}
                           value={totalSlotsInput}
                           onChange={(e) => {
-                            setTotalSlotsInput(e.target.value === '' ? '' : Number(e.target.value));
+                            setTotalSlotsInput(
+                              e.target.value === '' ? '' : Math.max(1, Math.floor(Number(e.target.value)))
+                            );
                             if (errors.totalSlots) setErrors({ ...errors, totalSlots: '' });
+                          }}
+                          onKeyDown={(e) => {
+                            if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                              e.preventDefault();
+                            }
                           }}
                           className={getInputClass('totalSlots')}
                           placeholder="Ví dụ: 50, 100..."
@@ -750,9 +756,14 @@ export function FloorFormModal({
                                     onChange={(e) =>
                                       updateSlotGroup(index, {
                                         startNumber:
-                                          e.target.value === '' ? '' : Number(e.target.value),
+                                          e.target.value === '' ? '' : Math.max(1, Math.floor(Number(e.target.value))),
                                       })
                                     }
+                                    onKeyDown={(e) => {
+                                      if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                        e.preventDefault();
+                                      }
+                                    }}
                                     placeholder="1"
                                     className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870]"
                                   />
@@ -771,14 +782,20 @@ export function FloorFormModal({
                                         updateSlotGroup(index, { count: '' });
                                         return;
                                       }
-                                      let val = Number(e.target.value);
+                                      let val = Math.floor(Number(e.target.value));
                                       if (val < 0) val = 0;
                                       if (val > maxAllowed) val = maxAllowed;
                                       updateSlotGroup(index, { count: val });
                                     }}
+                                    onKeyDown={(e) => {
+                                      if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                                        e.preventDefault();
+                                      }
+                                    }}
                                     placeholder="0"
                                     className={`w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
-                                      errors[`slotGroup_${index}_count`] || Number(group.count) > maxAllowed
+                                      errors[`slotGroup_${index}_count`] ||
+                                      Number(group.count) > maxAllowed
                                         ? 'border-red-400'
                                         : 'border-gray-200'
                                     }`}

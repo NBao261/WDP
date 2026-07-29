@@ -471,9 +471,46 @@ export function FacilityFormModal({
               <div className="space-y-4">
                 {/* Operating Hours */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Giờ hoạt động <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex justify-between items-end mb-1.5">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Giờ hoạt động <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, openTime: '00:00', closeTime: '23:59' });
+                          if (errors.openTime || errors.closeTime) setErrors({ ...errors, openTime: '', closeTime: '' });
+                        }}
+                        className="text-[10px] px-2 py-1 bg-[#9FE870]/20 text-[#062F28] rounded-md font-semibold hover:bg-[#9FE870]/40 transition-colors"
+                        title="Mở cửa cả ngày"
+                      >
+                        24/24h
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, openTime: '06:00', closeTime: '18:00' });
+                          if (errors.openTime || errors.closeTime) setErrors({ ...errors, openTime: '', closeTime: '' });
+                        }}
+                        className="text-[10px] px-2 py-1 bg-[#9FE870]/20 text-[#062F28] rounded-md font-semibold hover:bg-[#9FE870]/40 transition-colors"
+                        title="Mở cửa ban ngày"
+                      >
+                        6h - 18h
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, openTime: '08:00', closeTime: '22:00' });
+                          if (errors.openTime || errors.closeTime) setErrors({ ...errors, openTime: '', closeTime: '' });
+                        }}
+                        className="text-[10px] px-2 py-1 bg-[#9FE870]/20 text-[#062F28] rounded-md font-semibold hover:bg-[#9FE870]/40 transition-colors"
+                        title="Mở cửa hành chính & tối"
+                      >
+                        8h - 22h
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex gap-3 items-start">
                     <div className="flex-1">
                       <div className="relative">

@@ -7,7 +7,11 @@ import { pricingService, type PricingPlan } from '../../../../services/pricing.s
 import { type Facility } from '../../../../services/facility.service';
 import { type VehicleType } from '../../../../services/vehicleType.service';
 import { FEE_TYPE_LABELS, mapToUiType } from './constants';
-import { ICON_MAP, getVehicleColorTheme, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
+import {
+  ICON_MAP,
+  getVehicleColorTheme,
+  DEFAULT_ICON,
+} from '../../../shared/vehicles/components/constants';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
 
 interface PlanTableProps {
@@ -106,7 +110,6 @@ export function PlanTableView({
     if (plans.length > 0) fetchCounts();
   }, [plans]);
 
-
   const toggle = async (plan: PricingPlan, s: 'active' | 'inactive') => {
     setLoading(true);
     try {
@@ -171,9 +174,14 @@ export function PlanTableView({
               >
                 <span className="flex items-center gap-1.5">
                   Tên bảng giá
-                  <ArrowUpDown size={13} className={sortName !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
+                  <ArrowUpDown
+                    size={13}
+                    className={sortName !== 'default' ? 'text-white' : 'text-[#062F28]/40'}
+                  />
                   {sortName !== 'default' && (
-                    <span className="text-[10px] text-white font-bold">{sortName === 'name_asc' ? 'A-Z' : 'Z-A'}</span>
+                    <span className="text-[10px] text-white font-bold">
+                      {sortName === 'name_asc' ? 'A-Z' : 'Z-A'}
+                    </span>
                   )}
                 </span>
               </th>
@@ -188,9 +196,14 @@ export function PlanTableView({
               >
                 <span className="flex items-center gap-1.5">
                   Loại xe
-                  <ArrowUpDown size={13} className={sortVehicle !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
+                  <ArrowUpDown
+                    size={13}
+                    className={sortVehicle !== 'default' ? 'text-white' : 'text-[#062F28]/40'}
+                  />
                   {sortVehicle !== 'default' && (
-                    <span className="text-[10px] text-white font-bold">{sortVehicle === 'vt_asc' ? 'A-Z' : 'Z-A'}</span>
+                    <span className="text-[10px] text-white font-bold">
+                      {sortVehicle === 'vt_asc' ? 'A-Z' : 'Z-A'}
+                    </span>
                   )}
                 </span>
               </th>
@@ -206,9 +219,14 @@ export function PlanTableView({
               >
                 <span className="flex items-center gap-1.5">
                   Đơn giá cơ bản
-                  <ArrowUpDown size={13} className={sortPrice !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
+                  <ArrowUpDown
+                    size={13}
+                    className={sortPrice !== 'default' ? 'text-white' : 'text-[#062F28]/40'}
+                  />
                   {sortPrice !== 'default' && (
-                    <span className="text-[10px] text-white font-bold">{sortPrice === 'price_desc' ? '↓ Cao' : '↑ Thấp'}</span>
+                    <span className="text-[10px] text-white font-bold">
+                      {sortPrice === 'price_desc' ? '↓ Cao' : '↑ Thấp'}
+                    </span>
                   )}
                 </span>
               </th>
@@ -225,9 +243,14 @@ export function PlanTableView({
               >
                 <span className="flex items-center justify-end gap-1.5">
                   Thao tác
-                  <ArrowUpDown size={13} className={sortDate !== 'default' ? 'text-white' : 'text-[#062F28]/40'} />
+                  <ArrowUpDown
+                    size={13}
+                    className={sortDate !== 'default' ? 'text-white' : 'text-[#062F28]/40'}
+                  />
                   {sortDate !== 'default' && (
-                    <span className="text-[10px] text-white font-bold">{sortDate === 'created_desc' ? '↓ Mới' : '↑ Cũ'}</span>
+                    <span className="text-[10px] text-white font-bold">
+                      {sortDate === 'created_desc' ? '↓ Mới' : '↑ Cũ'}
+                    </span>
                   )}
                 </span>
               </th>
@@ -235,160 +258,176 @@ export function PlanTableView({
           </thead>
           <tbody className="divide-y divide-gray-50">
             <AnimatePresence mode="popLayout">
-            {plans.map((plan, index) => {
-              const vtId =
-                typeof plan.vehicleTypeId === 'object'
-                  ? plan.vehicleTypeId?._id
-                  : plan.vehicleTypeId;
-              const vtName =
-                typeof plan.vehicleTypeId === 'object'
-                  ? plan.vehicleTypeId?.name
-                  : (vehicleTypes.find((v) => v._id === vtId)?.name ?? '');
-              const vtIconKey =
-                typeof plan.vehicleTypeId === 'object'
-                  ? plan.vehicleTypeId?.icon
-                  : (vehicleTypes.find((v) => v._id === vtId)?.icon ?? '');
-              const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
-              const VtIcon = vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : ICON_MAP[DEFAULT_ICON];
-              const isActive = plan.status === 'active';
+              {plans.map((plan, index) => {
+                const vtId =
+                  typeof plan.vehicleTypeId === 'object'
+                    ? plan.vehicleTypeId?._id
+                    : plan.vehicleTypeId;
+                const vtName =
+                  typeof plan.vehicleTypeId === 'object'
+                    ? plan.vehicleTypeId?.name
+                    : (vehicleTypes.find((v) => v._id === vtId)?.name ?? '');
+                const vtIconKey =
+                  typeof plan.vehicleTypeId === 'object'
+                    ? plan.vehicleTypeId?.icon
+                    : (vehicleTypes.find((v) => v._id === vtId)?.icon ?? '');
+                const uiFeeType = mapToUiType(plan.feeType, plan.feeMethod || '');
+                const VtIcon =
+                  vtIconKey && ICON_MAP[vtIconKey] ? ICON_MAP[vtIconKey] : ICON_MAP[DEFAULT_ICON];
+                const isActive = plan.status === 'active';
 
-              const baseRate = plan.rates[0];
-
-              return (
-                <motion.tr
-                  layout
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  key={plan._id}
-                  onClick={() => onViewDetail(plan)}
-                  className={`hover:bg-[#9FE870]/10 transition-colors cursor-pointer border-b border-gray-50 last:border-0 ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
-                >
-                  <td className="px-4 py-4 text-[#6b6b6b] text-sm text-center font-medium truncate">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </td>
-                  <td
-                    className="px-4 py-4 font-bold text-[15px] text-[#062F28] max-w-[200px] truncate"
-                    title={plan.name}
+                return (
+                  <motion.tr
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    key={plan._id}
+                    onClick={() => onViewDetail(plan)}
+                    className={`hover:bg-[#9FE870]/10 transition-colors cursor-pointer border-b border-gray-50 last:border-0 ${!isActive ? 'opacity-75 bg-gray-50/50' : ''}`}
                   >
-                    {plan.name}
-                  </td>
-                  <td className="px-4 py-4">
-                    {(() => {
-                      const vtObj = vehicleTypes.find(v => v._id === vtId);
-                      const colorTheme = getVehicleColorTheme(vtObj?.code, vtObj?.icon);
-                      return (
-                        <span
-                          className="inline-flex items-center gap-1.5 px-3 py-1 text-[13px] font-semibold rounded-lg"
-                          style={{ background: colorTheme.bg, color: colorTheme.text }}
-                        >
-                          <VtIcon size={14} color={colorTheme.text} strokeWidth={2} /> {vtName}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="text-[#6b6b6b] text-sm font-medium">
-                      {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    {baseRate ? (
-                      <div className="whitespace-nowrap">
-                        <span className="font-bold text-[#062F28] text-[15px]">
-                          {fmt(baseRate.amount)}
-                        </span>
-                        <span className="text-[#6b6b6b] text-[13px] ml-1">
-                          /{translateUnit(baseRate.unit)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 text-[13px] text-[#6b6b6b]">
-                    <div className="flex flex-col gap-0.5 whitespace-nowrap">
-                      {plan.overnightFee > 0 && (
-                        <span>
-                          Qua đêm:{' '}
-                          <span className="font-medium text-[#062F28]">
-                            {fmt(plan.overnightFee)}
+                    <td className="px-4 py-4 text-[#6b6b6b] text-sm text-center font-medium truncate">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td
+                      className="px-4 py-4 font-bold text-[15px] text-[#062F28] max-w-[200px] truncate"
+                      title={plan.name}
+                    >
+                      {plan.name}
+                    </td>
+                    <td className="px-4 py-4">
+                      {(() => {
+                        const vtObj = vehicleTypes.find((v) => v._id === vtId);
+                        const colorTheme = getVehicleColorTheme(vtObj?.code, vtObj?.icon);
+                        return (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 text-[13px] font-semibold rounded-lg"
+                            style={{ background: colorTheme.bg, color: colorTheme.text }}
+                          >
+                            <VtIcon size={14} color={colorTheme.text} strokeWidth={2} /> {vtName}
                           </span>
-                        </span>
-                      )}
-                      {plan.overtimeFeePerHour > 0 && (
-                        <span>
-                          Quá giờ:{' '}
-                          <span className="font-medium text-[#062F28]">
-                            {fmt(plan.overtimeFeePerHour)}/h
-                          </span>
-                        </span>
-                      )}
-                      {plan.lostCardFee > 0 && (
-                        <span>
-                          Mất thẻ:{' '}
-                          <span className="font-medium text-[#062F28]">{fmt(plan.lostCardFee)}</span>
-                        </span>
-                      )}
-                      {!plan.overnightFee && !plan.overtimeFeePerHour && !plan.lostCardFee && (
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-[#6b6b6b] text-sm font-medium">
+                        {FEE_TYPE_LABELS[uiFeeType] ?? plan.feeType}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      {plan.rates && plan.rates.length > 0 ? (
+                        <div className="flex flex-col gap-1 whitespace-nowrap">
+                          {plan.rates.map((rate, rIdx) => (
+                            <div key={rIdx} className="flex items-center gap-1.5">
+                              {plan.rates.length > 1 && (
+                                <span
+                                  className="text-[12px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium truncate max-w-[130px]"
+                                  title={`${rate.label}${rate.startTime && rate.endTime ? ` (${rate.startTime} - ${rate.endTime})` : ''}`}
+                                >
+                                  {rate.label}{' '}
+                                  {rate.startTime && rate.endTime
+                                    ? `(${rate.startTime}-${rate.endTime})`
+                                    : ''}
+                                </span>
+                              )}
+                              <span className="font-bold text-[#062F28] text-[14px]">
+                                {fmt(rate.amount)}
+                              </span>
+                              <span className="text-[#6b6b6b] text-[12px]">
+                                /{translateUnit(rate.unit)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
                         <span className="text-gray-400">-</span>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    {(() => {
-                      const sessCount = sessionCounts[plan._id] ?? 0;
+                    </td>
+                    <td className="px-4 py-4 text-[13px] text-[#6b6b6b]">
+                      <div className="flex flex-col gap-0.5 whitespace-nowrap">
+                        {plan.overnightFee > 0 && (
+                          <span>
+                            Qua đêm:{' '}
+                            <span className="font-medium text-[#062F28]">
+                              {fmt(plan.overnightFee)}
+                            </span>
+                          </span>
+                        )}
+                        {plan.overtimeFeePerHour > 0 && (
+                          <span>
+                            Quá giờ:{' '}
+                            <span className="font-medium text-[#062F28]">
+                              {fmt(plan.overtimeFeePerHour)}/h
+                            </span>
+                          </span>
+                        )}
+                        {plan.lostCardFee > 0 && (
+                          <span>
+                            Mất thẻ:{' '}
+                            <span className="font-medium text-[#062F28]">
+                              {fmt(plan.lostCardFee)}
+                            </span>
+                          </span>
+                        )}
+                        {!plan.overnightFee && !plan.overtimeFeePerHour && !plan.lostCardFee && (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {(() => {
+                        const sessCount = sessionCounts[plan._id] ?? 0;
 
-                      if (isActive) {
+                        if (isActive) {
+                          return (
+                            <div className="flex flex-col items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-[#f0fce4] to-[#e6f9d4] text-[#4a8c1c] border border-[#c2e89a]/60 shadow-sm">
+                                <CheckCircle2 size={12} />
+                                ĐANG ÁP DỤNG
+                              </span>
+                              {sessCount > 0 && (
+                                <span className="text-[10px] font-medium text-[#4a8c1c]">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#82C94E] animate-pulse mr-1 align-middle" />
+                                  {sessCount} xe đang gửi
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // Inactive
                         return (
                           <div className="flex flex-col items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-[#f0fce4] to-[#e6f9d4] text-[#4a8c1c] border border-[#c2e89a]/60 shadow-sm">
-                              <CheckCircle2 size={12} />
-                              ĐANG ÁP DỤNG
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
+                              <PowerOff size={12} />
+                              VÔ HIỆU HÓA
                             </span>
                             {sessCount > 0 && (
-                              <span className="text-[10px] font-medium text-[#4a8c1c]">
-                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#82C94E] animate-pulse mr-1 align-middle" />
-                                {sessCount} xe đang gửi
+                              <span className="text-[10px] font-medium text-amber-600">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
+                                {sessCount} xe · giá cũ
                               </span>
                             )}
                           </div>
                         );
-                      }
-
-                      // Inactive
-                      return (
-                        <div className="flex flex-col items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-gray-50 text-gray-400 border border-gray-200/60">
-                            <PowerOff size={12} />
-                            VÔ HIỆU HÓA
-                          </span>
-                          {sessCount > 0 && (
-                            <span className="text-[10px] font-medium text-amber-600">
-                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1 align-middle" />
-                              {sessCount} xe · giá cũ
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <div
-                      className="flex items-center justify-end relative"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        onClick={(e) => handleMenuClick(e, plan._id)}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      })()}
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <div
+                        className="flex items-center justify-end relative"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <MoreVertical size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              );
-            })}
+                        <button
+                          onClick={(e) => handleMenuClick(e, plan._id)}
+                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
             </AnimatePresence>
           </tbody>
         </table>

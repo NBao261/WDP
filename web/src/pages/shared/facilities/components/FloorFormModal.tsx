@@ -632,6 +632,11 @@ export function FloorFormModal({
                             group.vehicleTypeIcon && ICON_MAP[group.vehicleTypeIcon]
                               ? ICON_MAP[group.vehicleTypeIcon]
                               : ICON_MAP[DEFAULT_ICON];
+                              
+                          const currentTotal = Number(totalSlotsInput) || 0;
+                          const baseSlots = isEdit ? existingSlotCount : 0;
+                          const otherGroupsSum = computedTotalSlots - (Number(group.count) || 0);
+                          const maxAllowed = Math.max(1, currentTotal - baseSlots - otherGroupsSum);
 
                           return (
                             <div
@@ -729,17 +734,20 @@ export function FloorFormModal({
                                   <input
                                     type="number"
                                     min={1}
-                                    max={999}
+                                    max={maxAllowed}
                                     value={group.count}
-                                    onChange={(e) =>
-                                      updateSlotGroup(index, {
-                                        count:
-                                          e.target.value === '' ? '' : Number(e.target.value),
-                                      })
-                                    }
+                                    onChange={(e) => {
+                                      if (e.target.value === '') {
+                                        updateSlotGroup(index, { count: '' });
+                                        return;
+                                      }
+                                      let val = Number(e.target.value);
+                                      if (val > maxAllowed) val = maxAllowed;
+                                      updateSlotGroup(index, { count: val });
+                                    }}
                                     placeholder="50"
                                     className={`w-full border rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
-                                      errors[`slotGroup_${index}_count`]
+                                      errors[`slotGroup_${index}_count`] || Number(group.count) > maxAllowed
                                         ? 'border-red-400'
                                         : 'border-gray-200'
                                     }`}
@@ -803,7 +811,7 @@ export function FloorFormModal({
                         </button>
                         <button
                           type="submit"
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || ((isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots) > (Number(totalSlotsInput) || 0))}
                           className="px-5 py-2.5 text-sm font-bold text-white bg-[#062F28] rounded-xl hover:bg-[#062F28]/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
                         >
                           {isSubmitting && <Loader2 size={16} className="animate-spin" />}

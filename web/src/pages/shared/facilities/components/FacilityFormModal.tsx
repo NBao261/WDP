@@ -284,7 +284,9 @@ export function FacilityFormModal({
 
         if (form.latitude !== 0 && form.longitude !== 0) {
           const duplicateLocation = existing.find(
-            (f) => f.location?.coordinates?.[0] === form.longitude && f.location?.coordinates?.[1] === form.latitude
+            (f) =>
+              f.location?.coordinates?.[0] === form.longitude &&
+              f.location?.coordinates?.[1] === form.latitude
           );
           if (duplicateLocation) {
             setErrors({ location: 'Vị trí bản đồ này đã được sử dụng cho một cơ sở khác' });
@@ -468,7 +470,7 @@ export function FacilityFormModal({
               </div>
 
               {/* ═══════════════ RIGHT COLUMN ═══════════════ */}
-              <div className="space-y-4">
+              <div className="space-y-4 flex flex-col h-full">
                 {/* Operating Hours */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
@@ -480,7 +482,8 @@ export function FacilityFormModal({
                         type="button"
                         onClick={() => {
                           setForm({ ...form, openTime: '00:00', closeTime: '23:59' });
-                          if (errors.openTime || errors.closeTime) setErrors({ ...errors, openTime: '', closeTime: '' });
+                          if (errors.openTime || errors.closeTime)
+                            setErrors({ ...errors, openTime: '', closeTime: '' });
                         }}
                         className={`text-[10px] px-2.5 py-1 rounded-md font-semibold transition-all ${
                           form.openTime === '00:00' && form.closeTime === '23:59'
@@ -495,7 +498,8 @@ export function FacilityFormModal({
                         type="button"
                         onClick={() => {
                           setForm({ ...form, openTime: '06:00', closeTime: '18:00' });
-                          if (errors.openTime || errors.closeTime) setErrors({ ...errors, openTime: '', closeTime: '' });
+                          if (errors.openTime || errors.closeTime)
+                            setErrors({ ...errors, openTime: '', closeTime: '' });
                         }}
                         className={`text-[10px] px-2.5 py-1 rounded-md font-semibold transition-all ${
                           form.openTime === '06:00' && form.closeTime === '18:00'
@@ -510,7 +514,8 @@ export function FacilityFormModal({
                         type="button"
                         onClick={() => {
                           setForm({ ...form, openTime: '08:00', closeTime: '22:00' });
-                          if (errors.openTime || errors.closeTime) setErrors({ ...errors, openTime: '', closeTime: '' });
+                          if (errors.openTime || errors.closeTime)
+                            setErrors({ ...errors, openTime: '', closeTime: '' });
                         }}
                         className={`text-[10px] px-2.5 py-1 rounded-md font-semibold transition-all ${
                           form.openTime === '08:00' && form.closeTime === '22:00'
@@ -569,15 +574,14 @@ export function FacilityFormModal({
                 </div>
 
                 {/* Description */}
-                <div>
+                <div className="flex-1 flex flex-col min-h-[120px]">
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả</label>
-                  <div className="relative">
-                    <FileText size={16} className="absolute left-3 top-3 text-gray-400" />
+                  <div className="relative flex-1 flex">
+                    <FileText size={16} className="absolute left-3 top-3 text-gray-400 z-10" />
                     <textarea
-                      rows={3}
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all resize-none"
+                      className="w-full flex-1 pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] focus:bg-white transition-all resize-none"
                       placeholder="Mô tả ngắn gọn về tòa nhà / bãi đỗ..."
                     />
                   </div>

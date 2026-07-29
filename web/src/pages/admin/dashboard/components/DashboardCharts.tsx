@@ -48,8 +48,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           </span>
           <span className="text-[13px] font-semibold text-white tabular-nums">
             {typeof entry.value === 'number' &&
-            (entry.name === 'Doanh thu' || entry.name === 'Doanh thu (₫)')
-              ? entry.value.toLocaleString('vi-VN') + '₫'
+            (entry.name === 'Doanh thu' || entry.name === 'Doanh thu (đ)')
+              ? entry.value.toLocaleString('vi-VN') + 'đ'
               : typeof entry.value === 'number'
                 ? entry.value.toLocaleString('vi-VN')
                 : entry.value}
@@ -204,7 +204,7 @@ export function DashboardCharts({
   const chartVehicleType = (revenueData?.byVehicleType ?? [])
     .filter((v) => v.totalRevenue > 0)
     .sort((a, b) => b.totalRevenue - a.totalRevenue)
-    .map((v) => ({ name: v.vehicleTypeName, 'Doanh thu (₫)': v.totalRevenue, count: v.count }));
+    .map((v) => ({ name: v.vehicleTypeName, 'Doanh thu (đ)': v.totalRevenue, count: v.count }));
 
   /* Payment method chart — ADMIN ONLY */
   const chartPayment = (revenueData?.byMethod ?? [])
@@ -434,7 +434,7 @@ export function DashboardCharts({
                   content={<CustomTooltip />}
                   cursor={{ fill: '#f5f5f3', opacity: 0.6 }}
                 />
-                <Bar dataKey="Doanh thu (₫)" radius={[0, 6, 6, 0]} maxBarSize={32}>
+                <Bar dataKey="Doanh thu (đ)" radius={[0, 6, 6, 0]} maxBarSize={32}>
                   {chartVehicleType.map((_entry, index) => (
                     <Cell
                       key={`cell-vt-${index}`}
@@ -517,7 +517,7 @@ export function DashboardCharts({
                             />
                           </div>
                           <span className="text-[11px] text-[#9ca3af]">
-                            {item.value.toLocaleString('vi-VN')}₫ · {item.count} GD
+                            {item.value.toLocaleString('vi-VN')}đ · {item.count} GD
                           </span>
                         </div>
                       </div>

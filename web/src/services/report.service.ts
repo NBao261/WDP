@@ -76,6 +76,8 @@ export interface RevenueReportData {
     grandTotal: number;
     totalTransactions: number;
     avgRevenuePerDay: number;
+    avgRevenuePeriod: number;
+    periodLabel: string;  // 'ngày' | 'tháng' | 'tuần'
   };
   byTimePeriod: RevenueDataPoint[];
   byMethod: RevenueByMethod[];

@@ -187,7 +187,7 @@ export function useFacilitiesData() {
     }
     for (const floor of floors) {
       const floorSlots = byFloor[floor._id] ?? [];
-      const total = floorSlots.length;
+      const total = floor.totalSlots || floorSlots.length; // Use totalSlots from floor creation, fallback if 0
       const occupied = floorSlots.filter((s) => s.status === 'occupied').length;
       const reserved = floorSlots.filter((s) => s.status === 'reserved').length;
       const fillRate = total > 0 ? Math.round((occupied / total) * 100) : 0;

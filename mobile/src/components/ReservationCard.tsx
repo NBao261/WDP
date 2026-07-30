@@ -17,8 +17,12 @@ const getStatusBadge = (status: ReservationStatus) => {
     case 'pending':
     case 'confirmed':
       return <Badge label="Đã xác nhận" variant="success" />;
+    case 'checked_in':
+      return <Badge label="Đã check-in" variant="info" />;
     case 'used':
       return <Badge label="Đã sử dụng" variant="info" />;
+    case 'completed':
+      return <Badge label="Hoàn thành" variant="success" />;
     case 'cancelled':
       return <Badge label="Đã hủy" variant="danger" />;
     case 'expired':

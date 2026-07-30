@@ -5,7 +5,7 @@ import { User, IUser, UserRole, UserStatus } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { env } from '../config/env';
 import { setCache, getCache, delCache } from '../config/redis';
-import { EmailService } from './email.service';
+import { emailService } from './email.service';
 
 export class AuthService {
   static generateTokens(user: IUser) {
@@ -114,7 +114,6 @@ export class AuthService {
     }
   }
 
-  // ── Forgot Password: Gửi OTP qua email ──────────────────
   static async forgotPassword(email: string): Promise<void> {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
@@ -125,27 +124,21 @@ export class AuthService {
       throw new AppError('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
     }
 
-    // Rate limit: chỉ cho gửi OTP 1 lần mỗi 60 giây
     const rateLimitKey = `otp_rate:${email.toLowerCase()}`;
     const rateLimited = await getCache(rateLimitKey);
     if (rateLimited) {
       throw new AppError('Vui lòng đợi 60 giây trước khi gửi lại mã OTP', 429);
     }
 
-    // Tạo OTP 6 số
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Lưu OTP vào Redis (TTL 5 phút)
     await setCache(`otp:${email.toLowerCase()}`, otp, 300);
 
-    // Đặt rate limit 60 giây
     await setCache(rateLimitKey, '1', 60);
 
-    // Gửi email
-    await EmailService.sendOtpEmail(email, otp);
+    await emailService.sendOtpEmail(email, otp);
   }
 
-  // ── Verify OTP: Xác minh OTP và trả về reset token ──────
   static async verifyOtp(email: string, otp: string): Promise<{ resetToken: string }> {
     const storedOtp = await getCache<string>(`otp:${email.toLowerCase()}`);
 
@@ -157,17 +150,14 @@ export class AuthService {
       throw new AppError('Mã OTP không chính xác', 400);
     }
 
-    // Xóa OTP sau khi verify thành công (chỉ dùng 1 lần)
     await delCache(`otp:${email.toLowerCase()}`);
 
-    // Tạo reset token ngẫu nhiên, lưu vào Redis (TTL 10 phút)
     const resetToken = crypto.randomBytes(32).toString('hex');
     await setCache(`reset_token:${email.toLowerCase()}`, resetToken, 600);
 
     return { resetToken };
   }
 
-  // ── Reset Password: Đổi mật khẩu bằng reset token ───────
   static async resetPasswordWithToken(email: string, token: string, newPassword: string): Promise<void> {
     const storedToken = await getCache<string>(`reset_token:${email.toLowerCase()}`);
 
@@ -179,12 +169,9 @@ export class AuthService {
     if (!user) {
       throw new AppError('Tài khoản không tồn tại', 404);
     }
-
-    // Hash password mới
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
 
-    // Reset trạng thái lock nếu có
     user.failedLoginAttempts = 0;
     user.lockedUntil = null;
     if (user.status === UserStatus.LOCKED) {
@@ -193,11 +180,9 @@ export class AuthService {
 
     await user.save();
 
-    // Xóa reset token (chỉ dùng 1 lần)
     await delCache(`reset_token:${email.toLowerCase()}`);
   }
 
-  // ── Change Password: Đổi mật khẩu khi đã đăng nhập ──────
   static async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
     const user = await User.findById(userId).select('+password');
     if (!user) {

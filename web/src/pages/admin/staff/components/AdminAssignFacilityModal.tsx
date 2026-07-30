@@ -21,11 +21,6 @@ interface AdminAssignFacilityModalProps {
   onSuccess: () => void;
 }
 
-/**
- * Modal nhanh (Quick-Action) để Admin phân công Tòa nhà
- * trực tiếp từ bảng danh sách User — không cần vào Edit wizard.
- * Hiển thị TẤT CẢ facilities đang active trong hệ thống.
- */
 export function AdminAssignFacilityModal({
   user,
   onClose,

@@ -70,7 +70,7 @@ export default function ChangePasswordScreen() {
         ]);
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error?.response?.data?.message || "Không thể đổi mật khẩu.");
+      Alert.alert("Lỗi", error?.message || error?.error?.message || "Không thể đổi mật khẩu.");
     } finally {
       setLoading(false);
     }

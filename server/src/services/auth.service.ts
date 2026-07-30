@@ -138,14 +138,11 @@ export class AuthService {
     // Lưu OTP vào Redis (TTL 5 phút)
     await setCache(`otp:${email.toLowerCase()}`, otp, 300);
 
-    // Đặt rate limit 60 giây
     await setCache(rateLimitKey, '1', 60);
 
-    // Gửi email
     await EmailService.sendOtpEmail(email, otp);
   }
 
-  // ── Verify OTP: Xác minh OTP và trả về reset token ──────
   static async verifyOtp(email: string, otp: string): Promise<{ resetToken: string }> {
     const storedOtp = await getCache<string>(`otp:${email.toLowerCase()}`);
 
@@ -157,17 +154,14 @@ export class AuthService {
       throw new AppError('Mã OTP không chính xác', 400);
     }
 
-    // Xóa OTP sau khi verify thành công (chỉ dùng 1 lần)
     await delCache(`otp:${email.toLowerCase()}`);
 
-    // Tạo reset token ngẫu nhiên, lưu vào Redis (TTL 10 phút)
     const resetToken = crypto.randomBytes(32).toString('hex');
     await setCache(`reset_token:${email.toLowerCase()}`, resetToken, 600);
 
     return { resetToken };
   }
 
-  // ── Reset Password: Đổi mật khẩu bằng reset token ───────
   static async resetPasswordWithToken(email: string, token: string, newPassword: string): Promise<void> {
     const storedToken = await getCache<string>(`reset_token:${email.toLowerCase()}`);
 

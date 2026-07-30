@@ -170,6 +170,18 @@ export function FloorFormModal({
       );
       return;
     }
+
+    // Block selection of NEW vehicle types if the floor's allocated slots have reached the total capacity
+    if (isEdit && !selectedVehicleTypes.includes(id)) {
+      const currentTotal = Number(totalSlotsInput) || 0;
+      if (existingSlotCount >= currentTotal) {
+        toast.warning(
+          `Tầng này đã phân bổ đủ ${existingSlotCount}/${currentTotal} vị trí. Vui lòng tăng giới hạn slot trước khi gán thêm loại xe mới.`
+        );
+        return;
+      }
+    }
+
     setSelectedVehicleTypes((prev) => {
       const next = prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id];
       if (next.length > 0 && errors.vehicleTypes) {

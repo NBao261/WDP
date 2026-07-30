@@ -3,6 +3,7 @@ import { User, IUser, UserStatus } from '../models/user.model';
 import { ParkingFacility } from '../models/parkingFacility.model';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { AppError } from '../middlewares/error.middleware';
+import { emailService } from './email.service';
 
 export class UserService {
   static async createUser(data: Partial<IUser>): Promise<IUser> {
@@ -32,6 +33,15 @@ export class UserService {
       await ParkingFacility.updateMany(
         { _id: { $in: data.assignedFacilities } },
         { $addToSet: { assignedUsers: newUser._id } }
+      );
+    }
+
+    if (newUser.email) {
+      emailService.sendAccountCreationEmail(
+        newUser.email,
+        newUser.fullName || 'Bạn',
+        password as string,
+        newUser.role
       );
     }
 
@@ -226,6 +236,15 @@ export class UserService {
     if (!user) {
       throw new AppError('User not found', 404);
     }
+
+    if (user.email) {
+      emailService.sendPasswordResetEmail(
+        user.email,
+        user.fullName || 'Bạn',
+        newPassword
+      );
+    }
+
     return user;
   }
 }

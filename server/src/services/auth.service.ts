@@ -5,7 +5,7 @@ import { User, IUser, UserRole, UserStatus } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { env } from '../config/env';
 import { setCache, getCache, delCache } from '../config/redis';
-import { EmailService } from './email.service';
+import { emailService } from './email.service';
 
 export class AuthService {
   static generateTokens(user: IUser) {
@@ -114,7 +114,6 @@ export class AuthService {
     }
   }
 
-  // ── Forgot Password: Gửi OTP qua email ──────────────────
   static async forgotPassword(email: string): Promise<void> {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
@@ -125,22 +124,19 @@ export class AuthService {
       throw new AppError('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.', 403);
     }
 
-    // Rate limit: chỉ cho gửi OTP 1 lần mỗi 60 giây
     const rateLimitKey = `otp_rate:${email.toLowerCase()}`;
     const rateLimited = await getCache(rateLimitKey);
     if (rateLimited) {
       throw new AppError('Vui lòng đợi 60 giây trước khi gửi lại mã OTP', 429);
     }
 
-    // Tạo OTP 6 số
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Lưu OTP vào Redis (TTL 5 phút)
     await setCache(`otp:${email.toLowerCase()}`, otp, 300);
 
     await setCache(rateLimitKey, '1', 60);
 
-    await EmailService.sendOtpEmail(email, otp);
+    await emailService.sendOtpEmail(email, otp);
   }
 
   static async verifyOtp(email: string, otp: string): Promise<{ resetToken: string }> {

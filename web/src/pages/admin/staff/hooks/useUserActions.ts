@@ -98,7 +98,7 @@ export function useUserActions(onRefresh: () => void) {
         ? `Bạn có chắc chắn muốn mở khóa tài khoản "${confirmState.user?.name}"?`
         : confirmState.type === 'delete'
           ? `Bạn có chắc chắn muốn xóa tài khoản "${confirmState.user?.name}"? Thao tác này sẽ vô hiệu hóa người dùng trên hệ thống (Soft Delete).`
-          : `Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${confirmState.user?.name}"? Người dùng sẽ bắt buộc đổi mật khẩu ở lần đăng nhập tiếp theo.`;
+          : `Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${confirmState.user?.name}"? Hệ thống sẽ tạo một mật khẩu mới ngẫu nhiên và gửi về email của người dùng.`;
 
   const confirmText =
     confirmState.type === 'lock'

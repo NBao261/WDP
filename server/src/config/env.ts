@@ -31,4 +31,10 @@ export const env = {
   MOMO_API_URL: process.env.MOMO_API_URL || 'https://test-payment.momo.vn/v2/gateway/api/create',
   MOMO_QUERY_URL: process.env.MOMO_QUERY_URL || 'https://test-payment.momo.vn/v2/gateway/api/query',
   MOMO_IPN_URL: process.env.MOMO_IPN_URL || 'http://localhost:8000/api/v1/payments/webhook',
+
+  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
+  SMTP_PORT: process.env.SMTP_PORT || '587',
+  SMTP_SECURE: process.env.SMTP_SECURE || 'false',
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || '',
 } as const;

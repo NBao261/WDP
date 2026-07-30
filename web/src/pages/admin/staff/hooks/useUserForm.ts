@@ -188,12 +188,6 @@ export function useUserForm(
     return Object.keys(errs).length === 0;
   };
 
-  /**
-   * Step structure:
-   * - Create: [1] Thông tin → [2] Vai trò → [3*] Phân công Tòa nhà (nếu Manager/Staff, tùy chọn)
-   * - Edit:   [1] Thông tin → [2] Vai trò → [3] Quyền bổ sung
-   *           (Phân công Tòa nhà khi Edit → dùng Quick-Action từ bảng User)
-   */
   const showFacilityStep = !isEdit && ASSIGNABLE_ROLES.includes(selectedRole);
 
   const steps = isEdit

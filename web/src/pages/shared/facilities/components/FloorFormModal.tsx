@@ -302,8 +302,6 @@ export function FloorFormModal({
       toast.error('Có sự trùng lặp mã vị trí giữa các loại xe. Vui lòng kiểm tra lại.');
     }
 
-    // Removed: In create mode, we now allow 0 slots initially so they can be mapped later.
-
     // Validate step 2 limit
     const currentTotalSlots = Number(totalSlotsInput) || 0;
     const totalAllocated = isEdit ? existingSlotCount + computedTotalSlots : computedTotalSlots;

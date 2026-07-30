@@ -7,11 +7,6 @@ interface UserAssignFacilitiesStepProps {
   onChange: (ids: string[]) => void;
 }
 
-/**
- * Multi-select step để Admin phân công tòa nhà cho Manager/Staff.
- * Bước này là TÙY CHỌN — có thể bỏ qua và phân công sau.
- * Chỉ hiển thị facilities đang active.
- */
 export function UserAssignFacilitiesStep({
   selectedFacilityIds,
   onChange,

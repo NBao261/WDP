@@ -16,7 +16,7 @@ export class RoleService {
   }
 
   static async createRole(data: Partial<IRole>): Promise<IRole> {
-    const existing = await Role.findOne({ code: data.code });
+    const existing = await Role.findOne({ code: { $regex: new RegExp(`^${data.code!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
     if (existing) {
       throw new AppError(`Role with code '${data.code}' already exists`, 400);
     }

@@ -23,7 +23,7 @@ export class SlotService {
       throw new AppError(`Tầng "${floor.name}" đã đạt tối đa ${floor.totalSlots} slot. Không thể thêm slot mới.`, 400);
     }
 
-    const existingSlot = await ParkingSlot.findOne({ code: data.code, facilityId: data.facilityId });
+    const existingSlot = await ParkingSlot.findOne({ code: { $regex: new RegExp(`^${data.code!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, facilityId: data.facilityId, isDeleted: false });
     if (existingSlot) {
       throw new AppError('Mã slot đã tồn tại trong cơ sở này', 400);
     }
@@ -69,9 +69,13 @@ export class SlotService {
       });
     }
 
+    const codePatterns = slotsToCreate.map(s => ({
+      code: { $regex: new RegExp(`^${s.code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+    }));
     const existingSlots = await ParkingSlot.find({
       facilityId,
-      code: { $in: slotsToCreate.map(s => s.code) }
+      isDeleted: false,
+      $or: codePatterns,
     });
 
     if (existingSlots.length > 0) {
@@ -92,7 +96,7 @@ export class SlotService {
 
     if (data.code) {
       const existing = await ParkingSlot.findOne({
-        code: data.code,
+        code: { $regex: new RegExp(`^${data.code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
         facilityId: slot.facilityId,
         _id: { $ne: id },
         isDeleted: false,

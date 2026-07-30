@@ -10,7 +10,7 @@ import { getIO } from '../config/socket';
 
 export class FacilityService {
   static async createFacility(data: Partial<IParkingFacility>): Promise<IParkingFacility> {
-    const existingName = await ParkingFacility.findOne({ name: data.name });
+    const existingName = await ParkingFacility.findOne({ name: { $regex: new RegExp(`^${data.name!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
     if (existingName) {
       throw new AppError('Tên toà nhà đã tồn tại', 400);
     }
@@ -40,7 +40,7 @@ export class FacilityService {
 
   static async updateFacility(id: string, data: Partial<IParkingFacility>): Promise<IParkingFacility | null> {
     if (data.name) {
-      const existingName = await ParkingFacility.findOne({ name: data.name, _id: { $ne: id } });
+      const existingName = await ParkingFacility.findOne({ name: { $regex: new RegExp(`^${data.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, _id: { $ne: id } });
       if (existingName) {
         throw new AppError('Tên toà nhà đã tồn tại', 400);
       }

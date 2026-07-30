@@ -1,4 +1,4 @@
-export type ReservationStatus = 'pending' | 'confirmed' | 'used' | 'cancelled' | 'expired';
+export type ReservationStatus = 'pending' | 'confirmed' | 'checked_in' | 'used' | 'completed' | 'cancelled' | 'expired';
 
 export interface Reservation {
   _id: string;

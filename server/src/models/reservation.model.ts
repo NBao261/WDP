@@ -3,7 +3,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 export enum ReservationStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
+  CHECKED_IN = 'checked_in',
   USED = 'used',
+  COMPLETED = 'completed',
   CANCELLED = 'cancelled',
   EXPIRED = 'expired',
 }

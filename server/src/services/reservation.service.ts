@@ -286,18 +286,44 @@ export class ReservationService {
     return count;
   }
 
-  static async convertToUsed(reservationId: string): Promise<IReservation> {
+  static async convertToCheckedIn(reservationId: string): Promise<IReservation> {
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) throw new AppError('Đặt chỗ không tồn tại', 404);
 
     if (reservation.status !== ReservationStatus.CONFIRMED) {
-      throw new AppError('Đặt chỗ không ở trạng thái có thể sử dụng', 400);
+      throw new AppError('Đặt chỗ không ở trạng thái có thể check-in', 400);
     }
 
-    reservation.status = ReservationStatus.USED;
+    reservation.status = ReservationStatus.CHECKED_IN;
     await reservation.save();
 
-    logger.info(`Reservation converted to used: ${reservationId}`);
+    // Clear reservation cache để mobile nhận status mới ngay lập tức
+    delPattern(`cache:reservations:user:${reservation.userId}:*`).catch(() => {});
+    if (reservation.facilityId) {
+      delPattern(`cache:reservations:facility:${reservation.facilityId}:*`).catch(() => {});
+    }
+
+    logger.info(`Reservation checked in: ${reservationId}`);
+    return reservation;
+  }
+
+  static async convertToCompleted(reservationId: string): Promise<IReservation> {
+    const reservation = await Reservation.findById(reservationId);
+    if (!reservation) throw new AppError('Đặt chỗ không tồn tại', 404);
+
+    if (reservation.status !== ReservationStatus.CHECKED_IN) {
+      throw new AppError('Đặt chỗ không ở trạng thái có thể hoàn thành', 400);
+    }
+
+    reservation.status = ReservationStatus.COMPLETED;
+    await reservation.save();
+
+    delPattern(`cache:reservations:user:${reservation.userId}:*`).catch(() => {});
+    if (reservation.facilityId) {
+      delPattern(`cache:reservations:facility:${reservation.facilityId}:*`).catch(() => {});
+    }
+
+    logger.info(`Reservation completed: ${reservationId}`);
     return reservation;
   }
 
@@ -324,11 +350,12 @@ export class ReservationService {
 
     if (!reservation) throw new AppError('Không tìm thấy mã đặt chỗ', 404);
 
-    if (reservation.status !== ReservationStatus.CONFIRMED) {
+    if (reservation.status !== ReservationStatus.CONFIRMED && reservation.status !== ReservationStatus.CHECKED_IN) {
       const statusMsg: Record<string, string> = {
         cancelled: 'đã bị hủy',
         expired: 'đã hết hạn',
         used: 'đã sử dụng',
+        completed: 'đã hoàn thành',
         pending: 'đang chờ xác nhận',
       };
       const msg = statusMsg[reservation.status] || reservation.status;

@@ -169,12 +169,9 @@ export class AuthService {
     if (!user) {
       throw new AppError('Tài khoản không tồn tại', 404);
     }
-
-    // Hash password mới
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
 
-    // Reset trạng thái lock nếu có
     user.failedLoginAttempts = 0;
     user.lockedUntil = null;
     if (user.status === UserStatus.LOCKED) {
@@ -183,11 +180,9 @@ export class AuthService {
 
     await user.save();
 
-    // Xóa reset token (chỉ dùng 1 lần)
     await delCache(`reset_token:${email.toLowerCase()}`);
   }
 
-  // ── Change Password: Đổi mật khẩu khi đã đăng nhập ──────
   static async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
     const user = await User.findById(userId).select('+password');
     if (!user) {

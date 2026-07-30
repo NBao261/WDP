@@ -6,7 +6,11 @@ import { ExceptionDetailResolveForm } from './ExceptionDetailResolveForm';
 import { ExceptionDetailReviewBlocks } from './ExceptionDetailReviewBlocks';
 import { DirectCheckoutModal } from './DirectCheckoutModal';
 import { useState, useEffect } from 'react';
-import { exceptionService, EXCEPTION_TYPE_LABELS, ExceptionType } from '../../../../services/exception.service';
+import {
+  exceptionService,
+  EXCEPTION_TYPE_LABELS,
+  ExceptionType,
+} from '../../../../services/exception.service';
 
 interface ExceptionDetailDrawerProps {
   selectedException: ExceptionData | null;
@@ -62,20 +66,28 @@ export default function ExceptionDetailDrawer({
 
       // Fetch full detail nếu source là driver (có thể có images)
       if (selectedException.source === 'driver') {
-        exceptionService.getExceptionById(selectedException.id).then((res: any) => {
-          if (res.success && res.data) {
-            const exc = res.data;
-            const session = typeof exc.sessionId === 'object' ? exc.sessionId : null;
-            const driver = typeof exc.driverId === 'object' && exc.driverId ? exc.driverId : null;
-            setDetailData(prev => prev ? {
-              ...prev,
-              images: exc.images || [],
-              driverName: driver?.name || prev.driverName,
-            } : prev);
-          }
-        }).catch(() => {
-          // Bỏ qua lỗi, dùng data đã có
-        }).finally(() => setIsLoadingDetail(false));
+        exceptionService
+          .getExceptionById(selectedException.id)
+          .then((res: any) => {
+            if (res.success && res.data) {
+              const exc = res.data;
+              const session = typeof exc.sessionId === 'object' ? exc.sessionId : null;
+              const driver = typeof exc.driverId === 'object' && exc.driverId ? exc.driverId : null;
+              setDetailData((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      images: exc.images || [],
+                      driverName: driver?.name || prev.driverName,
+                    }
+                  : prev
+              );
+            }
+          })
+          .catch(() => {
+            // Bỏ qua lỗi, dùng data đã có
+          })
+          .finally(() => setIsLoadingDetail(false));
       } else {
         setIsLoadingDetail(false);
       }
@@ -88,8 +100,7 @@ export default function ExceptionDetailDrawer({
 
   const badge = STATUS_BADGE[detailData.status] || STATUS_BADGE.NEW;
   const isResolved = detailData.status === 'RESOLVED';
-  const canResolve =
-    detailData.status === 'NEW' || detailData.status === 'PROCESSING';
+  const canResolve = detailData.status === 'NEW' || detailData.status === 'PROCESSING';
   const parkingLocation = `${detailData.facilityName} - ${detailData.floorName} - ${detailData.slotCode}`;
 
   return (
@@ -122,10 +133,7 @@ export default function ExceptionDetailDrawer({
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto space-y-8 bg-[#fdfdfd]">
-          <ExceptionInfoBlocks
-            selectedException={detailData}
-            parkingLocation={parkingLocation}
-          />
+          <ExceptionInfoBlocks selectedException={detailData} parkingLocation={parkingLocation} />
 
           <ExceptionDetailResolveForm
             selectedException={detailData}
@@ -144,10 +152,7 @@ export default function ExceptionDetailDrawer({
             isLoadingSlots={logic.isLoadingSlots}
           />
 
-          <ExceptionDetailReviewBlocks
-            selectedException={detailData}
-            isResolved={isResolved}
-          />
+          <ExceptionDetailReviewBlocks selectedException={detailData} isResolved={isResolved} />
         </div>
 
         <div className="p-6 border-t border-[#e8e9e8] flex gap-3 bg-white">

@@ -44,7 +44,9 @@ export const Loading: React.FC<LoadingProps> = ({
     <div className={`${containerClasses} ${className}`}>
       <div className="relative flex items-center justify-center mb-3">
         {/* Soft green glow */}
-        <div className={`absolute ${glowSizes[size]} rounded-full bg-[#86cd3d]/25 blur-md animate-pulse`} />
+        <div
+          className={`absolute ${glowSizes[size]} rounded-full bg-[#86cd3d]/25 blur-md animate-pulse`}
+        />
         {/* Single green spinning arc */}
         <div
           className={`${spinnerSizes[size]} rounded-full border-[#86cd3d]/25 border-t-[#86cd3d] animate-spin shrink-0`}

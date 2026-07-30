@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2, Building2, Layers, ChevronDown } from 'lucide-react';
+import { X, Loader2, Building2, Layers, ChevronDown, Lock } from 'lucide-react';
 import {
   vehicleTypeService,
   VehicleType,
@@ -11,6 +11,7 @@ import {
 } from '../../../../services/vehicleType.service';
 import { facilityService, Facility } from '../../../../services/facility.service';
 import { floorService, Floor } from '../../../../services/floor.service';
+import { sessionService } from '../../../../services/session.service';
 import { ICON_OPTIONS } from './constants';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuthStore } from '../../../../store/useAuthStore';
@@ -50,6 +51,8 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFacOpen, setIsFacOpen] = useState(false);
   const [isFloorOpen, setIsFloorOpen] = useState(false);
+  // Set of floor IDs that currently have active parking sessions
+  const [activeFloorIds, setActiveFloorIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isOpen) {
@@ -74,6 +77,24 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
           floors: [],
         });
       }
+      // Fetch active sessions to know which floors are occupied
+      sessionService.getActiveSessions({ limit: 2000 }).then((res) => {
+        if (res.success && Array.isArray(res.data)) {
+          const ids = new Set<string>();
+          res.data.forEach((s: any) => {
+            const fId =
+              typeof s.floorId === 'object' && s.floorId !== null
+                ? s.floorId._id
+                : s.floorId;
+            if (fId) ids.add(fId);
+          });
+          setActiveFloorIds(ids);
+        }
+      }).catch(() => {
+        // silently ignore — if check fails, don't block UI
+      });
+    } else {
+      setActiveFloorIds(new Set());
     }
   }, [isOpen, vehicle]);
 
@@ -561,16 +582,32 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                               : fl?.facilityId)
                         );
                         if (!fl) return null;
+                        const hasActiveSessions = activeFloorIds.has(floorId);
                         return (
                           <div
                             key={floorId}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-sm shadow-sm hover:border-red-200 hover:shadow-md transition-all group"
+                            title={
+                              hasActiveSessions
+                                ? 'Không thể bỏ: Đang có xe gửi trong tầng này'
+                                : undefined
+                            }
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-white border rounded-lg text-sm shadow-sm transition-all group ${
+                              hasActiveSessions
+                                ? 'border-amber-200 bg-amber-50/40 cursor-default'
+                                : 'border-gray-200 hover:border-red-200 hover:shadow-md'
+                            }`}
                           >
                             <span className="font-medium text-gray-700">{fac?.name}</span>
                             <span className="text-gray-300 text-xs">/</span>
                             <span className="text-emerald-600 font-semibold">{fl.name}</span>
                             <button
                               type="button"
+                              disabled={hasActiveSessions}
+                              title={
+                                hasActiveSessions
+                                  ? 'Đang có xe gửi trong tầng này — không thể bỏ'
+                                  : 'Bỏ tầng này'
+                              }
                               onClick={() => {
                                 setForm((f) => ({
                                   ...f,
@@ -581,9 +618,13 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
                                   setIsFloorOpen(false);
                                 }
                               }}
-                              className="ml-1 text-gray-300 group-hover:text-red-500 transition-colors"
+                              className={`ml-1 transition-colors ${
+                                hasActiveSessions
+                                  ? 'text-amber-400 cursor-not-allowed'
+                                  : 'text-gray-300 group-hover:text-red-500'
+                              }`}
                             >
-                              <X size={14} />
+                              {hasActiveSessions ? <Lock size={12} /> : <X size={14} />}
                             </button>
                           </div>
                         );

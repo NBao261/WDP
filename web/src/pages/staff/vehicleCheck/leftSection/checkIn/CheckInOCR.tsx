@@ -45,7 +45,11 @@ export function CheckInOCR({
         </button>
       ) : (
         <div className="relative border border-[#e8e9e8] rounded-[6px] overflow-hidden h-full flex-1 bg-[#f5f5f4] min-h-[150px]">
-          <img src={getImageUrl(previewUrl)} alt="preview" className="w-full h-full object-contain" />
+          <img
+            src={getImageUrl(previewUrl)}
+            alt="preview"
+            className="w-full h-full object-contain"
+          />
           <button
             type="button"
             onClick={clearPreview}

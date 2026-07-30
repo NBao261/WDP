@@ -1,13 +1,6 @@
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-/**
- * Table — matches the Figma pattern from Dashboard (Recent Sessions) and Users pages:
- *   bg-white rounded-2xl shadow-sm border border-gray-100
- *   thead: bg-gray-50 text-gray-500 font-medium
- *   tbody: divide-y divide-gray-100, hover:bg-gray-50/50
- */
-
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
     <div className="relative w-full overflow-auto">

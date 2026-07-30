@@ -6,17 +6,10 @@ interface PaginationProps {
   totalItems: number;
   pageLimit: number;
   onPageChange: (page: number) => void;
-  /**
-   * Label for what is being paginated (e.g. "người dùng", "vai trò").
-   * Defaults to "mục".
-   */
+
   itemLabel?: string;
 }
 
-/**
- * Reusable pagination component with ellipsis support.
- * Renders page numbers with smart windowing around the current page.
- */
 export function Pagination({
   currentPage,
   totalPages,

@@ -1,5 +1,5 @@
-import { 
-  Check, 
+import {
+  Check,
   RefreshCw,
   Building,
   Car,
@@ -8,7 +8,7 @@ import {
   CreditCard,
   BarChart,
   Settings,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react';
 import { PERMISSION_GROUPS } from '../../constants/permissions';
 
@@ -97,21 +97,23 @@ export function PermissionGroupList({
               <button
                 type="button"
                 onClick={() => onToggleGroup?.(groupIds)}
-                className="w-full bg-gray-50/80 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between hover:bg-gray-100/60 transition-colors"
+                className="w-full min-h-[52px] bg-gray-50/80 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between gap-2 hover:bg-gray-100/60 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm shrink-0">
                     {getGroupIcon(group.id) || <span className="text-sm">{group.icon}</span>}
                   </div>
-                  <span className="font-bold text-[#062F28] text-xs">{group.name}</span>
+                  <span className="font-bold text-[#062F28] text-xs text-left line-clamp-2 leading-snug">
+                    {group.name}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-md border border-gray-200">
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-medium text-gray-500 bg-white px-2 py-0.5 rounded-md border border-gray-200 whitespace-nowrap">
                     {checkedCount} / {groupIds.length}
                   </span>
                   <div
                     className={`
-                      w-5 h-5 rounded flex items-center justify-center border-2 transition-all
+                      w-5 h-5 rounded flex items-center justify-center border-2 transition-all shrink-0
                       ${
                         allChecked
                           ? 'bg-[#9FE870] border-[#9FE870]'
@@ -128,15 +130,17 @@ export function PermissionGroupList({
                 </div>
               </button>
             ) : (
-              <div className="bg-gray-50/80 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+              <div className="min-h-[52px] bg-gray-50/80 px-4 py-2.5 border-b border-gray-100 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shadow-sm shrink-0">
                     {getGroupIcon(group.id) || <span className="text-sm">{group.icon}</span>}
                   </div>
-                  <span className="font-bold text-[#062F28] text-xs">{group.name}</span>
+                  <span className="font-bold text-[#062F28] text-xs text-left line-clamp-2 leading-snug">
+                    {group.name}
+                  </span>
                 </div>
                 {checkedCount > 0 && (
-                  <span className="text-[10px] font-bold text-[#062F28] bg-[#9FE870]/20 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-[#062F28] bg-[#9FE870]/20 px-2 py-0.5 rounded shrink-0">
                     +{checkedCount}
                   </span>
                 )}

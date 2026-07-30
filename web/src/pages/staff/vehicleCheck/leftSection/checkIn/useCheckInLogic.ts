@@ -35,8 +35,6 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
           state.setPlate(recognized);
           if (response.data.imageUrl) state.setCheckInImage(response.data.imageUrl);
           state.setOcrSuccess(true);
-
-          // ── Auto-detect reservation bằng biển số (không cần quét QR) ──
           if (!state.reservationInfo && state.facilityId) {
             try {
               const resLookup: any = await apiClient.get(
@@ -53,7 +51,6 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
                 toast.success(`🎫 Tự động nhận diện đặt chỗ — ${resLookup.data.code}`);
               }
             } catch {
-              // Không tìm thấy reservation — bỏ qua, check-in bình thường (walk-in)
             }
           } else if (state.reservationInfo?.licensePlate) {
             const clean = (s: string) => s.replace(/[^A-Z0-9]/g, '').toUpperCase();
@@ -173,7 +170,5 @@ export function useCheckInLogic(onCheckIn: (data: any) => void) {
     });
   };
 
-  // Hoisting the remaining `useEffect` hooks and functions...
-  // Since we want this file to be < 150 lines, we will create another hook or use them in `CheckInContainer`
   return { ...state, handleImageUpload, clearPreview, lookupReservation, handleCheckInClick };
 }

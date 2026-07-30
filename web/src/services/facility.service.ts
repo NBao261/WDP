@@ -10,10 +10,9 @@ export interface Facility {
   closeTime: string;
   description: string;
   images: string[];
-  // GeoJSON Point — coordinates: [longitude, latitude]
   location?: {
     type: string;
-    coordinates: [number, number]; // [lng, lat]
+    coordinates: [number, number];
   };
   status: 'active' | 'inactive';
   isDeleted: boolean;

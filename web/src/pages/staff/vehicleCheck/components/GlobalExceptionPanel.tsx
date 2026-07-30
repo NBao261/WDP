@@ -110,6 +110,10 @@ export default function GlobalExceptionPanel({
                   <span className="text-[#060606]">{logic.activeSession?.code || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span>Mã thẻ:</span>
+                  <span className="text-[#060606] font-mono">{logic.activeSession?.cardCode || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
                   <span>Giờ vào:</span>
                   <span className="text-[#060606]">
                     {logic.activeSession?.checkInTime
@@ -123,6 +127,16 @@ export default function GlobalExceptionPanel({
                 <div className="flex justify-between">
                   <span>Cổng vào:</span>
                   <span className="text-[#060606]">{logic.activeSession?.gateIn || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Bãi xe:</span>
+                  <span className="text-[#060606]">{(logic.activeSession?.facilityId as any)?.name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Vị trí:</span>
+                  <span className="text-[#060606]">
+                    {(logic.activeSession?.floorId as any)?.name || '—'} — {(logic.activeSession?.slotId as any)?.code || '—'}
+                  </span>
                 </div>
               </div>
             </div>

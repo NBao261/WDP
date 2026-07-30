@@ -11,6 +11,8 @@ interface UserBasicInfoStepProps {
   isEdit: boolean;
   basicData: BasicData;
   onChange: (updater: (prev: BasicData) => BasicData) => void;
+  fieldErrors: Record<string, string>;
+  setFieldErrors: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
 }
 
 const inputClass =
@@ -20,7 +22,13 @@ const inputClass =
  * Step 1 of UserFormModal: collects name, email (create only), phone, password (create only).
  * Animation handled by parent UserFormModal motion.div wrapper.
  */
-export function UserBasicInfoStep({ isEdit, basicData, onChange }: UserBasicInfoStepProps) {
+export function UserBasicInfoStep({
+  isEdit,
+  basicData,
+  onChange,
+  fieldErrors,
+  setFieldErrors,
+}: UserBasicInfoStepProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       {/* Name */}
@@ -34,11 +42,17 @@ export function UserBasicInfoStep({ isEdit, basicData, onChange }: UserBasicInfo
             type="text"
             required
             value={basicData.name}
-            onChange={(e) => onChange((p) => ({ ...p, name: e.target.value }))}
-            className={inputClass}
+            onChange={(e) => {
+              onChange((p) => ({ ...p, name: e.target.value }));
+              if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: '' }));
+            }}
+            className={`${inputClass} ${fieldErrors.name ? 'border-red-300 focus:ring-red-300' : ''}`}
             placeholder="Nhập họ và tên..."
           />
         </div>
+        {fieldErrors.name && (
+          <p className="text-xs text-red-500 mt-1.5">{fieldErrors.name}</p>
+        )}
       </div>
 
       {/* Email — editable only on create */}
@@ -53,11 +67,17 @@ export function UserBasicInfoStep({ isEdit, basicData, onChange }: UserBasicInfo
               type="email"
               required
               value={basicData.email}
-              onChange={(e) => onChange((p) => ({ ...p, email: e.target.value }))}
-              className={inputClass}
+              onChange={(e) => {
+                onChange((p) => ({ ...p, email: e.target.value }));
+                if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: '' }));
+              }}
+              className={`${inputClass} ${fieldErrors.email ? 'border-red-300 focus:ring-red-300' : ''}`}
               placeholder="example@company.com"
             />
           </div>
+          {fieldErrors.email && (
+            <p className="text-xs text-red-500 mt-1.5">{fieldErrors.email}</p>
+          )}
         </div>
       ) : (
         <div>
@@ -88,11 +108,17 @@ export function UserBasicInfoStep({ isEdit, basicData, onChange }: UserBasicInfo
             type="tel"
             required
             value={basicData.phone}
-            onChange={(e) => onChange((p) => ({ ...p, phone: e.target.value }))}
-            className={inputClass}
+            onChange={(e) => {
+              onChange((p) => ({ ...p, phone: e.target.value }));
+              if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: '' }));
+            }}
+            className={`${inputClass} ${fieldErrors.phone ? 'border-red-300 focus:ring-red-300' : ''}`}
             placeholder="09xx xxx xxx"
           />
         </div>
+        {fieldErrors.phone && (
+          <p className="text-xs text-red-500 mt-1.5">{fieldErrors.phone}</p>
+        )}
       </div>
 
       {/* Password — create only */}
@@ -108,12 +134,19 @@ export function UserBasicInfoStep({ isEdit, basicData, onChange }: UserBasicInfo
               required
               minLength={6}
               value={basicData.password}
-              onChange={(e) => onChange((p) => ({ ...p, password: e.target.value }))}
-              className={inputClass}
+              onChange={(e) => {
+                onChange((p) => ({ ...p, password: e.target.value }));
+                if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: '' }));
+              }}
+              className={`${inputClass} ${fieldErrors.password ? 'border-red-300 focus:ring-red-300' : ''}`}
               placeholder="Tối thiểu 6 ký tự"
             />
           </div>
-          <p className="text-xs text-gray-400 mt-1.5">Mật khẩu cấp lần đầu cho nhân viên.</p>
+          {fieldErrors.password ? (
+            <p className="text-xs text-red-500 mt-1.5">{fieldErrors.password}</p>
+          ) : (
+            <p className="text-xs text-gray-400 mt-1.5">Mật khẩu cấp lần đầu cho nhân viên.</p>
+          )}
         </div>
       )}
     </div>

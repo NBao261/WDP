@@ -6,6 +6,7 @@ import { User } from '../models/user.model';
 import { AppError } from '../middlewares/error.middleware';
 import { getIO } from '../config/socket';
 import { addExceptionUploadJob } from '../queues/uploadQueue';
+import { PricingPlan } from '../models/pricingPlan.model';
 
 interface CreateExceptionDto {
   sessionId: string;
@@ -42,6 +43,14 @@ export class ExceptionService {
       throw new AppError('Không thể tạo ngoại lệ cho lượt gửi đã kết thúc', 400);
     }
 
+    const existingException = await Exception.findOne({
+      sessionId: session._id,
+      type: data.type,
+    });
+    if (existingException) {
+      throw new AppError('Sự cố cùng loại đã được ghi nhận cho lượt gửi này', 400);
+    }
+
     const staffUser = await User.findById(data.staffId).select('assignedFacilities');
     if (!staffUser) throw new AppError('Staff không tồn tại', 404);
     const isAssigned = staffUser.assignedFacilities.some(
@@ -51,13 +60,25 @@ export class ExceptionService {
       throw new AppError('Bạn không được phân công tại bãi xe này', 403);
     }
 
+    let calculatedSurcharge = data.surcharge || 0;
+    if (data.type === ExceptionType.LOST_CARD && !calculatedSurcharge) {
+      const pricingPlan = await PricingPlan.findOne({
+        facilityId: session.facilityId,
+        vehicleTypeId: session.vehicleTypeId,
+        isActive: true,
+      });
+      if (pricingPlan) {
+        calculatedSurcharge = pricingPlan.lostCardFee || 0;
+      }
+    }
+
     const exception = new Exception({
       sessionId: new mongoose.Types.ObjectId(data.sessionId),
       type: data.type,
       description: data.description,
       source: 'staff',
       staffId: new mongoose.Types.ObjectId(data.staffId),
-      surcharge: data.surcharge || 0,
+      surcharge: calculatedSurcharge,
       actualPlate: data.actualPlate,
       expectedPlate: data.expectedPlate,
       checkInImage: data.checkInImage,
@@ -379,6 +400,14 @@ export class ExceptionService {
     if (!session) {
       throw new AppError('Lượt gửi xe không tồn tại', 404);
     }
+
+    const existingException = await Exception.findOne({
+      sessionId: session._id,
+      type: data.type,
+    });
+    if (existingException) {
+      throw new AppError('Sự cố cùng loại đã được ghi nhận cho lượt gửi này', 400);
+    }
     
     let imageUrls: string[] = [];
     if (data.images && data.images.length > 0) {
@@ -397,6 +426,18 @@ export class ExceptionService {
       }
     }
     
+    let calculatedSurcharge = 0;
+    if (data.type === ExceptionType.LOST_CARD) {
+      const pricingPlan = await PricingPlan.findOne({
+        facilityId: session.facilityId,
+        vehicleTypeId: session.vehicleTypeId,
+        isActive: true,
+      });
+      if (pricingPlan) {
+        calculatedSurcharge = pricingPlan.lostCardFee || 0;
+      }
+    }
+    
     const exception = new Exception({
       sessionId: new mongoose.Types.ObjectId(data.sessionId),
       type: data.type as ExceptionType,
@@ -404,10 +445,20 @@ export class ExceptionService {
       source: 'driver',
       driverId: new mongoose.Types.ObjectId(data.driverId),
       images: imageUrls,
+      surcharge: calculatedSurcharge,
       status: ExceptionStatus.NEW,
     });
 
     await exception.save();
+
+    if (
+      data.type === ExceptionType.LOST_CARD ||
+      data.type === ExceptionType.WRONG_PLATE ||
+      data.type === ExceptionType.WRONG_ZONE
+    ) {
+      session.status = SessionStatus.EXCEPTION;
+      await session.save();
+    }
 
     try {
       getIO().to(`facility:${session.facilityId}`).emit('exception:created', {

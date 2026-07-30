@@ -681,8 +681,11 @@ export class SessionService {
       let lostCardFeeTotal = 0;
       const resolvedExceptions = await Exception.find({ sessionId, status: ExceptionStatus.RESOLVED }).lean();
       for (const exc of resolvedExceptions) {
-        exceptionSurcharge += exc.surcharge || 0;
-        if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
+        if (exc.type === ExceptionType.LOST_CARD) {
+          lostCardFeeTotal += exc.surcharge || 0;
+        } else {
+          exceptionSurcharge += exc.surcharge || 0;
+        }
       }
       return {
         totalFee: exceptionSurcharge + lostCardFeeTotal,
@@ -778,8 +781,11 @@ export class SessionService {
     });
 
     for (const exc of resolvedExceptions) {
-      exceptionSurcharge += exc.surcharge || 0;
-      if (exc.type === ExceptionType.LOST_CARD) lostCardFeeTotal += pricingPlan.lostCardFee || 0;
+      if (exc.type === ExceptionType.LOST_CARD) {
+        lostCardFeeTotal += exc.surcharge || 0;
+      } else {
+        exceptionSurcharge += exc.surcharge || 0;
+      }
     }
 
     const totalFee = baseFee + overnightFee + overtimeFee + exceptionSurcharge + lostCardFeeTotal;

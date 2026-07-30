@@ -35,3 +35,49 @@ export const refreshTokenSchema = z.object({
       .min(1, 'Refresh token is required'),
   }),
 });
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: 'Email không được để trống' })
+      .email('Email không hợp lệ'),
+  }),
+});
+
+export const verifyOtpSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: 'Email không được để trống' })
+      .email('Email không hợp lệ'),
+    otp: z
+      .string({ required_error: 'Mã OTP không được để trống' })
+      .length(6, 'Mã OTP phải có 6 ký tự'),
+  }),
+});
+
+export const resetPasswordWithTokenSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: 'Email không được để trống' })
+      .email('Email không hợp lệ'),
+    token: z
+      .string({ required_error: 'Token không được để trống' })
+      .min(1, 'Token không được để trống'),
+    newPassword: z
+      .string({ required_error: 'Mật khẩu mới không được để trống' })
+      .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+      .max(128, 'Mật khẩu không được quá 128 ký tự'),
+  }),
+});
+
+export const changePasswordSchema = z.object({
+  body: z.object({
+    oldPassword: z
+      .string({ required_error: 'Mật khẩu hiện tại không được để trống' })
+      .min(1, 'Mật khẩu hiện tại không được để trống'),
+    newPassword: z
+      .string({ required_error: 'Mật khẩu mới không được để trống' })
+      .min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự')
+      .max(128, 'Mật khẩu mới không được quá 128 ký tự'),
+  }),
+});

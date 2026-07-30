@@ -25,6 +25,7 @@ export class UserService {
     const newUser = new User({
       ...data,
       password: hashedPassword,
+      mustChangePassword: false,
     });
 
     await newUser.save();
@@ -39,7 +40,7 @@ export class UserService {
     if (newUser.email) {
       emailService.sendAccountCreationEmail(
         newUser.email,
-        newUser.fullName || 'Bạn',
+        newUser.name || 'Bạn',
         password as string,
         newUser.role
       );
@@ -228,7 +229,7 @@ export class UserService {
     
     const user = await User.findByIdAndUpdate(userId, { 
       password: hashedPassword,
-      mustChangePassword: true,
+      mustChangePassword: false,
       failedLoginAttempts: 0,
       lockedUntil: null
     }, { new: true });
@@ -240,7 +241,7 @@ export class UserService {
     if (user.email) {
       emailService.sendPasswordResetEmail(
         user.email,
-        user.fullName || 'Bạn',
+        user.name || 'Bạn',
         newPassword
       );
     }

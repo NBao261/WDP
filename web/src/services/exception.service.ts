@@ -79,6 +79,11 @@ export interface CreateExceptionPayload {
   type: ExceptionType;
   description: string;
   surcharge?: number;
+  actualPlate?: string;
+  expectedPlate?: string;
+  checkInImage?: string;
+  checkOutImage?: string;
+  cardCode?: string;
 }
 
 export interface GetExceptionsParams {

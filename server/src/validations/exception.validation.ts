@@ -9,11 +9,11 @@ export const createExceptionSchema = z.object({
     type: z.nativeEnum(ExceptionType, { required_error: 'Vui lòng chọn loại ngoại lệ hợp lệ' }),
     description: z.string({ required_error: 'Vui lòng cung cấp mô tả' }).min(1, 'Mô tả không được để trống').max(2000, 'Mô tả quá dài'),
     surcharge: z.number().min(0).optional(),
-    actualPlate: z.string().max(15, 'Biển số quá dài').optional(),
-    expectedPlate: z.string().max(15, 'Biển số quá dài').optional(),
-    checkInImage: z.string().max(500, 'URL ảnh quá dài').optional(),
-    checkOutImage: z.string().max(500, 'URL ảnh quá dài').optional(),
-    cardCode: z.string().max(50, 'Mã thẻ quá dài').optional(),
+    actualPlate: z.string().max(15, 'Biển số quá dài').nullable().optional().transform(v => v || undefined),
+    expectedPlate: z.string().max(15, 'Biển số quá dài').nullable().optional().transform(v => v || undefined),
+    checkInImage: z.string().max(500, 'URL ảnh quá dài').nullable().optional().transform(v => v || undefined),
+    checkOutImage: z.string().max(500, 'URL ảnh quá dài').nullable().optional().transform(v => v || undefined),
+    cardCode: z.string().max(50, 'Mã thẻ quá dài').nullable().optional().transform(v => v || undefined),
   }),
 });
 
@@ -31,9 +31,9 @@ export const getExceptionsSchema = z.object({
 
 export const resolveExceptionSchema = z.object({
   body: z.object({
-    staffNote: z.string().max(2000, 'Ghi chú quá dài').optional().default(''),
-    newLicensePlate: z.string().optional(),
-    newSlotId: z.string().regex(objectIdRegex, 'Invalid slot ID format').optional(),
+    staffNote: z.string().max(2000, 'Ghi chú quá dài').nullable().optional().transform(v => v || ''),
+    newLicensePlate: z.string().nullable().optional().transform(v => v || undefined),
+    newSlotId: z.string().regex(objectIdRegex, 'Invalid slot ID format').nullable().optional().transform(v => v || undefined),
   }),
 });
 

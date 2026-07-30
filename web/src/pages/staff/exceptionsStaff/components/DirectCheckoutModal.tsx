@@ -41,7 +41,7 @@ export function DirectCheckoutModal({
             setMomoSuccess(true);
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setTimeout(() => {
-              toast.success("Khách đã thanh toán Momo thành công!");
+              toast.success('Khách đã thanh toán Momo thành công!');
               setMomoQR(null);
               setIsPolling(false);
               setMomoSuccess(false);
@@ -135,23 +135,23 @@ export function DirectCheckoutModal({
     setSubmittingType('momo');
     try {
       const gateOut = sessionStorage.getItem('staff_gate_name') || 'Cổng Ra';
-      const res = await paymentService.createIntent({ 
-        sessionId, 
-        method: 'e_wallet', 
-        checkOutImage: checkoutImage || undefined, 
-        gateOut 
+      const res = await paymentService.createIntent({
+        sessionId,
+        method: 'e_wallet',
+        checkOutImage: checkoutImage || undefined,
+        gateOut,
       });
       if (res.success && (res.data?.qrCodeUrl || res.data?.paymentUrl)) {
         const finalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(res.data.qrCodeUrl || res.data.paymentUrl)}`;
-        setMomoQR(finalQrUrl); 
-        setTransactionCode(res.data.payment.transactionCode); 
+        setMomoQR(finalQrUrl);
+        setTransactionCode(res.data.payment.transactionCode);
         setIsPolling(true);
-      } else { 
-        toast.error("Không thể tạo mã QR Momo!"); 
+      } else {
+        toast.error('Không thể tạo mã QR Momo!');
       }
-    } catch (error: any) { 
-      toast.error(error.message || 'Lỗi khi tạo giao dịch Momo'); 
-    } finally { 
+    } catch (error: any) {
+      toast.error(error.message || 'Lỗi khi tạo giao dịch Momo');
+    } finally {
       setSubmittingType(null);
     }
   };
@@ -285,8 +285,14 @@ export function DirectCheckoutModal({
           </button>
           <button
             onClick={handleMomoCheckOut}
-            disabled={submittingType !== null || isLoading || !feeData || feeData.totalFee === 0 || isUploading}
-            title={feeData?.totalFee === 0 ? "Không thể tạo QR Momo cho hóa đơn 0đ" : ""}
+            disabled={
+              submittingType !== null ||
+              isLoading ||
+              !feeData ||
+              feeData.totalFee === 0 ||
+              isUploading
+            }
+            title={feeData?.totalFee === 0 ? 'Không thể tạo QR Momo cho hóa đơn 0đ' : ''}
             className={`flex-1 h-12 font-bold rounded-xl transition-colors text-sm shadow-sm flex items-center justify-center gap-2 ${feeData?.totalFee === 0 ? 'bg-[#fcfcfc] border border-[#e8e9e8] text-[#9b9b9b] cursor-not-allowed' : 'bg-[#A3E635] hover:bg-[#84CC16] text-[#1A202C]'}`}
           >
             {submittingType === 'momo' ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
@@ -305,10 +311,14 @@ export function DirectCheckoutModal({
             <div className="bg-white p-2 rounded-xl border-2 border-pink-100 shadow-inner mb-4">
               <img src={momoQR} alt="Momo QR Code" className="w-40 h-40 object-contain" />
             </div>
-            <div className={`flex items-center gap-2 text-[11px] font-medium mb-4 px-4 py-2 rounded-full ${momoSuccess ? 'text-green-600 bg-green-50' : 'text-[#A50064] bg-pink-50'}`}>
+            <div
+              className={`flex items-center gap-2 text-[11px] font-medium mb-4 px-4 py-2 rounded-full ${momoSuccess ? 'text-green-600 bg-green-50' : 'text-[#A50064] bg-pink-50'}`}
+            >
               {momoSuccess ? (
                 <>
-                  <div className="w-3.5 h-3.5 rounded-full bg-green-500 text-white flex items-center justify-center text-[8px] font-bold">✓</div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-green-500 text-white flex items-center justify-center text-[8px] font-bold">
+                    ✓
+                  </div>
                   Thanh toán thành công!
                 </>
               ) : (

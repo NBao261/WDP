@@ -4,10 +4,6 @@ interface StatusBadgeProps {
   status: UserStatus | string;
 }
 
-/**
- * Shared status badge component — renders a styled pill for user account status.
- * Used in UserTable and any future status-aware UI.
- */
 export function StatusBadge({ status }: StatusBadgeProps) {
   switch (status) {
     case 'active':

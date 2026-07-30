@@ -29,6 +29,7 @@ export const rateSchema = z.object({
     z
       .number({ required_error: 'Bắt buộc', invalid_type_error: 'Bắt buộc' })
       .refine((val) => val === 0 || val >= 1000, 'Giá phải từ 1000 trở lên (hoặc 0 = Miễn phí)')
+      .refine((val) => val <= 2000000, 'Tối đa 2,000,000đ')
       .refine((val) => val % 1000 === 0, 'Phải là số chẵn (chia hết cho 1.000đ)')
   ),
   unit: z.string().min(1, 'Bắt buộc'),
@@ -54,6 +55,7 @@ export const formSchema = z
       z
         .number({ invalid_type_error: 'Phải là số' })
         .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0)')
+        .refine((val) => val <= 2000000, 'Tối đa 2,000,000đ')
         .refine((val) => val % 1000 === 0, 'Phải là số chẵn (chia hết cho 1.000đ)')
     ),
     overtimeFeePerHour: z.preprocess(
@@ -61,6 +63,7 @@ export const formSchema = z
       z
         .number({ invalid_type_error: 'Phải là số' })
         .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0)')
+        .refine((val) => val <= 2000000, 'Tối đa 2,000,000đ')
         .refine((val) => val % 1000 === 0, 'Phải là số chẵn (chia hết cho 1.000đ)')
     ),
     lostCardFee: z.preprocess(
@@ -68,6 +71,7 @@ export const formSchema = z
       z
         .number({ invalid_type_error: 'Phải là số' })
         .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0)')
+        .refine((val) => val <= 2000000, 'Tối đa 2,000,000đ')
         .refine((val) => val % 1000 === 0, 'Phải là số chẵn (chia hết cho 1.000đ)')
     ),
     gracePeriodMinutes: z.preprocess(
@@ -82,6 +86,7 @@ export const formSchema = z
       z
         .number({ invalid_type_error: 'Phải là số' })
         .refine((val) => val === 0 || val >= 1000, 'Tối thiểu 1000 (hoặc 0 = Không giới hạn)')
+        .refine((val) => val <= 2000000, 'Tối đa 2,000,000đ')
         .refine((val) => val % 1000 === 0, 'Phải là số chẵn (chia hết cho 1.000đ)')
     ),
     firstBlockHours: z.preprocess(

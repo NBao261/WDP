@@ -56,11 +56,11 @@ export function useGlobalExceptionLogic(currentSession: any, coPlateCam: string,
         sessionId, 
         type: exceptionType, 
         description: note.trim(),
-        expectedPlate: activeSession.licensePlate,
-        actualPlate: coPlateCam || activeSession.licensePlate,
-        checkInImage: activeSession.checkInImage,
-        checkOutImage: checkOutImage || activeSession.checkOutImage,
-        cardCode: activeSession.cardCode
+        expectedPlate: activeSession.licensePlate || undefined,
+        actualPlate: (coPlateCam || activeSession.licensePlate) || undefined,
+        ...(activeSession.checkInImage ? { checkInImage: activeSession.checkInImage } : {}),
+        ...((checkOutImage || activeSession.checkOutImage) ? { checkOutImage: checkOutImage || activeSession.checkOutImage } : {}),
+        ...(activeSession.cardCode ? { cardCode: activeSession.cardCode } : {}),
       };
       if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== "") payload.surcharge = Number(surcharge);
       else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== "") payload.surcharge = Number(surcharge);

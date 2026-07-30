@@ -21,7 +21,7 @@ export class AuthService {
   }
 
   static async register(data: Partial<IUser>): Promise<{ user: Partial<IUser>; tokens: { accessToken: string; refreshToken: string } }> {
-    const existingUser = await User.findOne({ $or: [{ email: data.email }, { phone: data.phone }] });
+    const existingUser = await User.findOne({ $or: [{ email: data.email?.toLowerCase() }, { phone: data.phone }] });
     if (existingUser) {
       throw new AppError('Email or phone already in use', 400);
     }
@@ -45,7 +45,7 @@ export class AuthService {
   }
 
   static async login(email: string, passwordInput: string): Promise<{ user: Partial<IUser>; tokens: { accessToken: string; refreshToken: string } }> {
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) {
       throw new AppError('Invalid credentials', 401);
     }

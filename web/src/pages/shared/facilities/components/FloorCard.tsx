@@ -170,7 +170,12 @@ export const FloorCard = React.memo(function FloorCard({
   const badgeStyle = isActive
     ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
     : (floor as any).status === 'maintenance'
-      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      ? {
+          background: 'rgba(250,204,21,0.15)',
+          color: '#EAB308',
+          border: 'none',
+          fontWeight: 'bold',
+        }
       : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   // Vehicle type objects - Optimized with useMemo
@@ -178,7 +183,9 @@ export const FloorCard = React.memo(function FloorCard({
     return (floor.allowedVehicleTypes || [])
       .map((item: any) => {
         const typeId = typeof item === 'string' ? item : item._id;
-        return vehicleTypes.find((v) => v._id === typeId) || (typeof item === 'object' ? item : null);
+        return (
+          vehicleTypes.find((v) => v._id === typeId) || (typeof item === 'object' ? item : null)
+        );
       })
       .filter(Boolean);
   }, [floor.allowedVehicleTypes, vehicleTypes]);
@@ -233,130 +240,138 @@ export const FloorCard = React.memo(function FloorCard({
             </div>
           </div>
 
-        {/* Badge & Action Menu */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span
-            style={{
-              fontSize: 10,
-              padding: '3px 10px',
-              borderRadius: 20,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              ...badgeStyle,
-            }}
-          >
+          {/* Badge & Action Menu */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: isActive ? '#82C94E' : (floor as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                fontSize: 10,
+                padding: '3px 10px',
+                borderRadius: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                ...badgeStyle,
               }}
-            />
-            {isActive ? 'HOẠT ĐỘNG' : (floor as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
-          </span>
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: isActive
+                    ? '#82C94E'
+                    : (floor as any).status === 'maintenance'
+                      ? '#EAB308'
+                      : '#9b9e9b',
+                }}
+              />
+              {isActive
+                ? 'HOẠT ĐỘNG'
+                : (floor as any).status === 'maintenance'
+                  ? 'BẢO TRÌ'
+                  : 'ĐÃ VÔ HIỆU HÓA'}
+            </span>
 
-          {/* Menu dropdown */}
-          {isFacilityActive && (
-            <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
-              {loading ? (
-                <div className="w-7 h-7 flex items-center justify-center">
-                  <Loader2 size={14} className="animate-spin text-gray-400" />
-                </div>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpen((v) => !v);
-                  }}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              )}
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -6 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -6 }}
-                    transition={{ duration: 0.12 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
+            {/* Menu dropdown */}
+            {isFacilityActive && (
+              <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
+                {loading ? (
+                  <div className="w-7 h-7 flex items-center justify-center">
+                    <Loader2 size={14} className="animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen((v) => !v);
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <div
-                      className="fixed inset-0 z-[-1]"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpen(false);
-                      }}
-                    />
-                    {onViewDetail && (
-                      <>
+                    <MoreVertical size={16} />
+                  </button>
+                )}
+                <AnimatePresence>
+                  {menuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                      transition={{ duration: 0.12 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-8 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-20"
+                    >
+                      <div
+                        className="fixed inset-0 z-[-1]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuOpen(false);
+                        }}
+                      />
+                      {onViewDetail && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewDetail(floor);
+                              setMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Eye size={14} /> Xem chi tiết
+                          </button>
+                          <div className="h-px bg-gray-100 mx-2 my-1" />
+                        </>
+                      )}
+                      {isActive && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(floor);
+                              setMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Pencil size={14} /> Chỉnh sửa
+                          </button>
+                          <div className="h-px bg-gray-100 mx-2 my-1" />
+                        </>
+                      )}
+                      {isActive ? (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewDetail(floor);
+                          onClick={() => {
                             setMenuOpen(false);
+                            setConfirmAction('deactivate');
                           }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          className="w-full text-left px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
                         >
-                          <Eye size={14} /> Xem chi tiết
+                          <PowerOff size={14} /> Vô hiệu hóa
                         </button>
-                        <div className="h-px bg-gray-100 mx-2 my-1" />
-                      </>
-                    )}
-                    {isActive && (
-                      <>
+                      ) : (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(floor);
-                            setMenuOpen(false);
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          onClick={handleReactivate}
+                          className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2"
+                          style={{ color: '#27500A' }}
                         >
-                          <Pencil size={14} /> Chỉnh sửa
+                          <CheckCircle size={14} /> Kích hoạt lại
                         </button>
-                        <div className="h-px bg-gray-100 mx-2 my-1" />
-                      </>
-                    )}
-                    {isActive ? (
+                      )}
+                      <div className="h-px bg-gray-100 mx-2 my-1" />
                       <button
                         onClick={() => {
                           setMenuOpen(false);
-                          setConfirmAction('deactivate');
+                          setConfirmAction('delete');
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                       >
-                        <PowerOff size={14} /> Vô hiệu hóa
+                        <Trash2 size={14} /> Xóa tầng
                       </button>
-                    ) : (
-                      <button
-                        onClick={handleReactivate}
-                        className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2"
-                        style={{ color: '#27500A' }}
-                      >
-                        <CheckCircle size={14} /> Kích hoạt lại
-                      </button>
-                    )}
-                    <div className="h-px bg-gray-100 mx-2 my-1" />
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setConfirmAction('delete');
-                      }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <Trash2 size={14} /> Xóa tầng
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Vehicle type pills - separate row */}
@@ -395,7 +410,9 @@ export const FloorCard = React.memo(function FloorCard({
           <div className="w-px h-8 bg-gray-100" />
           <div className="text-center flex-1">
             <div className="text-[11px] text-[#7B7B7B] mb-1">Lấp đầy</div>
-            <div className="text-[15px] font-bold" style={{ color: fillColor }}>{fillRate}%</div>
+            <div className="text-[15px] font-bold" style={{ color: fillColor }}>
+              {fillRate}%
+            </div>
           </div>
         </div>
       </div>
@@ -407,10 +424,11 @@ export const FloorCard = React.memo(function FloorCard({
             e.stopPropagation();
             onViewMap(floor);
           }}
-          className={`w-full py-3.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${isActive
+          className={`w-full py-3.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${
+            isActive
               ? 'bg-[#9FE870] text-[#062F28] hover:bg-[#062F28] hover:text-[#9FE870]'
               : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-            }`}
+          }`}
         >
           Sơ đồ tầng →
         </button>
@@ -465,9 +483,7 @@ export function FloorGrid({
   if (floors.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-[#e8eae8] py-20 flex flex-col items-center gap-4">
-        <div
-          className="w-14 h-14 rounded-2xl bg-white border-[1.5px] border-[#f0f0f0] flex items-center justify-center"
-        >
+        <div className="w-14 h-14 rounded-2xl bg-white border-[1.5px] border-[#f0f0f0] flex items-center justify-center">
           <Layers size={24} className="text-[#9FE870]" />
         </div>
         <div className="text-center">

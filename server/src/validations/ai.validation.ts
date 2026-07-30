@@ -9,7 +9,7 @@ export const chatQuerySchema = z.object({
       .min(1, 'Vui lòng nhập câu hỏi')
       .max(2000, 'Câu hỏi quá dài (tối đa 2000 ký tự)')
       .trim(),
-    conversationId: z.string().max(100, 'Conversation ID quá dài').optional(),
+    conversationId: z.string().max(100, 'Conversation ID quá dài').nullable().optional().transform(v => v || undefined),
   }),
 });
 

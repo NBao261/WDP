@@ -6,9 +6,9 @@ import { AppError } from '../middlewares/error.middleware';
 
 export class UserService {
   static async createUser(data: Partial<IUser>): Promise<IUser> {
-    const existingUser = await User.findOne({ $or: [{ email: data.email }, { phone: data.phone }] });
+    const existingUser = await User.findOne({ $or: [{ email: data.email?.toLowerCase() }, { phone: data.phone }] });
     if (existingUser) {
-      if (existingUser.email === data.email) throw new AppError('Email đã được sử dụng', 400);
+      if (existingUser.email === data.email?.toLowerCase()) throw new AppError('Email đã được sử dụng', 400);
       if (existingUser.phone === data.phone) throw new AppError('Số điện thoại đã được sử dụng', 400);
       throw new AppError('Email hoặc số điện thoại đã được sử dụng', 400);
     }
@@ -46,7 +46,7 @@ export class UserService {
 
     if (data.email || data.phone) {
       const orConditions: any[] = [];
-      if (data.email) orConditions.push({ email: data.email });
+      if (data.email) orConditions.push({ email: data.email.toLowerCase() });
       if (data.phone) orConditions.push({ phone: data.phone });
       
       if (orConditions.length > 0) {
@@ -56,7 +56,7 @@ export class UserService {
         });
         
         if (existingUser) {
-          if (data.email && existingUser.email === data.email) {
+          if (data.email && existingUser.email === data.email.toLowerCase()) {
             throw new AppError('Email đã được sử dụng', 400);
           }
           if (data.phone && existingUser.phone === data.phone) {

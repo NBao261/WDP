@@ -27,7 +27,7 @@ export class VehicleTypeService {
   }
 
   static async createVehicleType(data: Partial<IVehicleType>): Promise<IVehicleType> {
-    const existingType = await VehicleType.findOne({ code: data.code });
+    const existingType = await VehicleType.findOne({ code: data.code!.toUpperCase(), isDeleted: false });
     if (existingType) {
       throw new AppError('Mã loại xe đã tồn tại', 400);
     }
@@ -72,7 +72,7 @@ export class VehicleTypeService {
     }
 
     if (data.code && data.code.toUpperCase() !== oldVehicleType.code.toUpperCase()) {
-      const existingType = await VehicleType.findOne({ code: data.code.toUpperCase() });
+      const existingType = await VehicleType.findOne({ code: data.code.toUpperCase(), _id: { $ne: id }, isDeleted: false });
       if (existingType) {
         throw new AppError('Mã loại xe đã tồn tại', 400);
       }

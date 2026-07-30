@@ -1,9 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { X, Layers, Calendar, Lock, } from 'lucide-react';
+import { X, Layers, Calendar, Lock } from 'lucide-react';
 import { Floor } from '../../../../services/floor.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
-import { ICON_MAP, DEFAULT_ICON, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
+import {
+  ICON_MAP,
+  DEFAULT_ICON,
+  getVehicleColorTheme,
+} from '../../../shared/vehicles/components/constants';
 
 function getBarTextColor(pct: number) {
   if (pct > 85) return 'text-[#E24B4A]';
@@ -32,7 +36,12 @@ export function FloorDetailModal({
   const badgeStyle = isActive
     ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
     : (floor as any).status === 'maintenance'
-      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      ? {
+          background: 'rgba(250,204,21,0.15)',
+          color: '#EAB308',
+          border: 'none',
+          fontWeight: 'bold',
+        }
       : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   return createPortal(
@@ -94,10 +103,18 @@ export function FloorDetailModal({
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          background: isActive ? '#82C94E' : (floor as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                          background: isActive
+                            ? '#82C94E'
+                            : (floor as any).status === 'maintenance'
+                              ? '#EAB308'
+                              : '#9b9e9b',
                         }}
                       />
-                      {isActive ? 'HOẠT ĐỘNG' : (floor as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
+                      {isActive
+                        ? 'HOẠT ĐỘNG'
+                        : (floor as any).status === 'maintenance'
+                          ? 'BẢO TRÌ'
+                          : 'ĐÃ VÔ HIỆU HÓA'}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
@@ -133,14 +150,16 @@ export function FloorDetailModal({
                     Các loại xe cho phép
                   </p>
                   {(floor.allowedVehicleTypes?.length || 0) > 0 ? (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {(floor.allowedVehicleTypes || []).map((vId: any) => {
-                          const id = typeof vId === 'string' ? vId : vId._id;
-                          const v = typeof vId === 'string' ? vehicleTypes.find(vt => vt._id === id) : vId;
-                          if (!v) return null;
-                          const IconComp = v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : ICON_MAP[DEFAULT_ICON];
-                          const color = getVehicleColorTheme(v.code || v.name, v.icon);
-                          return (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(floor.allowedVehicleTypes || []).map((vId: any) => {
+                        const id = typeof vId === 'string' ? vId : vId._id;
+                        const v =
+                          typeof vId === 'string' ? vehicleTypes.find((vt) => vt._id === id) : vId;
+                        if (!v) return null;
+                        const IconComp =
+                          v.icon && ICON_MAP[v.icon] ? ICON_MAP[v.icon] : ICON_MAP[DEFAULT_ICON];
+                        const color = getVehicleColorTheme(v.code || v.name, v.icon);
+                        return (
                           <span
                             key={id}
                             className="px-2.5 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 shadow-sm"
@@ -186,17 +205,20 @@ export function FloorDetailModal({
                       </div>
                       <div className="text-[12px] text-[#7B7B7B] mt-1 font-medium">Đang dùng</div>
                     </div>
-                    
+
                     <div className="w-full mt-2 pt-3 border-t border-gray-100 text-center flex items-center justify-center gap-2">
                       <span className="text-[13px] text-[#7B7B7B] font-medium">Tỷ lệ lấp đầy:</span>
-                      <span className={`text-[15px] font-bold ${getBarTextColor(
-                          floor.totalSlots 
-                            ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100) 
+                      <span
+                        className={`text-[15px] font-bold ${getBarTextColor(
+                          floor.totalSlots
+                            ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100)
                             : 0
-                        )}`}>
-                        {floor.totalSlots 
-                          ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100) 
-                          : 0}%
+                        )}`}
+                      >
+                        {floor.totalSlots
+                          ? Math.round(((stats?.occupied ?? 0) / floor.totalSlots) * 100)
+                          : 0}
+                        %
                       </span>
                     </div>
                   </div>

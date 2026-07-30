@@ -25,7 +25,13 @@ interface CustomDropdownProps {
   placeholder?: string;
 }
 
-export function CustomDropdown({ value, onChange, options, width = 180, icon: Icon }: CustomDropdownProps) {
+export function CustomDropdown({
+  value,
+  onChange,
+  options,
+  width = 180,
+  icon: Icon,
+}: CustomDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const active = value !== 'all' && value !== 'none' && value !== 'today';

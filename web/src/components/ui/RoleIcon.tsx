@@ -6,10 +6,6 @@ interface RoleIconProps {
   size?: number;
 }
 
-/**
- * Shared role icon component — renders the correct icon for each UserRole.
- * Used in UserTable, RoleCard, and any future role-aware UI.
- */
 export function RoleIcon({ role, size = 16 }: RoleIconProps) {
   switch (role) {
     case UserRole.ADMIN:

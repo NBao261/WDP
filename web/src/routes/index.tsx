@@ -6,11 +6,9 @@ import MainLayout from '../layouts/MainLayout';
 import StaffLayout from '../layouts/StaffLayout';
 import DriverLayout from '../layouts/DriverLayout';
 
-// ── Auth Pages ──
 import LoginPage from '../pages/auth/LoginPage';
 import UnauthorizedPage from '../pages/error/UnauthorizedPage';
 
-// ── Admin Pages ──
 import DashboardPage from '../pages/admin/dashboard/DashboardPage';
 
 const BillingPage = lazy(() => import('../pages/admin/billing/BillingPage'));
@@ -21,7 +19,6 @@ const CustomersPage = lazy(() => import('../pages/admin/customers/CustomersPage'
 const RolesPage = lazy(() => import('../pages/admin/roles/RolesPage'));
 const LogsPage = lazy(() => import('../pages/admin/logs/LogsPage'));
 
-// ── Manager / Staff / Driver Pages ──
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 const AssignmentsPage = lazy(() => import('../pages/manager/assignments/AssignmentsPage'));
 const VehiclesPage = lazy(() => import('../pages/shared/vehicles/VehiclesPage'));
@@ -31,7 +28,6 @@ const SharedPricingPage = lazy(() => import('../pages/shared/pricing/PricingPage
 const ExceptionsManagerPage = lazy(
   () => import('../pages/manager/exceptionsManager/ExceptionsManagerPage')
 );
-// Staff Pages ──
 const VehicleCheckPage = lazy(() => import('../pages/staff/vehicleCheck/VehicleCheckPage'));
 const ActiveSessionsPage = lazy(() => import('../pages/staff/activeSessions/ActiveSessionsPage'));
 const ExceptionsStaffPage = lazy(
@@ -39,7 +35,6 @@ const ExceptionsStaffPage = lazy(
 );
 const ShiftSelectionPage = lazy(() => import('../pages/staff/shiftSelection/ShiftSelectionPage'));
 
-// ── Driver Pages ──
 const DriverDashboard = lazy(() => import('../pages/driver/dashboard/DriverDashboard'));
 const DriverFacilitiesPage = lazy(() => import('../pages/driver/facilities/FacilitiesPage'));
 const ReservationPage = lazy(() => import('../pages/driver/book/ReservationPage'));
@@ -47,7 +42,9 @@ const HistoryPage = lazy(() => import('../pages/driver/history/HistoryPage'));
 import { Loading } from '../components/ui/Loading';
 
 const S = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<Loading variant="fullscreen" text="Đang tải hệ thống..." />}>{children}</Suspense>
+  <Suspense fallback={<Loading variant="fullscreen" text="Đang tải hệ thống..." />}>
+    {children}
+  </Suspense>
 );
 
 export const router = createBrowserRouter([
@@ -90,7 +87,6 @@ export const router = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [
-          // ── Admin Routes ──────────────────────────────────
           {
             path: 'admin',
             element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
@@ -104,7 +100,6 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              // FR-5: Quản lý Bảng giá
               {
                 path: 'pricing',
                 element: (
@@ -137,7 +132,6 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              // FR-18: User Management
               {
                 path: 'staff',
                 element: (
@@ -162,7 +156,6 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              // FR-19: Role & Permission Management
               {
                 path: 'roles',
                 element: (
@@ -182,7 +175,6 @@ export const router = createBrowserRouter([
             ],
           },
 
-          // ── Manager Routes ────────────────────────────────
           {
             path: 'manager',
             element: <ProtectedRoute allowedRoles={[UserRole.MANAGER, UserRole.ADMIN]} />,
@@ -204,7 +196,6 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              // FR-1,2,3: Quản lý Tòa nhà & Phân tầng
               {
                 path: 'facilities',
                 element: (
@@ -213,7 +204,6 @@ export const router = createBrowserRouter([
                   </S>
                 ),
               },
-              // FR-5: Quản lý Bảng giá
               {
                 path: 'pricing',
                 element: (
@@ -223,7 +213,6 @@ export const router = createBrowserRouter([
                 ),
               },
 
-              // FR-7: Sự cố (Manager)
               {
                 path: 'exceptions',
                 element: (
@@ -273,7 +262,6 @@ export const router = createBrowserRouter([
           },
         ],
       },
-      // ── Driver Routes ────────────────────────────────
       {
         path: 'driver',
         element: <ProtectedRoute allowedRoles={[UserRole.DRIVER]} />,

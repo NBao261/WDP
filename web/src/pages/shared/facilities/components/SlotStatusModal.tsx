@@ -37,7 +37,11 @@ import { userService } from '../../../../services/user.service';
 import { vehicleTypeService, type VehicleType } from '../../../../services/vehicleType.service';
 import { sessionService } from '../../../../services/session.service';
 import { ConfirmModal } from '../../../../components/ConfirmModal';
-import { ICON_MAP, DEFAULT_ICON, getVehicleColorTheme } from '../../../shared/vehicles/components/constants';
+import {
+  ICON_MAP,
+  DEFAULT_ICON,
+  getVehicleColorTheme,
+} from '../../../shared/vehicles/components/constants';
 
 interface SlotStatusModalProps {
   slot: ParkingSlot | null;
@@ -263,7 +267,10 @@ function InfoItem({
 function getImageUrl(url?: string) {
   if (!url) return undefined;
   if (url.startsWith('http')) return getOptimizedImageUrl(url, 400);
-  const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
+  const SERVER_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace(
+    '/api/v1',
+    ''
+  );
   return `${SERVER_URL}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
@@ -419,10 +426,19 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
       setFetchingNames(true);
       try {
         const facId =
-          slot.facilityId && typeof slot.facilityId === 'object' ? (slot.facilityId as any)._id : slot.facilityId;
-        const flrId = slot.floorId && typeof slot.floorId === 'object' ? (slot.floorId as any)._id : slot.floorId;
+          slot.facilityId && typeof slot.facilityId === 'object'
+            ? (slot.facilityId as any)._id
+            : slot.facilityId;
+        const flrId =
+          slot.floorId && typeof slot.floorId === 'object'
+            ? (slot.floorId as any)._id
+            : slot.floorId;
 
-        if (slot.facilityId && typeof slot.facilityId === 'object' && (slot.facilityId as any).name) {
+        if (
+          slot.facilityId &&
+          typeof slot.facilityId === 'object' &&
+          (slot.facilityId as any).name
+        ) {
           setFacilityName((slot.facilityId as any).name);
         } else if (facId) {
           const r = await facilityService.getById(facId);
@@ -457,7 +473,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
     if (s) {
       setEditCode(s.code);
       setEditVtId(
-        s.vehicleTypeId && typeof s.vehicleTypeId === 'object' ? (s.vehicleTypeId as any)._id : s.vehicleTypeId
+        s.vehicleTypeId && typeof s.vehicleTypeId === 'object'
+          ? (s.vehicleTypeId as any)._id
+          : s.vehicleTypeId
       );
       setEditStatus(s.status);
     }
@@ -499,9 +517,15 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
   }
   const vtColorTheme = getVehicleColorTheme(vtCode, vtIconKey);
   // Override curCfg for slot box colors based on vehicle type
-  const slotBoxCfg = (vtCode || vtIconKey)
-    ? { bg: vtColorTheme.bg, color: vtColorTheme.text, border: vtColorTheme.bg, dot: vtColorTheme.text }
-    : curCfg;
+  const slotBoxCfg =
+    vtCode || vtIconKey
+      ? {
+          bg: vtColorTheme.bg,
+          color: vtColorTheme.text,
+          border: vtColorTheme.bg,
+          dot: vtColorTheme.text,
+        }
+      : curCfg;
 
   const handleSubmit = async () => {
     if (!selected) return;
@@ -771,7 +795,11 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                         <div className="flex flex-wrap gap-2">
                           <div
                             className="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg"
-                            style={{ background: vtColorTheme.bg, borderColor: vtColorTheme.bg, color: vtColorTheme.text }}
+                            style={{
+                              background: vtColorTheme.bg,
+                              borderColor: vtColorTheme.bg,
+                              color: vtColorTheme.text,
+                            }}
                           >
                             <VtIcon size={16} strokeWidth={2.5} />
                             <span className="text-[13px] font-bold">{vtNameStr}</span>
@@ -892,13 +920,19 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                             icon={Tag}
                             label="Trạng thái"
                             value={
-                              <span className={`inline-flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border ${
-                                reservation.status === 'confirmed'
-                                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                                  : 'text-amber-700 bg-amber-50 border-amber-200'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${reservation.status === 'confirmed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                {reservation.status === 'confirmed' ? 'Đã xác nhận' : 'Chờ xác nhận'}
+                              <span
+                                className={`inline-flex items-center gap-1.5 text-[12px] font-bold px-3 py-1 rounded-xl border ${
+                                  reservation.status === 'confirmed'
+                                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                                    : 'text-amber-700 bg-amber-50 border-amber-200'
+                                }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${reservation.status === 'confirmed' ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                />
+                                {reservation.status === 'confirmed'
+                                  ? 'Đã xác nhận'
+                                  : 'Chờ xác nhận'}
                               </span>
                             }
                           />
@@ -914,7 +948,11 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                             <InfoItem icon={Mail} label="Email" value={reservation.user.email} />
                           )}
                           {typeof reservation.user === 'object' && reservation.user.phone && (
-                            <InfoItem icon={Phone} label="Số điện thoại" value={reservation.user.phone} />
+                            <InfoItem
+                              icon={Phone}
+                              label="Số điện thoại"
+                              value={reservation.user.phone}
+                            />
                           )}
                         </div>
                       </div>
@@ -940,7 +978,10 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                          {(() => { const DefIcon = ICON_MAP[DEFAULT_ICON]; return <DefIcon size={24} className="text-gray-300" />; })()}
+                          {(() => {
+                            const DefIcon = ICON_MAP[DEFAULT_ICON];
+                            return <DefIcon size={24} className="text-gray-300" />;
+                          })()}
                         </div>
                         <p className="text-[14px] font-medium text-gray-500 mb-1">
                           Vị trí đang trống
@@ -953,17 +994,20 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                       <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center shadow-sm mb-4 border-2 border-blue-200">
                         <Ticket size={32} className="text-blue-500" />
                       </div>
-                      <p className="text-[14px] font-bold text-blue-700 mb-1">
-                        Đã đặt trước
-                      </p>
+                      <p className="text-[14px] font-bold text-blue-700 mb-1">Đã đặt trước</p>
                       <p className="text-[13px] text-gray-500">
                         Slot này đã được đặt bởi{' '}
                         <span className="font-semibold text-[#062F28]">
-                          {typeof reservation.user === 'object' ? reservation.user.name : 'Người dùng'}
+                          {typeof reservation.user === 'object'
+                            ? reservation.user.name
+                            : 'Người dùng'}
                         </span>
                       </p>
                       <p className="text-[12px] text-gray-400 mt-1">
-                        Biển số: <span className="font-bold text-[#062F28] tracking-wider">{reservation.licensePlate}</span>
+                        Biển số:{' '}
+                        <span className="font-bold text-[#062F28] tracking-wider">
+                          {reservation.licensePlate}
+                        </span>
                       </p>
                     </div>
                   ) : session?.checkInImage ? (
@@ -972,9 +1016,9 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                         Hình ảnh xe lúc vào
                       </p>
                       <div className="w-full flex-1 rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-200/60 p-2 flex items-center justify-center">
-                        <img 
-                          src={getImageUrl(session?.checkInImage) || ''} 
-                          alt="Hình ảnh xe lúc vào" 
+                        <img
+                          src={getImageUrl(session?.checkInImage) || ''}
+                          alt="Hình ảnh xe lúc vào"
                           className="w-full h-full object-contain rounded-xl"
                         />
                       </div>
@@ -982,7 +1026,10 @@ export function SlotStatusModal({ slot, onClose, onSuccess }: SlotStatusModalPro
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center text-gray-400">
                       <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                        {(() => { const DefIcon = ICON_MAP[DEFAULT_ICON]; return <DefIcon size={24} className="text-gray-300" />; })()}
+                        {(() => {
+                          const DefIcon = ICON_MAP[DEFAULT_ICON];
+                          return <DefIcon size={24} className="text-gray-300" />;
+                        })()}
                       </div>
                       <p className="text-[14px] font-medium text-gray-500 mb-1">
                         Không có hình ảnh

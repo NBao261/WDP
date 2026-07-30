@@ -193,7 +193,16 @@ export const facilityApi = {
 export const authApi = {
   changePassword: (data: any) => {
     return apiClient.put('/auth/change-password', data);
-  }
+  },
+  forgotPassword: (email: string) => {
+    return apiClient.post('/auth/forgot-password', { email });
+  },
+  verifyOtp: (email: string, otp: string) => {
+    return apiClient.post('/auth/verify-otp', { email, otp });
+  },
+  resetPassword: (email: string, token: string, newPassword: string) => {
+    return apiClient.post('/auth/reset-password', { email, token, newPassword });
+  },
 };
 
 export const vehicleApi = {

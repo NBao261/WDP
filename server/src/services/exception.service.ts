@@ -43,6 +43,14 @@ export class ExceptionService {
       throw new AppError('Không thể tạo ngoại lệ cho lượt gửi đã kết thúc', 400);
     }
 
+    const existingException = await Exception.findOne({
+      sessionId: session._id,
+      type: data.type,
+    });
+    if (existingException) {
+      throw new AppError('Sự cố cùng loại đã được ghi nhận cho lượt gửi này', 400);
+    }
+
     const staffUser = await User.findById(data.staffId).select('assignedFacilities');
     if (!staffUser) throw new AppError('Staff không tồn tại', 404);
     const isAssigned = staffUser.assignedFacilities.some(
@@ -391,6 +399,14 @@ export class ExceptionService {
     const session = await ParkingSession.findById(data.sessionId);
     if (!session) {
       throw new AppError('Lượt gửi xe không tồn tại', 404);
+    }
+
+    const existingException = await Exception.findOne({
+      sessionId: session._id,
+      type: data.type,
+    });
+    if (existingException) {
+      throw new AppError('Sự cố cùng loại đã được ghi nhận cho lượt gửi này', 400);
     }
     
     let imageUrls: string[] = [];

@@ -1053,37 +1053,39 @@ export function PricingFormModal({
                         )}
                       </div>
 
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                            Đơn giá (VNĐ) <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            {...registerNumber(`rates.${idx}.amount`)}
-                            type="number"
-                            min="0"
-                            max="2000000"
-                            placeholder="0"
-                            onKeyDown={handleNumberKeyDown}
-                            readOnly={hasActiveSessions}
-                            className={`${getInputCls(!!errors.rates?.[idx]?.amount, 'text-[16px] text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
-                          />
+                      <div>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                              Đơn giá (VNĐ) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              {...registerNumber(`rates.${idx}.amount`)}
+                              type="number"
+                              min="0"
+                              max="2000000"
+                              placeholder="0"
+                              onKeyDown={handleNumberKeyDown}
+                              readOnly={hasActiveSessions}
+                              className={`${getInputCls(!!errors.rates?.[idx]?.amount, 'text-[16px] text-[#062F28]')} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
+                            />
+                          </div>
+                          <div className="w-16">
+                            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                              Đơn vị
+                            </label>
+                            <input
+                              {...register(`rates.${idx}.unit`)}
+                              readOnly
+                              className={`${getInputCls(false, 'text-[15px] font-bold')} bg-gray-50 text-gray-500 cursor-not-allowed text-center border-gray-100`}
+                            />
+                          </div>
                         </div>
                         {errors.rates?.[idx]?.amount && (
-                          <p className={errCls}>
+                          <p className={`${errCls} mt-1.5`}>
                             <span>⚠</span> {errors.rates[idx]!.amount!.message}
                           </p>
                         )}
-                        <div className="w-16">
-                          <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                            Đơn vị
-                          </label>
-                          <input
-                            {...register(`rates.${idx}.unit`)}
-                            readOnly
-                            className={`${getInputCls(false, 'text-[15px] font-bold')} bg-gray-50 text-gray-500 cursor-not-allowed text-center border-gray-100`}
-                          />
-                        </div>
                       </div>
                     </div>
                   ))}

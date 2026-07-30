@@ -60,7 +60,9 @@ export function useDashboard() {
   const [occupancyData, setOccupancyData] = useState<OccupancyReportData | null>(null);
   const [peakHoursData, setPeakHoursData] = useState<PeakHoursReportData | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [facilities, setFacilities] = useState<any[]>([]);
   const [facilityIds, setFacilityIds] = useState<string[]>([]);
+  const [facilityFilter, setFacilityFilter] = useState<string>('all');
   const socketRef = useRef<Socket | null>(null);
 
   // Fetch user & facility stats once (not time-filtered)
@@ -81,6 +83,7 @@ export function useDashboard() {
         totalFacilities: facilityRes.status === 'fulfilled' ? (facilityRes.value.pagination?.total ?? 0) : 0,
       });
       if (facilityRes.status === 'fulfilled' && facilityRes.value.data) {
+        setFacilities(facilityRes.value.data);
         setFacilityIds(facilityRes.value.data.map((f: any) => f._id));
       }
     } catch (err) {
@@ -94,12 +97,13 @@ export function useDashboard() {
     setRevenueData(null);
     setPeakHoursData(null);
     const { startDate, endDate, groupBy } = getDateRange(timeFilter);
+    const facilityId = facilityFilter !== 'all' ? facilityFilter : undefined;
     try {
       const [trafficRes, revenueRes, occupancyRes, peakRes] = await Promise.allSettled([
-        reportService.getTrafficReport({ startDate, endDate, groupBy }),
-        reportService.getRevenueReport({ startDate, endDate, groupBy }),
-        reportService.getOccupancyReport(),
-        reportService.getPeakHoursReport({ startDate, endDate }),
+        reportService.getTrafficReport({ startDate, endDate, groupBy, facilityId }),
+        reportService.getRevenueReport({ startDate, endDate, groupBy, facilityId }),
+        reportService.getOccupancyReport({ facilityId }),
+        reportService.getPeakHoursReport({ startDate, endDate, facilityId }),
       ]);
 
       if (trafficRes.status === 'fulfilled' && trafficRes.value.success)
@@ -116,7 +120,7 @@ export function useDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [timeFilter]);
+  }, [timeFilter, facilityFilter]);
 
   useEffect(() => {
     fetchData();
@@ -168,6 +172,9 @@ export function useDashboard() {
     occupancyData,
     peakHoursData,
     userStats,
+    facilities,
+    facilityFilter,
+    setFacilityFilter,
     fetchData,
   };
 }

@@ -1,18 +1,12 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../../store';
-import {
-  RefreshCw,
-  Download,
-  FileSpreadsheet,
-  Loader2,
-} from 'lucide-react';
+import { RefreshCw, Download, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useDashboard, TIME_FILTER_OPTIONS, TimeFilter } from './hooks/useDashboard';
 import { DashboardCards } from './components/DashboardCards';
 import { DashboardCharts } from './components/DashboardCharts';
 import { SystemStatsWidget } from './components/SystemStatsWidget';
-import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
 import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
 import { ExportConfirmModal } from './components/ExportConfirmModal';
 import { CustomDropdown } from '../../../components/ui/CustomDropdown';
@@ -71,6 +65,9 @@ export default function DashboardPage() {
     occupancyData,
     peakHoursData,
     userStats,
+    facilities,
+    facilityFilter,
+    setFacilityFilter,
     fetchData,
   } = useDashboard();
 
@@ -91,12 +88,14 @@ export default function DashboardPage() {
       setExporting(true);
       toast.info(`Đang xuất báo cáo ra ${fmt === 'pdf' ? 'PDF' : 'Excel'}...`);
       const { startDate, endDate, groupBy } = getExportDateRange(timeFilter);
+      const facilityId = facilityFilter !== 'all' ? facilityFilter : undefined;
       const blob = await reportService.exportReport({
         reportType: 'comprehensive',
         format: fmt,
         startDate,
         endDate,
         groupBy,
+        facilityId,
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -116,20 +115,24 @@ export default function DashboardPage() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-6 w-full pb-12"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
       {/* ═══ HEADER BAR ═══ */}
-      <motion.header variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <motion.header
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6"
+      >
         <div>
-          <h1 className="text-[#1a1a1a] font-bold text-[22px] tracking-tight">Tổng quan hệ thống</h1>
+          <h1 className="text-[#1a1a1a] font-bold text-[22px] tracking-tight">
+            Tổng quan hệ thống
+          </h1>
           <p className="text-[13px] text-[#6b7280] mt-0.5">
-            Xin chào,{' '}
-            <span className="font-semibold text-[#062F28]">{user?.name}</span>
-            {' '}— {new Date().toLocaleDateString('vi-VN', {
+            Xin chào, <span className="font-semibold text-[#062F28]">{user?.name}</span> —{' '}
+            {new Date().toLocaleDateString('vi-VN', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -139,6 +142,16 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Facility Filter */}
+          <CustomDropdown
+            value={facilityFilter}
+            onChange={setFacilityFilter}
+            options={[
+              { label: 'Tất cả tòa nhà', value: 'all' },
+              ...facilities.map((f: any) => ({ label: f.name, value: f._id })),
+            ]}
+          />
+
           {/* Time Filter */}
           <CustomDropdown
             value={timeFilter}
@@ -201,10 +214,9 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Right 1/3 — 2 admin-exclusive widgets */}
-          <div className="flex flex-col gap-4">
+          {/* Right 1/3 — admin-exclusive widget */}
+          <div className="h-full">
             <SystemStatsWidget userStats={userStats} />
-            <RevenueBreakdownWidget revenueData={revenueData} />
           </div>
         </div>
 

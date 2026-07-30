@@ -186,7 +186,6 @@ export function DashboardCards({
       {/* ── Card 3: Tỷ lệ lấp đầy ── */}
       <div className="col-span-2 xl:col-span-1 bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between h-[168px]">
         <div className="text-[15px] font-bold text-gray-900 flex items-center gap-2">
-          <GaugeCircle size={16} className="text-[#72d645]" />
           Tỷ lệ lấp đầy
         </div>
         <div>

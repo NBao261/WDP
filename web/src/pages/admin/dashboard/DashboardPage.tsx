@@ -7,7 +7,6 @@ import { useDashboard, TIME_FILTER_OPTIONS, TimeFilter } from './hooks/useDashbo
 import { DashboardCards } from './components/DashboardCards';
 import { DashboardCharts } from './components/DashboardCharts';
 import { SystemStatsWidget } from './components/SystemStatsWidget';
-import { RevenueBreakdownWidget } from './components/RevenueBreakdownWidget';
 import { FacilityLeaderboardWidget } from './components/FacilityLeaderboardWidget';
 import { ExportConfirmModal } from './components/ExportConfirmModal';
 import { CustomDropdown } from '../../../components/ui/CustomDropdown';
@@ -215,10 +214,9 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Right 1/3 — 2 admin-exclusive widgets */}
+          {/* Right 1/3 — admin-exclusive widget */}
           <div className="flex flex-col gap-4">
             <SystemStatsWidget userStats={userStats} />
-            <RevenueBreakdownWidget revenueData={revenueData} />
           </div>
         </div>
 

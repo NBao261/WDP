@@ -29,6 +29,7 @@ import { SessionDetailCard, FeeEstimate } from "../../src/components";
 import { ParkingSession } from "../../src/types/session.types";
 import { Reservation } from "../../src/types/reservation.types";
 import { sessionApi, reservationApi } from "../../src/services/api";
+import { useSocketEvent } from "../../src/hooks/useSocket";
 
 type Tab = "active" | "reserved" | "history";
 
@@ -45,11 +46,6 @@ function StatusBadge({ status }: { status: string }) {
       color: '#304f00',
       bg: 'rgba(164, 255, 7, 0.15)',
     },
-    completed: {
-      label: "Hoàn thành",
-      color: Colors.brandGrayText,
-      bg: Colors.brandGray,
-    },
     pending: {
       label: "Chờ duyệt",
       color: Colors.warning,
@@ -60,7 +56,17 @@ function StatusBadge({ status }: { status: string }) {
       color: '#304f00',
       bg: 'rgba(164, 255, 7, 0.15)',
     },
+    checked_in: {
+      label: "Đã check-in",
+      color: Colors.primary,
+      bg: Colors.primaryBg,
+    },
     used: { label: "Đã dùng", color: Colors.success, bg: Colors.successLight },
+    completed: {
+      label: "Hoàn thành",
+      color: Colors.success,
+      bg: Colors.successLight,
+    },
     cancelled: {
       label: "Đã huỷ",
       color: Colors.danger,
@@ -161,6 +167,8 @@ const ReservationCard2 = React.memo(({
   const diffM = Math.floor((diffMs % 3600000) / 60000);
   const isUpcoming = diffMs > 0;
   const isConfirmed = item.status === "confirmed";
+  const isCheckedIn = item.status === "checked_in" || item.status === "used";
+  const shouldShowQR = isConfirmed || isCheckedIn;
 
   let QRCode: any = null;
   try {
@@ -221,8 +229,8 @@ const ReservationCard2 = React.memo(({
         </View>
       </View>
 
-      {/* QR Banner — chỉ hiện khi confirmed */}
-      {isConfirmed && (item as any).code && (
+      {/* QR Banner — hiện khi confirmed hoặc checked_in */}
+      {shouldShowQR && (item as any).code && (
         <TouchableOpacity
           style={styles.qrBanner}
           onPress={() => setShowQR(true)}
@@ -261,7 +269,7 @@ const ReservationCard2 = React.memo(({
         </TouchableOpacity>
       )}
 
-      {["pending", "confirmed"].includes(item.status) && (
+      {["pending", "confirmed"].includes(item.status) && !isCheckedIn && (
         <TouchableOpacity
           style={styles.cancelBtn}
           onPress={() => onCancel(item._id)}
@@ -401,11 +409,11 @@ export default function ActivityScreen() {
         if (resRes?.success) {
           const all: Reservation[] = resRes.data;
           setUpcomingRes(
-            all.filter((r) => ["pending", "confirmed"].includes(r.status)),
+            all.filter((r) => ["pending", "confirmed", "checked_in", "used"].includes(r.status)),
           );
           setHistRes(
             all.filter((r) =>
-              ["used", "cancelled", "expired"].includes(r.status),
+              ["cancelled", "expired", "completed"].includes(r.status),
             ),
           );
         }
@@ -424,6 +432,27 @@ export default function ActivityScreen() {
       fetchData(tab);
     }, [tab]),
   );
+
+  // ─── Socket.io realtime: tự cập nhật khi có sự kiện ───
+  useSocketEvent('session:created', () => {
+    console.log('[Socket] session:created → refresh');
+    fetchData(tab);
+  });
+
+  useSocketEvent('session:completed', () => {
+    console.log('[Socket] session:completed → refresh');
+    fetchData(tab);
+  });
+
+  useSocketEvent('reservation:expiring', () => {
+    console.log('[Socket] reservation:expiring → refresh');
+    fetchData(tab);
+  });
+
+  useSocketEvent('reservation:statusChanged', () => {
+    console.log('[Socket] reservation:statusChanged → refresh');
+    fetchData(tab);
+  });
   
   const onRefresh = () => {
     setRefreshing(true);

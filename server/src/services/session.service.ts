@@ -378,7 +378,7 @@ export class SessionService {
       try {
         const saveOps: any[] = [session.save()];
         if (matchedReservation) {
-          saveOps.push(Reservation.updateOne({ _id: matchedReservation._id }, { status: ReservationStatus.USED }));
+          saveOps.push(Reservation.updateOne({ _id: matchedReservation._id }, { status: ReservationStatus.CHECKED_IN }));
         }
         await Promise.all(saveOps);
       } catch (err) {
@@ -409,6 +409,12 @@ export class SessionService {
         });
         if (session.driverId) {
           io.to(`user:${session.driverId}`).emit('session:created', { sessionId: session._id });
+          if (matchedReservation) {
+            io.to(`user:${session.driverId}`).emit('reservation:statusChanged', {
+              reservationId: matchedReservation._id,
+              status: ReservationStatus.CHECKED_IN,
+            });
+          }
         }
       } catch (err) { }
       
@@ -985,8 +991,24 @@ export class SessionService {
         await slot.save({ session: sessionMongoose });
       }
 
+      // Chuyển reservation sang COMPLETED khi checkout
+      if (session.reservationId) {
+        await Reservation.updateOne(
+          { _id: session.reservationId },
+          { status: ReservationStatus.COMPLETED },
+        ).session(sessionMongoose);
+      }
+
       await sessionMongoose.commitTransaction();
       sessionMongoose.endSession();
+
+      // Clear reservation cache
+      if (session.reservationId && session.driverId) {
+        delPattern(`cache:reservations:user:${session.driverId}:*`).catch(() => {});
+      }
+      if (session.reservationId && session.facilityId) {
+        delPattern(`cache:reservations:facility:${session.facilityId}:*`).catch(() => {});
+      }
 
       const populatedSession = await ParkingSession.findById(session._id)
         .populate('vehicleTypeId', 'name code icon')
@@ -1006,6 +1028,12 @@ export class SessionService {
         });
         if (session.driverId) {
           io.to(`user:${session.driverId}`).emit('session:completed', { sessionId: session._id });
+          if (session.reservationId) {
+            io.to(`user:${session.driverId}`).emit('reservation:statusChanged', {
+              reservationId: session.reservationId,
+              status: ReservationStatus.COMPLETED,
+            });
+          }
         }
       } catch (err) {
       }

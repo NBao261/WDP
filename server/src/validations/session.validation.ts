@@ -48,7 +48,7 @@ export const checkInSchema = z.object({
       .min(1, 'Reservation code is required')
       .max(50, 'Reservation code too long')
       .optional(),
-    checkInImage: z.string().max(500, 'Image URL too long').optional(),
+    checkInImage: z.string().max(500, 'Image URL too long').nullable().optional().transform(v => v || undefined),
   }).refine(
     (data) => data.reservationCode || (data.facilityId && data.vehicleTypeId && data.licensePlate),
     {
@@ -104,6 +104,6 @@ export const checkOutSchema = z.object({
       .min(1, 'Gate out is required')
       .max(50, 'Gate out too long')
       .trim(),
-    checkOutImage: z.string().max(500, 'Image URL too long').optional(),
+    checkOutImage: z.string().max(500, 'Image URL too long').nullable().optional().transform(v => v || undefined),
   }),
 });

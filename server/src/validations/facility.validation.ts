@@ -12,7 +12,7 @@ export const createFacilitySchema = z.object({
     closeTime: z
       .string({ required_error: 'Close time is required' })
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid time format (HH:mm)'),
-    description: z.string().max(2000, 'Description too long').optional(),
+    description: z.string().max(2000, 'Description too long').nullable().optional().transform(v => v || undefined),
     images: z.array(z.string()).optional(),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
@@ -32,7 +32,7 @@ export const updateFacilitySchema = z.object({
       .string()
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
       .optional(),
-    description: z.string().optional(),
+    description: z.string().nullable().optional().transform(v => v || undefined),
     images: z.array(z.string()).optional(),
     status: z.nativeEnum(FacilityStatus).optional(),
     latitude: z.number().min(-90).max(90).optional(),

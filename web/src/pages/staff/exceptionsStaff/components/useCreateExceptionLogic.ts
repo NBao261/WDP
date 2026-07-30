@@ -53,9 +53,9 @@ export function useCreateExceptionLogic(onClose: () => void, onSuccess: () => vo
         sessionId: foundSession._id, 
         type: exceptionType, 
         description: description.trim(),
-        expectedPlate: foundSession.licensePlate,
-        checkInImage: foundSession.checkInImage,
-        cardCode: foundSession.cardCode
+        expectedPlate: foundSession.licensePlate || undefined,
+        ...(foundSession.checkInImage ? { checkInImage: foundSession.checkInImage } : {}),
+        ...(foundSession.cardCode ? { cardCode: foundSession.cardCode } : {}),
       };
       if (exceptionType === ExceptionType.LOST_CARD && lostCardFee === 0 && surcharge !== "") payload.surcharge = Number(surcharge);
       else if (exceptionType !== ExceptionType.LOST_CARD && surcharge !== "") payload.surcharge = Number(surcharge);

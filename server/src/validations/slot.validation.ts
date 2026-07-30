@@ -57,6 +57,6 @@ export const updateSlotSchema = z.object({
 export const updateSlotStatusSchema = z.object({
   body: z.object({
     status: z.nativeEnum(SlotStatus, { required_error: 'Status is required' }),
-    reason: z.string().max(500, 'Reason too long').optional(),
+    reason: z.string().max(500, 'Reason too long').nullable().optional().transform(v => v || undefined),
   }),
 });

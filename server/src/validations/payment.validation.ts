@@ -11,8 +11,8 @@ export const createIntentSchema = z.object({
     method: z.nativeEnum(PaymentMethod, {
       required_error: 'Phương thức thanh toán không hợp lệ',
     }),
-    checkOutImage: z.string().max(500, 'URL ảnh quá dài').optional(),
-    gateOut: z.string().max(50, 'Gate out quá dài').trim().optional(),
+    checkOutImage: z.string().max(500, 'URL ảnh quá dài').nullable().optional().transform(v => v || undefined),
+    gateOut: z.string().max(50, 'Gate out quá dài').trim().nullable().optional().transform(v => v || undefined),
   }),
 });
 
@@ -36,7 +36,7 @@ export const cashCheckoutSchema = z.object({
       .min(1, 'Gate out không được để trống')
       .max(50, 'Gate out quá dài')
       .trim(),
-    checkOutImage: z.string().max(500, 'URL ảnh quá dài').optional(),
+    checkOutImage: z.string().max(500, 'URL ảnh quá dài').nullable().optional().transform(v => v || undefined),
   }),
 });
 

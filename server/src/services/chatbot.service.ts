@@ -9,6 +9,7 @@ import { ParkingSession, SessionStatus } from '../models/parkingSession.model';
 import { Feedback, FeedbackStatus } from '../models/feedback.model';
 import { Reservation, ReservationStatus } from '../models/reservation.model';
 import { Vehicle } from '../models/vehicle.model';
+import { VehicleType } from '../models/vehicleType.model';
 import { User } from '../models/user.model';
 import { PricingPlan } from '../models/pricingPlan.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
@@ -249,6 +250,25 @@ async function resolveFacilityId(
   }
 }
 
+async function resolveVehicleTypeId(
+  vehicleTypeName: string | null | undefined
+): Promise<string | undefined> {
+  if (!vehicleTypeName) return undefined;
+
+  const escapedName = escapeRegex(vehicleTypeName);
+  try {
+    const vt = await VehicleType.findOne({ name: { $regex: escapedName, $options: 'i' } }).select('_id name');
+    if (!vt) {
+      logger.warn(`[Chatbot] VehicleType not found: "${vehicleTypeName}"`);
+      return undefined;
+    }
+    return vt._id?.toString();
+  } catch (err: any) {
+    logger.error(`[Chatbot] Error resolving vehicleType name: "${vehicleTypeName}"`, { error: err.message });
+    return undefined;
+  }
+}
+
 async function queryWithScope(
   handler: (args: any, facilityId?: string) => Promise<any>,
   args: any,
@@ -328,18 +348,22 @@ function mergeMultiFacilityData(results: any[], facilityIds: string[], nameMap: 
 
 async function handleRevenueReport(args: any, facilityId?: string) {
   const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
-  return ReportService.getRevenueReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
+  const vehicleTypeId = await resolveVehicleTypeId(args.vehicleTypeName);
+  return ReportService.getRevenueReport({ facilityId, vehicleTypeId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
 }
 async function handleTrafficReport(args: any, facilityId?: string) {
   const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
-  return ReportService.getTrafficReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
+  const vehicleTypeId = await resolveVehicleTypeId(args.vehicleTypeName);
+  return ReportService.getTrafficReport({ facilityId, vehicleTypeId, startDate: timeRange.startDate, endDate: timeRange.endDate, groupBy: 'day' });
 }
 async function handleOccupancyReport(args: any, facilityId?: string) {
-  return ReportService.getOccupancyReport({ facilityId });
+  const vehicleTypeId = await resolveVehicleTypeId(args.vehicleTypeName);
+  return ReportService.getOccupancyReport({ facilityId, vehicleTypeId });
 }
 async function handlePeakHours(args: any, facilityId?: string) {
   const timeRange = resolveTimeRange(args.timeRange, args.customStartDate, args.customEndDate);
-  return ReportService.getPeakHoursReport({ facilityId, startDate: timeRange.startDate, endDate: timeRange.endDate });
+  const vehicleTypeId = await resolveVehicleTypeId(args.vehicleTypeName);
+  return ReportService.getPeakHoursReport({ facilityId, vehicleTypeId, startDate: timeRange.startDate, endDate: timeRange.endDate });
 }
 async function handleFacilityInfo(args: any, facilityId?: string) {
   if (facilityId) {
@@ -672,7 +696,7 @@ const reportTools: Tool[] = [{
   functionDeclarations: [
     {
       name: "get_revenue_report",
-      description: "Lấy báo cáo doanh thu theo khoảng thời gian và bãi xe",
+      description: "Lấy báo cáo doanh thu theo khoảng thời gian và bãi xe. Có thể lọc theo loại xe.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -680,12 +704,13 @@ const reportTools: Tool[] = [{
           customStartDate: { type: SchemaType.STRING, description: customDateDesc },
           customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING, description: "Tên tòa nhà/bãi xe (optional)" },
+          vehicleTypeName: { type: SchemaType.STRING, description: "Tên loại xe để lọc, ví dụ: 'Xe máy', 'Ô tô', 'Xe đạp'. Chỉ dùng khi user yêu cầu lọc theo loại xe cụ thể." },
         }
       }
     },
     {
       name: "get_traffic_report",
-      description: "Lấy báo cáo lượt xe vào/ra theo khoảng thời gian",
+      description: "Lấy báo cáo lượt xe vào/ra theo khoảng thời gian. Có thể lọc theo loại xe (xe máy, ô tô, xe đạp...).",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -693,22 +718,24 @@ const reportTools: Tool[] = [{
           customStartDate: { type: SchemaType.STRING, description: customDateDesc },
           customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING },
+          vehicleTypeName: { type: SchemaType.STRING, description: "Tên loại xe để lọc, ví dụ: 'Xe máy', 'Ô tô', 'Xe đạp'. Chỉ dùng khi user yêu cầu lọc theo loại xe cụ thể." },
         }
       }
     },
     {
       name: "get_occupancy_report",
-      description: "Lấy báo cáo tỷ lệ lấp đầy hiện tại của bãi xe",
+      description: "Lấy báo cáo tỷ lệ lấp đầy hiện tại của bãi xe. Có thể lọc theo loại xe.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
           facilityName: { type: SchemaType.STRING },
+          vehicleTypeName: { type: SchemaType.STRING, description: "Tên loại xe để lọc, ví dụ: 'Xe máy', 'Ô tô'. Chỉ dùng khi user yêu cầu lọc theo loại xe cụ thể." },
         }
       }
     },
     {
       name: "get_peak_hours_report",
-      description: "Lấy báo cáo khung giờ cao điểm (nhiều xe vào ra nhất)",
+      description: "Lấy báo cáo khung giờ cao điểm (nhiều xe vào ra nhất). Có thể lọc theo loại xe.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
@@ -716,6 +743,7 @@ const reportTools: Tool[] = [{
           customStartDate: { type: SchemaType.STRING, description: customDateDesc },
           customEndDate: { type: SchemaType.STRING, description: customDateDesc },
           facilityName: { type: SchemaType.STRING },
+          vehicleTypeName: { type: SchemaType.STRING, description: "Tên loại xe để lọc, ví dụ: 'Xe máy', 'Ô tô'. Chỉ dùng khi user yêu cầu lọc theo loại xe cụ thể." },
         }
       }
     },

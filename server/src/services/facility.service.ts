@@ -3,6 +3,7 @@ import { Floor } from '../models/floor.model';
 import { ParkingSlot } from '../models/parkingSlot.model';
 import { VehicleType, IVehicleType } from '../models/vehicleType.model';
 import { User } from '../models/user.model';
+import { PricingPlan, FeeMethod } from '../models/pricingPlan.model';
 import { AppError } from '../middlewares/error.middleware';
 
 import { getCache, setCache, delPattern, delCache } from '../config/redis';
@@ -74,6 +75,27 @@ export class FacilityService {
           `Không thể giảm số tầng xuống ${data.totalFloors} vì toà nhà đang có ${currentFloorsCount} tầng. Vui lòng xoá bớt tầng trước khi giảm.`,
           400
         );
+      }
+    }
+
+    if (data.openTime || data.closeTime) {
+      const facilityToUpdate = await ParkingFacility.findById(id);
+      if (facilityToUpdate) {
+        const newOpenTime = data.openTime || facilityToUpdate.openTime;
+        const newCloseTime = data.closeTime || facilityToUpdate.closeTime;
+
+        if (newOpenTime !== facilityToUpdate.openTime || newCloseTime !== facilityToUpdate.closeTime) {
+          const activeTimeWindowPlans = await PricingPlan.countDocuments({
+            facilityId: id,
+            feeMethod: FeeMethod.TIME_WINDOW,
+            status: 'active',
+            isDeleted: false
+          });
+
+          if (activeTimeWindowPlans > 0) {
+            throw new AppError('Không thể thay đổi giờ hoạt động vì toà nhà đang có bảng giá theo khung giờ (TIME_WINDOW) đang hoạt động. Vui lòng vô hiệu hoá hoặc cập nhật các bảng giá này trước.', 400);
+          }
+        }
       }
     }
 

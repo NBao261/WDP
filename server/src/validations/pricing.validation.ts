@@ -8,7 +8,8 @@ const pricingRateSchema = z.object({
   label: z.string({ required_error: 'Rate label is required' }).min(1, 'Rate label is required').max(100, 'Label too long').trim(),
   amount: z
     .number({ required_error: 'Rate amount is required' })
-    .min(0, 'Rate amount must be non-negative'),
+    .min(0, 'Rate amount must be non-negative')
+    .max(2000000, 'Rate amount cannot exceed 2,000,000'),
   unit: z.string({ required_error: 'Rate unit is required' }).min(1, 'Rate unit is required').max(50, 'Unit too long'),
   startTime: z.string().regex(timeRegex, 'startTime must be in HH:MM format (00:00-23:59)').optional(),
   endTime: z.string().regex(timeRegex, 'endTime must be in HH:MM format (00:00-23:59)').optional(),
@@ -57,11 +58,11 @@ export const createPricingPlanSchema = z.object({
       .array(pricingRateSchema, { required_error: 'Rates are required' })
       .min(1, 'At least one rate is required')
       .max(24, 'Maximum 24 rates allowed'),
-    overnightFee: z.number().min(0, 'Overnight fee must be non-negative').optional(),
-    overtimeFeePerHour: z.number().min(0, 'Overtime fee must be non-negative').optional(),
-    lostCardFee: z.number().min(0, 'Lost card fee must be non-negative').optional(),
+    overnightFee: z.number().min(0, 'Overnight fee must be non-negative').max(2000000, 'Overnight fee cannot exceed 2,000,000').optional(),
+    overtimeFeePerHour: z.number().min(0, 'Overtime fee must be non-negative').max(2000000, 'Overtime fee cannot exceed 2,000,000').optional(),
+    lostCardFee: z.number().min(0, 'Lost card fee must be non-negative').max(2000000, 'Lost card fee cannot exceed 2,000,000').optional(),
     gracePeriodMinutes: z.number().min(0, 'Grace period must be non-negative').max(60, 'Grace period cannot exceed 60 minutes').optional(),
-    maxDailyFee: z.number().min(0, 'Max daily fee must be non-negative').optional(),
+    maxDailyFee: z.number().min(0, 'Max daily fee must be non-negative').max(2000000, 'Max daily fee cannot exceed 2,000,000').optional(),
     firstBlockHours: z.number().min(1, 'First block hours must be at least 1').optional(),
   }).refine((data) => {
     if (data.feeMethod === FeeMethod.TIME_WINDOW) {
@@ -104,11 +105,11 @@ export const updatePricingPlanSchema = z.object({
     feeType: z.nativeEnum(FeeType).optional(),
     feeMethod: z.nativeEnum(FeeMethod).optional(),
     rates: z.array(pricingRateSchema).min(1).optional(),
-    overnightFee: z.number().min(0).optional(),
-    overtimeFeePerHour: z.number().min(0).optional(),
-    lostCardFee: z.number().min(0).optional(),
+    overnightFee: z.number().min(0).max(2000000, 'Overnight fee cannot exceed 2,000,000').optional(),
+    overtimeFeePerHour: z.number().min(0).max(2000000, 'Overtime fee cannot exceed 2,000,000').optional(),
+    lostCardFee: z.number().min(0).max(2000000, 'Lost card fee cannot exceed 2,000,000').optional(),
     gracePeriodMinutes: z.number().min(0).max(60).optional(),
-    maxDailyFee: z.number().min(0).optional(),
+    maxDailyFee: z.number().min(0).max(2000000, 'Max daily fee cannot exceed 2,000,000').optional(),
     firstBlockHours: z.number().min(1).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }).refine((data) => {

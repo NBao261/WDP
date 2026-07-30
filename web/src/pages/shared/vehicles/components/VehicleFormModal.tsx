@@ -78,21 +78,22 @@ export function VehicleFormModal({ isOpen, onClose, vehicle, onSuccess }: ModalP
         });
       }
       // Fetch active sessions to know which floors are occupied
-      sessionService.getActiveSessions({ limit: 2000 }).then((res) => {
-        if (res.success && Array.isArray(res.data)) {
-          const ids = new Set<string>();
-          res.data.forEach((s: any) => {
-            const fId =
-              typeof s.floorId === 'object' && s.floorId !== null
-                ? s.floorId._id
-                : s.floorId;
-            if (fId) ids.add(fId);
-          });
-          setActiveFloorIds(ids);
-        }
-      }).catch(() => {
-        // silently ignore — if check fails, don't block UI
-      });
+      sessionService
+        .getActiveSessions({ limit: 2000 })
+        .then((res) => {
+          if (res.success && Array.isArray(res.data)) {
+            const ids = new Set<string>();
+            res.data.forEach((s: any) => {
+              const fId =
+                typeof s.floorId === 'object' && s.floorId !== null ? s.floorId._id : s.floorId;
+              if (fId) ids.add(fId);
+            });
+            setActiveFloorIds(ids);
+          }
+        })
+        .catch(() => {
+          // silently ignore — if check fails, don't block UI
+        });
     } else {
       setActiveFloorIds(new Set());
     }

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { X, Loader2, Check, } from 'lucide-react';
+import { X, Loader2, Check } from 'lucide-react';
 import { ICON_MAP, DEFAULT_ICON } from '../../../shared/vehicles/components/constants';
 import { slotService } from '../../../../services/slot.service';
 import { VehicleType } from '../../../../services/vehicleType.service';
@@ -47,14 +47,14 @@ export function SlotFormModal({
       setOriginalPrefix('');
       return;
     }
-    const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType);
+    const vtSlots = existingSlots.filter((s) => s.vehicleTypeId === vehicleType);
     if (vtSlots.length > 0) {
       const match = vtSlots[0].code.match(/^([A-Za-z]+)/);
       if (match) {
         setPrefix(match[1]);
         setOriginalPrefix(match[1]);
         let maxNum = 0;
-        vtSlots.forEach(s => {
+        vtSlots.forEach((s) => {
           const numPart = s.code.replace(match[1], '');
           const num = parseInt(numPart, 10);
           if (!isNaN(num) && num > maxNum) maxNum = num;
@@ -85,8 +85,8 @@ export function SlotFormModal({
   // Auto-fill code khi chọn loại xe (mode single)
   useEffect(() => {
     if (!vehicleType || mode !== 'single') return;
-    const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType);
-    const vt = vehicleTypes.find(v => v._id === vehicleType);
+    const vtSlots = existingSlots.filter((s) => s.vehicleTypeId === vehicleType);
+    const vt = vehicleTypes.find((v) => v._id === vehicleType);
     if (!vt) return;
     // Tìm prefix từ existing slots hoặc dùng tên loại xe viết hoa không dấu
     let codePrefix = '';
@@ -95,10 +95,15 @@ export function SlotFormModal({
       if (match) codePrefix = match[1];
     }
     if (!codePrefix) {
-      codePrefix = vt.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/\s+/g, '').toUpperCase();
+      codePrefix = vt.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/gi, 'd')
+        .replace(/\s+/g, '')
+        .toUpperCase();
     }
     let maxNum = 0;
-    vtSlots.forEach(s => {
+    vtSlots.forEach((s) => {
       const numPart = s.code.replace(/^[A-Za-z]+/, '');
       const num = parseInt(numPart, 10);
       if (!isNaN(num) && num > maxNum) maxNum = num;
@@ -116,7 +121,9 @@ export function SlotFormModal({
       map[vtId].count++;
     });
     // Sort codes naturally
-    Object.values(map).forEach((g) => g.codes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
+    Object.values(map).forEach((g) =>
+      g.codes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    );
     return map;
   }, [existingSlots]);
 
@@ -127,7 +134,7 @@ export function SlotFormModal({
     if (mode === 'single') {
       if (!code.trim()) {
         newErrors.code = 'Vui lòng nhập mã slot';
-      } else if (existingSlots.some(s => s.code === code.trim().toUpperCase())) {
+      } else if (existingSlots.some((s) => s.code === code.trim().toUpperCase())) {
         newErrors.code = 'Mã vị trí này đã tồn tại';
       }
     } else {
@@ -142,7 +149,7 @@ export function SlotFormModal({
         const duplicates: string[] = [];
         for (let i = 0; i < numCount; i++) {
           const generatedCode = `${pfx}${numStart + i}`;
-          if (existingSlots.some(s => s.code === generatedCode)) {
+          if (existingSlots.some((s) => s.code === generatedCode)) {
             duplicates.push(generatedCode);
           }
         }
@@ -179,7 +186,9 @@ export function SlotFormModal({
         const newPrefix = prefix.toUpperCase();
 
         if (originalPrefix && originalPrefix !== newPrefix) {
-          const vtSlots = existingSlots.filter(s => s.vehicleTypeId === vehicleType && s.code.startsWith(originalPrefix));
+          const vtSlots = existingSlots.filter(
+            (s) => s.vehicleTypeId === vehicleType && s.code.startsWith(originalPrefix)
+          );
           for (const slot of vtSlots) {
             const newCode = slot.code.replace(originalPrefix, newPrefix);
             await slotService.update(slot._id, { code: newCode });
@@ -216,7 +225,9 @@ export function SlotFormModal({
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div>
             <h2 className="text-lg font-bold text-[#062F28]">Gán Xe</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{singleOnly ? 'Gán loại xe cho vị trí trống' : 'Gán xe cho các vị trí mới'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {singleOnly ? 'Gán loại xe cho vị trí trống' : 'Gán xe cho các vị trí mới'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -228,7 +239,7 @@ export function SlotFormModal({
 
         <div className="p-6 overflow-y-auto flex-1 flex flex-col justify-between">
           <div className="space-y-4">
-              {!singleOnly && (
+            {!singleOnly && (
               <div className="flex bg-gray-100 p-1 rounded-xl mb-2 mt-2">
                 <button
                   onClick={() => {
@@ -249,19 +260,27 @@ export function SlotFormModal({
                   Gán Nhiều Vị Trí
                 </button>
               </div>
-              )}
+            )}
 
-              {totalSlots !== undefined && currentSlotCount !== undefined && (
-                <div className={`flex items-center gap-2 text-sm font-medium ${
-                  currentSlotCount >= totalSlots ? 'text-red-600' : (totalSlots - currentSlotCount) <= 5 ? 'text-amber-600' : 'text-[#062F28]'
-                }`}>
-                  <span>Sức chứa tầng:</span>
-                  <span className="font-semibold">
-                    {currentSlotCount} / {totalSlots} vị trí{' '}
-                    {currentSlotCount >= totalSlots ? '— Đã đầy' : `(còn ${totalSlots - currentSlotCount})`}
-                  </span>
-                </div>
-              )}
+            {totalSlots !== undefined && currentSlotCount !== undefined && (
+              <div
+                className={`flex items-center gap-2 text-sm font-medium ${
+                  currentSlotCount >= totalSlots
+                    ? 'text-red-600'
+                    : totalSlots - currentSlotCount <= 5
+                      ? 'text-amber-600'
+                      : 'text-[#062F28]'
+                }`}
+              >
+                <span>Sức chứa tầng:</span>
+                <span className="font-semibold">
+                  {currentSlotCount} / {totalSlots} vị trí{' '}
+                  {currentSlotCount >= totalSlots
+                    ? '— Đã đầy'
+                    : `(còn ${totalSlots - currentSlotCount})`}
+                </span>
+              </div>
+            )}
 
             {/* Vehicle Type Selection — FIRST */}
             <div className="space-y-4">
@@ -279,7 +298,8 @@ export function SlotFormModal({
                   <div className="flex flex-col gap-2">
                     {vehicleTypes.map((vt) => {
                       const isSelected = vehicleType === vt._id;
-                      const Icon = vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : ICON_MAP[DEFAULT_ICON];
+                      const Icon =
+                        vt.icon && ICON_MAP[vt.icon] ? ICON_MAP[vt.icon] : ICON_MAP[DEFAULT_ICON];
                       const info = vtSlotInfo[vt._id];
                       return (
                         <button
@@ -299,8 +319,13 @@ export function SlotFormModal({
                           <span className="flex-1">
                             {vt.name}
                             {info && (
-                              <span className={`text-xs font-normal ml-2 ${isSelected ? 'text-[#062F28]/60' : 'text-gray-400'}`}>
-                                Hiện tại có: <span className="font-bold">{info.codes[0]} - {info.codes[info.codes.length - 1]}</span>
+                              <span
+                                className={`text-xs font-normal ml-2 ${isSelected ? 'text-[#062F28]/60' : 'text-gray-400'}`}
+                              >
+                                Hiện tại có:{' '}
+                                <span className="font-bold">
+                                  {info.codes[0]} - {info.codes[info.codes.length - 1]}
+                                </span>
                               </span>
                             )}
                           </span>
@@ -318,102 +343,106 @@ export function SlotFormModal({
 
             {/* Slot Code / Bulk — AFTER vehicle type */}
             {vehicleType && (
-            <div className="space-y-4">
-              {mode === 'single' ? (
-                <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
-                    Mã Slot <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    value={code}
-                    onChange={(e) => {
-                      setCode(e.target.value.toUpperCase());
-                      if (errors.code) setErrors({ ...errors, code: '' });
-                    }}
-                    placeholder="A1, B2"
-                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.code ? 'border-red-400' : 'border-gray-200'}`}
-                  />
-                  {errors.code && <p className="text-xs text-red-500 mt-1">{errors.code}</p>}
-                </div>
-              ) : (
-                <div className="space-y-4 mb-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-1">
-                        Tiền tố <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        value={prefix}
-                        placeholder="A"
-                        onChange={(e) => {
-                          setPrefix(e.target.value.toUpperCase());
-                          if (errors.prefix) setErrors({ ...errors, prefix: '' });
-                        }}
-                        maxLength={4}
-                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.prefix ? 'border-red-400' : 'border-gray-200'}`}
-                      />
-                      {errors.prefix && <p className="text-xs text-red-500 mt-1">{errors.prefix}</p>}
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-1">
-                        Bắt đầu từ <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        placeholder="1"
-                        value={startNumber}
-                        onKeyDown={handleNumberKeyDown}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setStartNumber(val === '' ? '' : Number(val));
-                          if (errors.startNumber) setErrors({ ...errors, startNumber: '' });
-                        }}
-                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.startNumber ? 'border-red-400' : 'border-gray-200'}`}
-                      />
-                      {errors.startNumber && (
-                        <p className="text-xs text-red-500 mt-1">{errors.startNumber}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-1">
-                        Số lượng <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={999}
-                        placeholder="10"
-                        value={count}
-                        onKeyDown={handleNumberKeyDown}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                            setCount(val === '' ? '' : Number(val));
-                          if (errors.count) setErrors({ ...errors, count: '' });
-                        }}
-                        className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
-                          errors.count ? 'border-red-400' : 'border-gray-200'
-                        }`}
-                      />
-                      {errors.count && <p className="text-xs text-red-500 mt-1">{errors.count}</p>}
-                    </div>
+              <div className="space-y-4">
+                {mode === 'single' ? (
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                      Mã Slot <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={code}
+                      onChange={(e) => {
+                        setCode(e.target.value.toUpperCase());
+                        if (errors.code) setErrors({ ...errors, code: '' });
+                      }}
+                      placeholder="A1, B2"
+                      className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.code ? 'border-red-400' : 'border-gray-200'}`}
+                    />
+                    {errors.code && <p className="text-xs text-red-500 mt-1">{errors.code}</p>}
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Cấu trúc dự kiến:{' '}
-                    <span className="font-mono font-semibold">
-                      {prefix || 'A'}
-                      {Number(startNumber) || 1}
-                    </span>
-                    ,{' '}
-                    <span className="font-mono font-semibold">
-                      {prefix || 'A'}
-                      {(Number(startNumber) || 1) + 1}
-                    </span>
-                    , … (<span className="font-semibold">{Number(count) || 10}</span> slot)
-                  </p>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="space-y-4 mb-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 block mb-1">
+                          Tiền tố <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          value={prefix}
+                          placeholder="A"
+                          onChange={(e) => {
+                            setPrefix(e.target.value.toUpperCase());
+                            if (errors.prefix) setErrors({ ...errors, prefix: '' });
+                          }}
+                          maxLength={4}
+                          className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.prefix ? 'border-red-400' : 'border-gray-200'}`}
+                        />
+                        {errors.prefix && (
+                          <p className="text-xs text-red-500 mt-1">{errors.prefix}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 block mb-1">
+                          Bắt đầu từ <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          placeholder="1"
+                          value={startNumber}
+                          onKeyDown={handleNumberKeyDown}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setStartNumber(val === '' ? '' : Number(val));
+                            if (errors.startNumber) setErrors({ ...errors, startNumber: '' });
+                          }}
+                          className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${errors.startNumber ? 'border-red-400' : 'border-gray-200'}`}
+                        />
+                        {errors.startNumber && (
+                          <p className="text-xs text-red-500 mt-1">{errors.startNumber}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 block mb-1">
+                          Số lượng <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          placeholder="10"
+                          value={count}
+                          onKeyDown={handleNumberKeyDown}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCount(val === '' ? '' : Number(val));
+                            if (errors.count) setErrors({ ...errors, count: '' });
+                          }}
+                          className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#9FE870] ${
+                            errors.count ? 'border-red-400' : 'border-gray-200'
+                          }`}
+                        />
+                        {errors.count && (
+                          <p className="text-xs text-red-500 mt-1">{errors.count}</p>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Cấu trúc dự kiến:{' '}
+                      <span className="font-mono font-semibold">
+                        {prefix || 'A'}
+                        {Number(startNumber) || 1}
+                      </span>
+                      ,{' '}
+                      <span className="font-mono font-semibold">
+                        {prefix || 'A'}
+                        {(Number(startNumber) || 1) + 1}
+                      </span>
+                      , … (<span className="font-semibold">{Number(count) || 10}</span> slot)
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

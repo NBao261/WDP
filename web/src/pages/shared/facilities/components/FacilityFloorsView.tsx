@@ -86,7 +86,8 @@ export function FacilityFloorsView({
       {/* Facility summary strip */}
       <div className="bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] px-5 py-3.5 flex flex-wrap items-center gap-5">
         <div className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500">
-          <Clock size={16} /> Thời gian hoạt động: {viewFacility.openTime} – {viewFacility.closeTime}
+          <Clock size={16} /> Thời gian hoạt động: {viewFacility.openTime} –{' '}
+          {viewFacility.closeTime}
         </div>
         <div
           className="flex items-center gap-1.5 text-[14px] font-medium text-gray-500"
@@ -168,10 +169,10 @@ export function FacilityFloorsView({
         vehicleTypes={
           detailFloor
             ? vehicleTypes.filter((vt) =>
-              (detailFloor.allowedVehicleTypes || []).some(
-                (item: any) => (typeof item === 'string' ? item : item._id) === vt._id
+                (detailFloor.allowedVehicleTypes || []).some(
+                  (item: any) => (typeof item === 'string' ? item : item._id) === vt._id
+                )
               )
-            )
             : []
         }
       />

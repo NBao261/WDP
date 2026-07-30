@@ -71,7 +71,12 @@ export function FacilityCard({
   const badgeStyle = isActive
     ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
     : (facility as any).status === 'maintenance'
-      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      ? {
+          background: 'rgba(250,204,21,0.15)',
+          color: '#EAB308',
+          border: 'none',
+          fontWeight: 'bold',
+        }
       : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   const handleConfirm = async () => {
@@ -188,10 +193,7 @@ export function FacilityCard({
           {/* Text */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3
-                className="text-[15px] text-[#062F28] font-bold truncate"
-                title={facility.name}
-              >
+              <h3 className="text-[15px] text-[#062F28] font-bold truncate" title={facility.name}>
                 {facility.name}
               </h3>
             </div>
@@ -225,10 +227,18 @@ export function FacilityCard({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: isActive ? '#82C94E' : (facility as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                background: isActive
+                  ? '#82C94E'
+                  : (facility as any).status === 'maintenance'
+                    ? '#EAB308'
+                    : '#9b9e9b',
               }}
             />
-            {isActive ? 'HOẠT ĐỘNG' : (facility as any).status === 'maintenance' ? 'BẢO TRÌ' : 'ĐÃ VÔ HIỆU HÓA'}
+            {isActive
+              ? 'HOẠT ĐỘNG'
+              : (facility as any).status === 'maintenance'
+                ? 'BẢO TRÌ'
+                : 'ĐÃ VÔ HIỆU HÓA'}
           </span>
           <div className="relative -mr-2" onClick={(e) => e.stopPropagation()}>
             {loading ? (
@@ -406,7 +416,12 @@ export function FacilityListItem({
   const badgeStyle = isActive
     ? { background: 'rgba(159,232,112,0.15)', color: '#82C94E', border: 'none', fontWeight: 'bold' }
     : (facility as any).status === 'maintenance'
-      ? { background: 'rgba(250,204,21,0.15)', color: '#EAB308', border: 'none', fontWeight: 'bold' }
+      ? {
+          background: 'rgba(250,204,21,0.15)',
+          color: '#EAB308',
+          border: 'none',
+          fontWeight: 'bold',
+        }
       : { background: '#f0f1f0', color: '#6b6e6b', border: 'none', fontWeight: 'bold' };
 
   return (
@@ -459,10 +474,18 @@ export function FacilityListItem({
                 width: 5,
                 height: 5,
                 borderRadius: '50%',
-                background: isActive ? '#82C94E' : (facility as any).status === 'maintenance' ? '#EAB308' : '#9b9e9b',
+                background: isActive
+                  ? '#82C94E'
+                  : (facility as any).status === 'maintenance'
+                    ? '#EAB308'
+                    : '#9b9e9b',
               }}
             />
-            {isActive ? 'HOẠT ĐỘNG' : (facility as any).status === 'maintenance' ? 'BẢO TRÌ' : 'VÔ HIỆU HÓA'}
+            {isActive
+              ? 'HOẠT ĐỘNG'
+              : (facility as any).status === 'maintenance'
+                ? 'BẢO TRÌ'
+                : 'VÔ HIỆU HÓA'}
           </span>
         </div>
         <span

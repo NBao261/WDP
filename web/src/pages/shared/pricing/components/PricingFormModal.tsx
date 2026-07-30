@@ -741,6 +741,7 @@ export function PricingFormModal({
                       {...registerNumber('lostCardFee')}
                       type="number"
                       min="0"
+                      max="2000000"
                       onKeyDown={handleNumberKeyDown}
                       className={`${getInputCls(!!errors.lostCardFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                       placeholder="50000"
@@ -793,6 +794,7 @@ export function PricingFormModal({
                         {...registerNumber('maxDailyFee')}
                         type="number"
                         min="0"
+                        max="2000000"
                         onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.maxDailyFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
@@ -819,6 +821,7 @@ export function PricingFormModal({
                         {...registerNumber('overnightFee')}
                         type="number"
                         min="0"
+                        max="2000000"
                         onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.overnightFee)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
@@ -844,6 +847,7 @@ export function PricingFormModal({
                         {...registerNumber('overtimeFeePerHour')}
                         type="number"
                         min="0"
+                        max="2000000"
                         onKeyDown={handleNumberKeyDown}
                         className={`${getInputCls(!!errors.overtimeFeePerHour)} ${hasActiveSessions ? 'opacity-70 bg-gray-50' : ''}`}
                         placeholder="0"
@@ -1058,6 +1062,7 @@ export function PricingFormModal({
                             {...registerNumber(`rates.${idx}.amount`)}
                             type="number"
                             min="0"
+                            max="2000000"
                             placeholder="0"
                             onKeyDown={handleNumberKeyDown}
                             readOnly={hasActiveSessions}

@@ -51,7 +51,10 @@ export function StaffFilterBar({
 
       {hasFilters && (
         <button
-          onClick={() => { onSearchChange(''); onRoleFilterChange('ALL'); }}
+          onClick={() => {
+            onSearchChange('');
+            onRoleFilterChange('ALL');
+          }}
           className="flex items-center gap-1.5 text-[13px] text-red-500 hover:text-red-600 font-medium whitespace-nowrap px-3 py-2 rounded-xl hover:bg-red-50 transition-colors ml-auto"
         >
           <X size={14} />

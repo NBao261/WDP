@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.2.9 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.2.9">
   <diagram id="system_arch" name="System Architecture">
-    <mxGraphModel dx="1901" dy="1167" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1678" dy="1029" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -34,9 +34,6 @@
         <mxCell id="c_infra_layer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=1.5;fontSize=10;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;shadow=0;" value="&lt;b&gt;Infrastructure / Data Access Layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Repositories, Mongoose Models,&lt;br&gt;Redis Client, External API Adapters&lt;/font&gt;" vertex="1">
           <mxGeometry height="80" width="380" x="350" y="500" as="geometry" />
         </mxCell>
-        <mxCell id="c_alpr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;strokeWidth=2;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:11px;&quot;&gt;ALPR Microservice&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Python · FastAPI · Uvicorn&lt;br&gt;YOLOv8 · PaddleOCR v3&lt;/font&gt;" vertex="1">
-          <mxGeometry height="45" width="175" x="355" y="445" as="geometry" />
-        </mxCell>
         <mxCell id="g_data" parent="1" style="rounded=1;dashed=1;dashPattern=6 3;fillColor=#FFFBEB;strokeColor=#FCD34D;strokeWidth=2;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#B45309;arcSize=4;" value="Data Layer" vertex="1">
           <mxGeometry height="190" width="430" x="330" y="650" as="geometry" />
         </mxCell>
@@ -46,7 +43,7 @@
         <mxCell id="c_db" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=2;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:13px;&quot;&gt;MongoDB&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Primary Database&lt;br&gt;Mongoose ODM&lt;br&gt;Atlas Cloud&lt;/font&gt;" vertex="1">
           <mxGeometry height="110" width="175" x="560" y="690" as="geometry" />
         </mxCell>
-        <UserObject label="&#xa;&#xa;" link="&#xa;&lt;img src=&quot;https://appexchange.salesforce.com/image_host/54d359f8-a104-40ee-b94c-91488f80db81.png&quot; alt=&quot;Cloudinary for Salesforce Marketing Cloud; Digital Asset Management (DAM),  Image Management, Video Management, Content Management, API | Salesforce  AppExchange&quot;&gt;&#xa;&#xa;" id="g_external">
+        <UserObject label="External Reource &amp; Third-Parties" link="&#xa;&lt;span style=&quot;color: rgb(21, 128, 61); font-family: Helvetica; font-size: 12px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 700; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(236, 236, 236); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;Backend Server (Node.js · Express · TypeScript)&lt;/span&gt;&#xa;&#xa;" id="g_external">
           <mxCell parent="1" style="rounded=1;dashed=1;dashPattern=6 3;fillColor=#FAF5FF;strokeColor=#C4B5FD;strokeWidth=2;align=center;verticalAlign=top;spacingTop=10;fontStyle=1;fontSize=12;fontColor=#7C3AED;arcSize=4;" vertex="1">
             <mxGeometry height="780" width="510" x="840" y="60" as="geometry" />
           </mxCell>
@@ -54,17 +51,14 @@
         <mxCell id="c_cloudinary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Cloudinary&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Image Cloud Storage &amp; CDN&lt;/font&gt;" vertex="1">
           <mxGeometry height="65" width="180" x="1000" y="180" as="geometry" />
         </mxCell>
-        <mxCell id="c_google" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Google OAuth 2.0&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Social Login · JWT Token&lt;/font&gt;" vertex="1">
-          <mxGeometry height="65" width="180" x="1000" y="280" as="geometry" />
-        </mxCell>
         <mxCell id="c_momo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:12px;&quot;&gt;MoMo / VNPay&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Payment Gateway&lt;br&gt;IPN Webhook / Redirect&lt;/font&gt;" vertex="1">
-          <mxGeometry height="65" width="180" x="1000" y="507.5" as="geometry" />
+          <mxGeometry height="65" width="180" x="1000" y="425" as="geometry" />
         </mxCell>
         <mxCell id="c_gemini" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Google Gemini AI&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;AI Chatbot Assistant&lt;br&gt;JSON Response&lt;/font&gt;" vertex="1">
-          <mxGeometry height="65" width="180" x="1000" y="400" as="geometry" />
+          <mxGeometry height="65" width="180" x="1000" y="300" as="geometry" />
         </mxCell>
         <mxCell id="c_push" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=1.5;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:12px;&quot;&gt;Expo Push Service&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Mobile Push Notifications&lt;/font&gt;" vertex="1">
-          <mxGeometry height="65" width="180" x="1005" y="625" as="geometry" />
+          <mxGeometry height="65" width="180" x="1005" y="670" as="geometry" />
         </mxCell>
         <mxCell id="e_web_req" edge="1" parent="1" source="c_web" style="endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=1.8;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="c_api_layer">
           <mxGeometry relative="1" as="geometry" />
@@ -150,7 +144,7 @@
             <mxPoint x="-35" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="e_alpr_res" edge="1" parent="1" source="c_alpr" style="endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.348;entryY=1.006;entryDx=0;entryDy=0;entryPerimeter=0;" target="c_domain_layer">
+        <mxCell id="e_alpr_res" edge="1" parent="1" source="c_alpr" style="endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=1.2;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.369;entryY=1.004;entryDx=0;entryDy=0;entryPerimeter=0;" target="c_domain_layer">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="l_alpr_res" connectable="0" parent="e_alpr_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#EA580C;labelBackgroundColor=#FFFFFF;" value="Plate Result" vertex="1">
@@ -170,22 +164,6 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="l_cloudinary_res" connectable="0" parent="e_cloudinary_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="Image URL" vertex="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint y="10" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="e_google_req" edge="1" parent="1" source="c_service_layer" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="c_google">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_google_req" connectable="0" parent="e_google_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="HTTPS OAuth" vertex="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint y="-10" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="e_google_res" edge="1" parent="1" source="c_google" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.2;dashed=1;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;" target="c_service_layer">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="l_google_res" connectable="0" parent="e_google_res" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="JWT Token" vertex="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint y="10" as="offset" />
           </mxGeometry>
@@ -222,7 +200,7 @@
             <mxPoint y="10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="e_push_req" edge="1" parent="1" source="c_infra_layer" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="c_push">
+        <mxCell id="e_push_req" edge="1" parent="1" source="c_infra_layer" style="endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=1.5;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="c_push">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="l_push_req" connectable="0" parent="e_push_req" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;" value="Push Payload" vertex="1">
@@ -262,7 +240,7 @@
         </mxCell>
         <mxCell id="l_user_mobile" connectable="0" parent="e_user_mobile" style="edgeLabel;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;fontStyle=1;fontColor=#2563EB;labelBackgroundColor=#EFF6FF;" value="Interact" vertex="1">
           <mxGeometry relative="0.5" as="geometry">
-            <mxPoint x="30" as="offset" />
+            <mxPoint x="40" y="65" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="e_api_svc" edge="1" parent="1" source="c_api_layer" style="endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="c_service_layer">
@@ -288,6 +266,9 @@
           <mxGeometry relative="0.5" as="geometry">
             <mxPoint x="20" as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="c_alpr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;strokeWidth=2;fontSize=10;shadow=1;align=center;" value="&lt;b style=&quot;font-size:11px;&quot;&gt;ALPR Microservice&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;color:#64748B;&quot;&gt;Python · FastAPI · Uvicorn&lt;br&gt;YOLOv8 · PaddleOCR v3&lt;/font&gt;" vertex="1">
+          <mxGeometry height="65" width="190" x="995" y="550" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

@@ -46,7 +46,9 @@ export function StaffFormModal({ isOpen, onClose, user, onSuccess }: StaffFormMo
     isSubmitting,
     error,
     handleSubmit,
-    canGoNext,
+    fieldErrors,
+    setFieldErrors,
+    validateStep1,
     totalSteps,
     steps,
     showFacilityStep,
@@ -148,6 +150,8 @@ export function StaffFormModal({ isOpen, onClose, user, onSuccess }: StaffFormMo
                     isEdit={isEdit}
                     basicData={basicData}
                     onChange={setBasicData}
+                    fieldErrors={fieldErrors}
+                    setFieldErrors={setFieldErrors}
                   />
                 </motion.div>
               )}
@@ -230,9 +234,13 @@ export function StaffFormModal({ isOpen, onClose, user, onSuccess }: StaffFormMo
             {currentStep < totalSteps ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep((s) => (s + 1) as 1 | 2 | 3 | 4)}
-                disabled={!canGoNext()}
-                className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] hover:bg-[#9FE870]/90 rounded-xl transition-colors shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  if (currentStep === 1) {
+                    if (!validateStep1()) return;
+                  }
+                  setCurrentStep((s) => (s + 1) as 1 | 2 | 3 | 4);
+                }}
+                className="px-5 py-2.5 text-sm font-bold text-[#062F28] bg-[#9FE870] hover:bg-[#9FE870]/90 rounded-xl transition-colors shadow-sm flex items-center gap-1.5"
               >
                 Tiếp theo
                 <ChevronRight size={16} />
@@ -243,9 +251,10 @@ export function StaffFormModal({ isOpen, onClose, user, onSuccess }: StaffFormMo
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed
-                  ${!isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
-                    ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' // Cảnh báo nhẹ khi không gán
-                    : 'bg-[#9FE870] hover:bg-[#9FE870]/90 text-[#062F28]'
+                  ${
+                    !isEdit && isOnFacilityStep && selectedFacilityIds.length === 0
+                      ? 'bg-amber-200 hover:bg-amber-300 text-amber-900' // Cảnh báo nhẹ khi không gán
+                      : 'bg-[#9FE870] hover:bg-[#9FE870]/90 text-[#062F28]'
                   }
                 `}
               >

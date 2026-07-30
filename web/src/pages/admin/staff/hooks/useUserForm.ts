@@ -151,22 +151,43 @@ export function useUserForm(
     }
   };
 
-  const canGoNext = (): boolean => {
-    if (currentStep === 1) {
-      const hasBase = !!basicData.name.trim() && !!basicData.phone.trim();
-      if (!isEdit)
-        return hasBase && !!basicData.email.trim() && basicData.password.trim().length >= 6;
-      return hasBase;
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateStep1 = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!basicData.name.trim()) {
+      errs.name = 'Vui lòng nhập họ và tên';
+    } else if (basicData.name.trim().length < 2) {
+      errs.name = 'Họ và tên tối thiểu 2 ký tự';
     }
-    return true;
+
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    const phoneClean = basicData.phone.trim().replace(/\s+/g, '');
+    if (!basicData.phone.trim()) {
+      errs.phone = 'Vui lòng nhập số điện thoại';
+    } else if (!phoneRegex.test(phoneClean)) {
+      errs.phone = 'Số điện thoại không hợp lệ';
+    }
+
+    if (!isEdit) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!basicData.email.trim()) {
+        errs.email = 'Vui lòng nhập email';
+      } else if (!emailRegex.test(basicData.email.trim())) {
+        errs.email = 'Email không hợp lệ';
+      }
+
+      if (!basicData.password.trim()) {
+        errs.password = 'Vui lòng nhập mật khẩu';
+      } else if (basicData.password.trim().length < 6) {
+        errs.password = 'Mật khẩu tối thiểu 6 ký tự';
+      }
+    }
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  /**
-   * Step structure:
-   * - Create: [1] Thông tin → [2] Vai trò → [3*] Phân công Tòa nhà (nếu Manager/Staff, tùy chọn)
-   * - Edit:   [1] Thông tin → [2] Vai trò → [3] Quyền bổ sung
-   *           (Phân công Tòa nhà khi Edit → dùng Quick-Action từ bảng User)
-   */
   const showFacilityStep = !isEdit && ASSIGNABLE_ROLES.includes(selectedRole);
 
   const steps = isEdit
@@ -200,7 +221,9 @@ export function useUserForm(
     isSubmitting,
     error,
     handleSubmit,
-    canGoNext,
+    fieldErrors,
+    setFieldErrors,
+    validateStep1,
     totalSteps,
     steps,
     showFacilityStep,

@@ -210,7 +210,13 @@ export function SlotMappingEditorView({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setBulkOpen(true)}
+              onClick={() => {
+                if (slots.length >= floor.totalSlots) {
+                  toast.warning(`Tầng này đã phân bổ đủ ${slots.length}/${floor.totalSlots} vị trí. Vui lòng tăng giới hạn slot của tầng trước.`);
+                  return;
+                }
+                setBulkOpen(true);
+              }}
               className="px-3 py-2 bg-[#062F28] text-white hover:bg-[#062F28]/90 rounded-xl transition-colors flex items-center gap-1.5 text-sm font-medium shadow-sm"
             >
               <Plus size={16} />

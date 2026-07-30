@@ -170,6 +170,17 @@ export function FloorFormModal({
       );
       return;
     }
+
+    if (isEdit && !selectedVehicleTypes.includes(id)) {
+      const currentTotal = Number(totalSlotsInput) || 0;
+      if (existingSlotCount >= currentTotal) {
+        toast.warning(
+          `Tầng này đã phân bổ đủ ${existingSlotCount}/${currentTotal} vị trí. Vui lòng tăng giới hạn slot trước khi gán thêm loại xe mới.`
+        );
+        return;
+      }
+    }
+
     setSelectedVehicleTypes((prev) => {
       const next = prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id];
       if (next.length > 0 && errors.vehicleTypes) {
@@ -291,12 +302,7 @@ export function FloorFormModal({
       toast.error('Có sự trùng lặp mã vị trí giữa các loại xe. Vui lòng kiểm tra lại.');
     }
 
-    // In create mode, must have at least some slots
-    if (!isEdit && filledGroups.length === 0) {
-      slotGroups.forEach((_, i) => {
-        newErrors[`slotGroup_${i}_count`] = 'Nhập số lượng';
-      });
-    }
+    // Removed: In create mode, we now allow 0 slots initially so they can be mapped later.
 
     // Validate step 2 limit
     const currentTotalSlots = Number(totalSlotsInput) || 0;

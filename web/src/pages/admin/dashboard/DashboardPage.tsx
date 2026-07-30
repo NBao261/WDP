@@ -215,7 +215,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right 1/3 — admin-exclusive widget */}
-          <div className="flex flex-col gap-4">
+          <div className="h-full">
             <SystemStatsWidget userStats={userStats} />
           </div>
         </div>

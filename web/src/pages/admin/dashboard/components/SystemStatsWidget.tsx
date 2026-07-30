@@ -81,9 +81,9 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
     : [];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5 flex flex-col gap-4">
+    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5 flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-[14px] font-semibold text-[#1a1a1a]">Nhân sự hệ thống</h2>
           <p className="text-[12px] text-[#6b7280] mt-0.5">Toàn bộ tài khoản đang hoạt động</p>
@@ -95,7 +95,7 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
 
       {/* Total badge */}
       {userStats && (
-        <div className="flex items-center justify-between bg-[#f9fafb] rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between bg-[#f9fafb] rounded-xl px-4 py-3 mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-[#132c20] flex items-center justify-center">
               <Users size={14} className="text-white" />
@@ -120,7 +120,7 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
 
       {/* Role breakdown */}
       {userStats ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col flex-1 justify-around gap-2">
           {roles.map((role) => (
             <RoleRow
               key={role.label}
@@ -134,7 +134,7 @@ export function SystemStatsWidget({ userStats }: SystemStatsWidgetProps) {
           ))}
         </div>
       ) : (
-        <div className="flex items-center justify-center py-4">
+        <div className="flex items-center justify-center flex-1">
           <p className="text-[13px] text-[#9ca3af]">Đang tải...</p>
         </div>
       )}
